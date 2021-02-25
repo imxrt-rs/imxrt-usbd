@@ -1,5 +1,6 @@
 #![no_std]
 
+mod buffer;
 mod pll;
 mod qh;
 mod td;
