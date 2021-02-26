@@ -28,6 +28,8 @@ mod ENDPTCTRL {
     pub use imxrt_ral::usb::ENDPTCTRL1::*;
 }
 
+pub type Status = crate::td::Status;
+
 #[derive(Clone, Copy)]
 #[repr(u32)]
 enum Kind {
@@ -247,19 +249,8 @@ impl<'a> Endpoint<'a> {
         while ral::read_reg!(ral::usb, usb, ENDPTPRIME) != 0 {}
     }
 
-    pub fn is_transfer_active(&self) -> bool {
-        self.td.status().contains(crate::td::Status::ACTIVE)
-    }
-
-    pub fn is_transfer_halted(&self) -> bool {
-        self.td.status().contains(crate::td::Status::HALTED)
-    }
-
-    pub fn is_transfer_error(&self) -> bool {
-        use crate::td::Status;
-        self.td
-            .status()
-            .contains(Status::DATA_BUS_ERROR | Status::TRANSACTION_ERROR)
+    pub fn status(&self) -> Status {
+        self.td.status()
     }
 
     pub fn set_stalled(&mut self, usb: &ral::usb::Instance, stall: bool) {

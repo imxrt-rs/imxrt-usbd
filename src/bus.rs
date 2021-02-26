@@ -1,6 +1,6 @@
 //! USB bus implementation
 
-use crate::USB;
+use crate::{endpoint::Status, USB};
 use core::cell::RefCell;
 use cortex_m::interrupt::{self, Mutex};
 use imxrt_ral as ral;
@@ -161,9 +161,11 @@ impl UsbBus for Bus {
                 None => return Err(usb_device::UsbError::InvalidEndpoint),
             };
 
-            if ep.is_transfer_error() || ep.is_transfer_halted() {
+            let status = ep.status();
+            if status.contains(Status::DATA_BUS_ERROR | Status::TRANSACTION_ERROR | Status::HALTED)
+            {
                 return Err(usb_device::UsbError::InvalidState);
-            } else if ep.is_transfer_active() {
+            } else if status.contains(Status::ACTIVE) {
                 return Err(usb_device::UsbError::WouldBlock);
             }
 
@@ -183,12 +185,13 @@ impl UsbBus for Bus {
                 None => return Err(usb_device::UsbError::InvalidEndpoint),
             };
 
-            if ep.is_transfer_error() || ep.is_transfer_halted() {
+            let status = ep.status();
+            if status.contains(Status::DATA_BUS_ERROR | Status::TRANSACTION_ERROR | Status::HALTED)
+            {
                 return Err(usb_device::UsbError::InvalidState);
-            } else if ep.is_transfer_active() {
+            } else if status.contains(Status::ACTIVE) {
                 return Err(usb_device::UsbError::WouldBlock);
             }
-
 
             ep.clear_complete(&usb.usb);
             ep.clear_nack(&usb.usb);
