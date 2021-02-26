@@ -48,3 +48,7 @@ version = "0.4"
 [[bin]]
 name = "configured"
 path = "src/configured.rs"
+
+[lib]
+name = "support"
+path = "src/support.rs"

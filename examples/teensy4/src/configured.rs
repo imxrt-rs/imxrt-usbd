@@ -13,13 +13,8 @@
 #![no_std]
 #![no_main]
 
-use teensy4_fcb as _;
-use teensy4_panic as _;
-
 use hal::ral;
 use imxrt_hal as hal;
-
-use pins::common;
 use teensy4_pins as pins;
 
 use usb_device::prelude::*;
@@ -36,7 +31,7 @@ fn main() -> ! {
         ..
     } = hal::Peripherals::take().unwrap();
     let pins = pins::t40::into_pins(iomuxc);
-    let mut led = configure_led(pins.p13);
+    let mut led = support::configure_led(pins.p13);
 
     // DMA initialization (for logging)
     let mut dma_channels = _dma.clock(&mut ccm.handle);
@@ -64,7 +59,7 @@ fn main() -> ! {
     ral::modify_reg!(ral::ccm, ccm, CCGR6, CG1: 0b11, CG0: 0b11);
 
     usb.initialize(ccm_analog);
-    set_endpoint_memory(&mut usb);
+    support::set_endpoint_memory(&mut usb);
 
     let bus_adapter = imxrt_usb::Bus::new(usb);
     let bus = usb_device::bus::UsbBusAllocator::new(bus_adapter);
@@ -82,36 +77,5 @@ fn main() -> ! {
         if state == usb_device::device::UsbDeviceState::Addressed {
             led.set();
         }
-    }
-}
-
-type LED = hal::gpio::GPIO<common::P13, hal::gpio::Output>;
-fn configure_led(pad: common::P13) -> LED {
-    let mut led = hal::gpio::GPIO::new(pad);
-    led.set_fast(true);
-    led.output()
-}
-
-/// Assign memory for all of the USB's endpoints
-///
-/// # Panics
-///
-/// Panics if called more than once.
-fn set_endpoint_memory(usb: &mut imxrt_usb::USB) {
-    use core::sync::atomic;
-
-    static mut ENDPOINT_MEMORY: [u8; 4096] = [0; 4096];
-    static ONCE_GUARD: atomic::AtomicBool = atomic::AtomicBool::new(false);
-
-    if ONCE_GUARD.swap(true, atomic::Ordering::SeqCst) {
-        panic!("Already allocated endpoint memory!");
-    }
-
-    unsafe {
-        // Safety: ENDPOINT_MEMORY is unlikely to be null
-        let ptr = core::ptr::NonNull::new_unchecked(ENDPOINT_MEMORY.as_mut_ptr());
-        // Safety: ENDPOINT_MEMORY valid for it's length. With proper scoping
-        // and a runtime flag, we ensure it's only available to a single caller.
-        usb.set_endpoint_memory(ptr, ENDPOINT_MEMORY.len());
     }
 }
