@@ -20,3 +20,6 @@ version = "0.4"
 members = [
     "examples/teensy4",
 ]
+
+[patch.crates-io.usb-device]
+path = "../usb-device"
