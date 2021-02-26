@@ -121,7 +121,12 @@ impl UsbBus for Bus {
                     }
                 }
             };
-            debug!("EP{} {:?} INITIALIZE {:?}", ep_addr.index(), ep_addr.direction(), ep_type);
+            debug!(
+                "EP{} {:?} INITIALIZE {:?}",
+                ep_addr.index(),
+                ep_addr.direction(),
+                ep_type
+            );
             ep.initialize(&usb.usb);
 
             usb.endpoints[index(ep_addr)] = Some(ep);
@@ -153,12 +158,22 @@ impl UsbBus for Bus {
                 Some(ref mut ep) => ep,
                 None => return Err(usb_device::UsbError::InvalidEndpoint),
             };
-            trace!("EP{} {:?} WRITE {}", ep_addr.index(), ep_addr.direction(), buf.len());
+            trace!(
+                "EP{} {:?} WRITE {}",
+                ep_addr.index(),
+                ep_addr.direction(),
+                buf.len()
+            );
 
             let status = ep.status();
             if status.contains(Status::DATA_BUS_ERROR | Status::TRANSACTION_ERROR | Status::HALTED)
             {
-                warn!("EP{} {:?} STATUS {:?}", ep_addr.index(), ep_addr.direction(), status);
+                warn!(
+                    "EP{} {:?} STATUS {:?}",
+                    ep_addr.index(),
+                    ep_addr.direction(),
+                    status
+                );
                 return Err(usb_device::UsbError::InvalidState);
             } else if status.contains(Status::ACTIVE) {
                 warn!("EP{} {:?} ACTIVE", ep_addr.index(), ep_addr.direction());
@@ -184,7 +199,12 @@ impl UsbBus for Bus {
             let status = ep.status();
             if status.contains(Status::DATA_BUS_ERROR | Status::TRANSACTION_ERROR | Status::HALTED)
             {
-                warn!("EP{} {:?} STATUS {:?}", ep_addr.index(), ep_addr.direction(), status);
+                warn!(
+                    "EP{} {:?} STATUS {:?}",
+                    ep_addr.index(),
+                    ep_addr.direction(),
+                    status
+                );
                 return Err(usb_device::UsbError::InvalidState);
             } else if status.contains(Status::ACTIVE) {
                 warn!("EP{} {:?} ACTIVE", ep_addr.index(), ep_addr.direction());
@@ -198,11 +218,18 @@ impl UsbBus for Bus {
                 // Do they want to read the setup data? Let's guess...
                 if ep.has_setup(&usb.usb) && buf.len() >= 8 {
                     trace!("EP{} {:?} READ SETUP", ep_addr.index(), ep_addr.direction());
+
                     let setup = ep.read_setup(&usb.usb);
                     buf[..8].copy_from_slice(&setup.to_le_bytes());
+
                     return Ok(8);
                 } else {
-                    trace!("EP{} {:?} READ {}", ep_addr.index(), ep_addr.direction(), buf.len());
+                    trace!(
+                        "EP{} {:?} READ {}",
+                        ep_addr.index(),
+                        ep_addr.direction(),
+                        buf.len()
+                    );
                 }
             }
 

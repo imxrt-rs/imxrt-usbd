@@ -12,7 +12,7 @@ features = ["imxrt1062", "rt"]
 
 [dependencies.imxrt-usb]
 path = "../../"
-features = ["log"]
+# features = ["log"]
 
 [dependencies.cortex-m-rt]
 features = ["device"]

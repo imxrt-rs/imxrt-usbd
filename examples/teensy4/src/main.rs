@@ -68,6 +68,7 @@ fn main() -> ! {
     let bus = usb_device::bus::UsbBusAllocator::new(bus_adapter);
     let mut device = UsbDeviceBuilder::new(&bus, UsbVidPid(0x5824, 0x27dd))
         .product("imxrt-usb")
+        .max_packet_size_0(64)
         .build();
 
     loop {
@@ -78,7 +79,6 @@ fn main() -> ! {
         if state == usb_device::device::UsbDeviceState::Addressed {
             led.set();
         }
-        led.set();
     }
 }
 
