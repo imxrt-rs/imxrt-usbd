@@ -179,9 +179,13 @@ impl<'a> Endpoint<'a> {
     /// Read data from the endpoint into `buffer`
     ///
     /// Returns the number of bytes read into `buffer`, which is constrained by the
-    /// max packet length.
+    /// max packet length, and the number of bytes received in the last transfer.
     pub fn read(&mut self, buffer: &mut [u8]) -> usize {
-        let size = self.qh.max_packet_len().min(buffer.len());
+        let size = self
+            .qh
+            .max_packet_len()
+            .min(buffer.len())
+            .min(self.td.bytes_transferred());
         buffer
             .iter_mut()
             .take(size)

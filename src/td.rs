@@ -6,14 +6,15 @@
 #![allow(non_snake_case, non_upper_case_globals)]
 
 use crate::{ral, vcell::VCell};
+use core::cell::Cell;
 
 #[repr(C)]
 pub struct TD {
     NEXT: VCell<u32>,
     TOKEN: VCell<u32>,
     BUFFER_POINTERS: [VCell<u32>; 5],
-    // Reserved memory could be used for other things!
-    _reserved: [u32; 1],
+    // Reserved memory for other information
+    last_transfer_size: Cell<usize>,
 }
 
 impl TD {
@@ -28,13 +29,18 @@ impl TD {
                 VCell::new(0),
                 VCell::new(0),
             ],
-            _reserved: [0; 1],
+            last_transfer_size: Cell::new(0),
         }
     }
 
     /// Prepare a transfer to / from the memory described by `ptr` and `size`
+    ///
+    /// Specifieds `size` as the total bytes expected to transfer. This may not
+    /// be what's fully transferred; check `bytes_transferred` after the transfer
+    /// completes.
     pub fn set_buffer(&self, ptr: *mut u8, size: usize) {
         ral::modify_reg!(crate::td, self, TOKEN, TOTAL_BYTES: size as u32);
+        self.last_transfer_size.set(size);
 
         if size != 0 {
             const PTR_ALIGNMENT: u32 = 4096;
@@ -52,6 +58,12 @@ impl TD {
                 buffer_pointer.write(0);
             }
         }
+    }
+
+    /// Returns the number of bytes transferred in the previous transfer
+    pub fn bytes_transferred(&self) -> usize {
+        let total_bytes = ral::read_reg!(crate::td, self, TOKEN, TOTAL_BYTES) as usize;
+        self.last_transfer_size.get() - total_bytes
     }
 
     /// Read the status of the current / previous transfer
@@ -183,4 +195,5 @@ mod test {
     }
 }
 
+#[cfg(target_arch = "arm")]
 const _: [(); 1] = [(); (core::mem::size_of::<TD>() == 32) as usize];
