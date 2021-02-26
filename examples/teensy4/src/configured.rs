@@ -1,11 +1,14 @@
-//! An imxrt-ral example that blinks the Teensy 4's LED
+//! The example demonstrates how a USB device can reached
+//! the 'configured' state. Build the example, and run it
+//! on your Teensy 4. You should observe
 //!
-//! The example demonstrates
+//! - the LED turns on
+//! - a USB device, product string "imxrt-usb," connected to
+//!   your system
 //!
-//! - basic I/O multiplexing with the IOMUX controller
-//! - GPIO pin configuration and I/O
-//! - clock management with the CCM peripheral
-//! - PIT timer configuration, spinloop
+//! This example also instruments lightweight logging on UART2,
+//! pins 14 and 15. Use this example if you need to debug
+//! driver initialization.
 
 #![no_std]
 #![no_main]
@@ -38,7 +41,7 @@ fn main() -> ! {
     // DMA initialization (for logging)
     let mut dma_channels = _dma.clock(&mut ccm.handle);
     let mut channel = dma_channels[7].take().unwrap();
-    channel.set_interrupt_on_completion(true);
+    channel.set_interrupt_on_completion(false); // We'll poll the logger ourselves...
 
     //
     // UART initialization (for logging)
@@ -52,7 +55,6 @@ fn main() -> ! {
 
     let (tx, _) = uart.split();
     imxrt_uart_log::dma::init(tx, channel, Default::default()).unwrap();
-    unsafe { cortex_m::peripheral::NVIC::unmask(interrupt::DMA7_DMA23) };
 
     let usb1 = ral::usb::USB1::take().unwrap();
     let phy1 = ral::usbphy::USBPHY1::take().unwrap();
@@ -62,7 +64,7 @@ fn main() -> ! {
     ral::modify_reg!(ral::ccm, ccm, CCGR6, CG1: 0b11, CG0: 0b11);
 
     usb.initialize(ccm_analog);
-    unsafe { set_endpoint_memory(&mut usb) };
+    set_endpoint_memory(&mut usb);
 
     let bus_adapter = imxrt_usb::Bus::new(usb);
     let bus = usb_device::bus::UsbBusAllocator::new(bus_adapter);
@@ -72,6 +74,7 @@ fn main() -> ! {
         .build();
 
     loop {
+        imxrt_uart_log::dma::poll();
         if !device.poll(&mut []) {
             continue;
         }
@@ -89,26 +92,26 @@ fn configure_led(pad: common::P13) -> LED {
     led.output()
 }
 
-/// # Safety
+/// Assign memory for all of the USB's endpoints
 ///
-/// Only call this once!
-unsafe fn set_endpoint_memory(usb: &mut imxrt_usb::USB) {
+/// # Panics
+///
+/// Panics if called more than once.
+fn set_endpoint_memory(usb: &mut imxrt_usb::USB) {
+    use core::sync::atomic;
+
     static mut ENDPOINT_MEMORY: [u8; 4096] = [0; 4096];
-    let ptr = core::ptr::NonNull::new_unchecked(ENDPOINT_MEMORY.as_mut_ptr());
-    usb.set_endpoint_memory(ptr, ENDPOINT_MEMORY.len());
-}
+    static ONCE_GUARD: atomic::AtomicBool = atomic::AtomicBool::new(false);
 
-#[cortex_m_rt::pre_init]
-unsafe fn pre_init() {
-    extern "C" {
-        static __reset_vector: u32;
+    if ONCE_GUARD.swap(true, atomic::Ordering::SeqCst) {
+        panic!("Already allocated endpoint memory!");
     }
-    const SCB_VTOR: *mut u32 = 0xE000_ED08 as *mut u32;
-    core::ptr::write_volatile(SCB_VTOR, (&__reset_vector as *const _ as u32) - 4);
-}
 
-use ral::interrupt;
-#[cortex_m_rt::interrupt]
-fn DMA7_DMA23() {
-    imxrt_uart_log::dma::poll();
+    unsafe {
+        // Safety: ENDPOINT_MEMORY is unlikely to be null
+        let ptr = core::ptr::NonNull::new_unchecked(ENDPOINT_MEMORY.as_mut_ptr());
+        // Safety: ENDPOINT_MEMORY valid for it's length. With proper scoping
+        // and a runtime flag, we ensure it's only available to a single caller.
+        usb.set_endpoint_memory(ptr, ENDPOINT_MEMORY.len());
+    }
 }

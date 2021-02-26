@@ -5,36 +5,46 @@ authors = ["Ian McIntyre <ianpmcintyre@gmail.com>"]
 edition = "2018"
 publish = false  # This is an example package
 
+# The library we're demonstrating
+[dependencies.imxrt-usb]
+path = "../../"
+# features = ["log"]  # Only for driver development and debugging
 
+# Supporting other hardware access, start-up
 [dependencies.imxrt-hal]
 version = "0.4"
 features = ["imxrt1062", "rt"]
 
-[dependencies.imxrt-usb]
-path = "../../"
-# features = ["log"]
-
+# Runtime support
 [dependencies.cortex-m-rt]
 features = ["device"]
 version = "0.6.13"
 
-[dependencies.cortex-m]
-version = "0.7"
-
+# Necessary for booting the Teensy 4
 [dependencies.teensy4-fcb]
 version = "0.3.0"
 
+# Simple panic handler
 [dependencies.teensy4-panic]
 version = "0.1"
 
+# Pin API
 [dependencies.teensy4-pins]
 version = "0.1"
 
+# USB device
 [dependencies.usb-device]
 version = "0.2"
 
+# Logging over UART
 [dependencies.imxrt-uart-log]
 version = "0.2"
 
+# Logging configuration, and logging within the
+# examples
 [dependencies.log]
 version = "0.4"
+
+[[bin]]
+name = "configured"
+path = "src/configured.rs"
