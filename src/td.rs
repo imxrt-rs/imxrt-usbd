@@ -33,17 +33,8 @@ impl TD {
     }
 
     /// Prepare a transfer to / from the memory described by `ptr` and `size`
-    ///
-    /// Direction is dependent on the endpoint characteristics.
     pub fn set_buffer(&self, ptr: *mut u8, size: usize) {
-        ral::write_reg!(crate::td, self, NEXT, TERMINATE: 1);
-        ral::write_reg!(
-            crate::td,
-            self,
-            TOKEN,
-            TOTAL_BYTES: size as u32,
-            STATUS: ACTIVE
-        );
+        ral::modify_reg!(crate::td, self, TOKEN, TOTAL_BYTES: size as u32);
 
         if size != 0 {
             const PTR_ALIGNMENT: u32 = 4096;
@@ -68,6 +59,33 @@ impl TD {
         let status = ral::read_reg!(crate::td, self, TOKEN, STATUS);
         Status::from_bits_truncate(status)
     }
+
+    /// Clear all status flags in this transfer descriptor
+    pub fn clear_status(&self) {
+        ral::modify_reg!(crate::td, self, TOKEN, STATUS: 0);
+    }
+
+    /// Set the terminate bit to indicate that this TD points to an invalid
+    /// next TD
+    pub fn set_terminate(&self) {
+        ral::write_reg!(crate::td, self, NEXT, 1);
+    }
+
+    /// Set the next TD pointed at by this TD
+    pub fn set_next(&self, next: *const TD) {
+        ral::write_reg!(crate::td, self, NEXT, next as u32);
+    }
+
+    /// Set the active flag
+    pub fn set_active(&self) {
+        ral::modify_reg!(crate::td, self, TOKEN, STATUS: ACTIVE);
+    }
+
+    /// Specify if transfer completion should be indicated as a
+    /// USB interrupt (irrespective of an actual ISR run)
+    pub fn set_interrupt_on_complete(&self, ioc: bool) {
+        ral::modify_reg!(crate::td, self, TOKEN, IOC: ioc as u32);
+    }
 }
 
 bitflags::bitflags! {
@@ -76,23 +94,6 @@ bitflags::bitflags! {
         const HALTED = TOKEN::STATUS::RW::HALTED;
         const DATA_BUS_ERROR = TOKEN::STATUS::RW::DATA_BUS_ERROR;
         const TRANSACTION_ERROR = TOKEN::STATUS::RW::TRANSACTION_ERROR;
-    }
-}
-
-mod NEXT {
-    pub mod TERMINATE {
-        pub const offset: u32 = 0;
-        pub const mask: u32 = 1 << offset;
-        pub mod RW {}
-        pub mod R {}
-        pub mod W {}
-    }
-    pub mod NEXT_LINK_POINTER {
-        pub const offset: u32 = 5;
-        pub const mask: u32 = 0x7ffffff << offset;
-        pub mod RW {}
-        pub mod R {}
-        pub mod W {}
     }
 }
 
@@ -127,21 +128,24 @@ mod TOKEN {
 
 #[cfg(test)]
 mod test {
-    use super::{Status, TD};
+    use super::TD;
     use crate::ral;
-
-    #[test]
-    fn next() {
-        let td = TD::new();
-        ral::write_reg!(super, &td, NEXT, NEXT_LINK_POINTER: u32::max_value());
-        assert_eq!(td.NEXT.read(), u32::max_value() & !0b11111);
-    }
 
     #[test]
     fn terminate() {
         let td = TD::new();
-        ral::write_reg!(super, &td, NEXT, TERMINATE: u32::max_value());
+        td.set_terminate();
         assert_eq!(td.NEXT.read(), 1);
+    }
+
+    #[test]
+    fn next() {
+        let td = TD::new();
+        td.set_terminate();
+
+        let other = u32::max_value() & !(31);
+        td.set_next(other as *const _);
+        assert_eq!(td.NEXT.read(), other);
     }
 
     #[test]
@@ -170,9 +174,9 @@ mod test {
         let td = TD::new();
         let mut buffer = [0; 32];
         td.set_buffer(buffer.as_mut_ptr(), buffer.len());
-        assert_eq!(td.NEXT.read(), 1);
-        assert_eq!(td.TOKEN.read(), (32 << 16) | (1 << 7));
-        assert!(td.status().contains(Status::ACTIVE));
+        assert_eq!(td.NEXT.read(), 0);
+        assert_eq!(td.TOKEN.read(), (32 << 16));
+        assert!(td.status().is_empty());
         for buffer_pointer in td.BUFFER_POINTERS.iter() {
             assert!(buffer_pointer.read() != 0);
         }

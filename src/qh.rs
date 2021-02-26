@@ -42,13 +42,13 @@ impl QH {
     /// Sets the maximum packet length
     ///
     /// Clamps `max_packet_len` to 1024.
-    pub fn set_max_packet_len(&self, max_packet_len: u32) {
-        ral::modify_reg!(crate::qh, self, CAPABILITIES, MAXIMUM_PACKET_LENGTH: max_packet_len.min(1024));
+    pub fn set_max_packet_len(&self, max_packet_len: usize) {
+        ral::modify_reg!(crate::qh, self, CAPABILITIES, MAXIMUM_PACKET_LENGTH: max_packet_len.min(1024) as u32);
     }
 
     /// Returns the maximum packet length
-    pub fn max_packet_len(&self) -> u32 {
-        ral::read_reg!(crate::qh, self, CAPABILITIES, MAXIMUM_PACKET_LENGTH)
+    pub fn max_packet_len(&self) -> usize {
+        ral::read_reg!(crate::qh, self, CAPABILITIES, MAXIMUM_PACKET_LENGTH) as usize
     }
 
     /// Enable (true) or disable (false) zero length termination
