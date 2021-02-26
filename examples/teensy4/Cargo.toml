@@ -12,10 +12,14 @@ features = ["imxrt1062", "rt"]
 
 [dependencies.imxrt-usb]
 path = "../../"
+features = ["log"]
 
 [dependencies.cortex-m-rt]
 features = ["device"]
 version = "0.6.13"
+
+[dependencies.cortex-m]
+version = "0.7"
 
 [dependencies.teensy4-fcb]
 version = "0.3.0"

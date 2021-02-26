@@ -52,6 +52,7 @@ fn main() -> ! {
 
     let (tx, _) = uart.split();
     imxrt_uart_log::dma::init(tx, channel, Default::default()).unwrap();
+    unsafe { cortex_m::peripheral::NVIC::unmask(interrupt::DMA7_DMA23) };
 
     let usb1 = ral::usb::USB1::take().unwrap();
     let phy1 = ral::usbphy::USBPHY1::take().unwrap();
@@ -77,6 +78,7 @@ fn main() -> ! {
         if state == usb_device::device::UsbDeviceState::Addressed {
             led.set();
         }
+        led.set();
     }
 }
 
