@@ -299,4 +299,16 @@ impl<'a> Endpoint<'a> {
             }
         }
     }
+
+    pub fn flush(&mut self, usb: &ral::usb::Instance) {
+        match self.address.direction() {
+            UsbDirection::In => {
+                ral::write_reg!(ral::usb, usb, ENDPTFLUSH, FETB: 1 << self.address.index())
+            }
+            UsbDirection::Out => {
+                ral::write_reg!(ral::usb, usb, ENDPTFLUSH, FERB: 1 << self.address.index())
+            }
+        }
+        while ral::read_reg!(ral::usb, usb, ENDPTFLUSH) != 0 {}
+    }
 }

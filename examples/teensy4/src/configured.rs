@@ -74,7 +74,7 @@ fn main() -> ! {
             continue;
         }
         let state = device.state();
-        if state == usb_device::device::UsbDeviceState::Addressed {
+        if state == usb_device::device::UsbDeviceState::Configured {
             led.set();
         }
     }

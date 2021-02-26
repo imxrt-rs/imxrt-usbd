@@ -5,8 +5,8 @@
 use teensy4_fcb as _;
 use teensy4_panic as _;
 
-use teensy4_pins::common;
 use imxrt_hal as hal;
+use teensy4_pins::common;
 
 pub type LED = hal::gpio::GPIO<common::P13, hal::gpio::Output>;
 pub fn configure_led(pad: common::P13) -> LED {

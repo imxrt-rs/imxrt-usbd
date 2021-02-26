@@ -50,10 +50,6 @@ impl Bus {
         self.with_usb_mut(|usb| {
             for ep in usb.endpoints.iter_mut().flat_map(core::convert::identity) {
                 ep.configure(&usb.usb);
-                if UsbDirection::Out == ep.address().direction() {
-                    let max_packet_len = ep.max_packet_len();
-                    ep.schedule_transfer(&usb.usb, max_packet_len);
-                }
             }
         });
     }
@@ -122,10 +118,11 @@ impl UsbBus for Bus {
                 }
             };
             debug!(
-                "EP{} {:?} INITIALIZE {:?}",
+                "EP{} {:?} INITIALIZE {:?} {}",
                 ep_addr.index(),
                 ep_addr.direction(),
-                ep_type
+                ep_type,
+                max_packet_size,
             );
             ep.initialize(&usb.usb);
 
@@ -158,7 +155,7 @@ impl UsbBus for Bus {
                 Some(ref mut ep) => ep,
                 None => return Err(usb_device::UsbError::InvalidEndpoint),
             };
-            trace!(
+            debug!(
                 "EP{} {:?} WRITE {}",
                 ep_addr.index(),
                 ep_addr.direction(),
@@ -185,6 +182,16 @@ impl UsbBus for Bus {
             let written = ep.write(buf);
             ep.schedule_transfer(&usb.usb, written);
 
+            if ep_addr.index() == 0 && buf.len() != 0 {
+                // Schedule reciprocal transfer for status phase
+                let ctrl_addr = EndpointAddress::from_parts(0, UsbDirection::Out);
+                let ctrl = usb.endpoints[index(ctrl_addr)].as_mut().unwrap();
+                ctrl.flush(&usb.usb);
+                ctrl.clear_complete(&usb.usb);
+                ctrl.clear_nack(&usb.usb);
+                ctrl.schedule_transfer(&usb.usb, 0);
+            }
+
             Ok(written)
         })
     }
@@ -195,6 +202,25 @@ impl UsbBus for Bus {
                 Some(ref mut ep) => ep,
                 None => return Err(usb_device::UsbError::InvalidEndpoint),
             };
+
+            if ep_addr.index() == 0 {
+                // Do they want to read the setup data? Let's guess...
+                if ep.has_setup(&usb.usb) && buf.len() >= 8 {
+                    debug!("EP{} {:?} READ SETUP", ep_addr.index(), ep_addr.direction());
+
+                    let setup = ep.read_setup(&usb.usb);
+                    buf[..8].copy_from_slice(&setup.to_le_bytes());
+
+                    return Ok(8);
+                } else {
+                    debug!(
+                        "EP{} {:?} READ {}",
+                        ep_addr.index(),
+                        ep_addr.direction(),
+                        buf.len()
+                    );
+                }
+            }
 
             let status = ep.status();
             if status.contains(Status::DATA_BUS_ERROR | Status::TRANSACTION_ERROR | Status::HALTED)
@@ -214,28 +240,18 @@ impl UsbBus for Bus {
             ep.clear_complete(&usb.usb);
             ep.clear_nack(&usb.usb);
 
-            if ep_addr.index() == 0 {
-                // Do they want to read the setup data? Let's guess...
-                if ep.has_setup(&usb.usb) && buf.len() >= 8 {
-                    trace!("EP{} {:?} READ SETUP", ep_addr.index(), ep_addr.direction());
-
-                    let setup = ep.read_setup(&usb.usb);
-                    buf[..8].copy_from_slice(&setup.to_le_bytes());
-
-                    return Ok(8);
-                } else {
-                    trace!(
-                        "EP{} {:?} READ {}",
-                        ep_addr.index(),
-                        ep_addr.direction(),
-                        buf.len()
-                    );
-                }
-            }
-
             let read = ep.read(buf);
             let max_packet_len = ep.max_packet_len();
             ep.schedule_transfer(&usb.usb, max_packet_len);
+
+            if ep_addr.index() == 0 && buf.len() != 0 {
+                // Schedule reciprocal transfer for status phase
+                let ctrl_addr = EndpointAddress::from_parts(0, UsbDirection::In);
+                let ctrl = usb.endpoints[index(ctrl_addr)].as_mut().unwrap();
+                ctrl.flush(&usb.usb);
+                ctrl.clear_nack(&usb.usb);
+                ctrl.schedule_transfer(&usb.usb, 0);
+            }
 
             Ok(read)
         })
@@ -276,6 +292,15 @@ impl UsbBus for Bus {
             if usbsts & USBSTS::URI::mask != 0 {
                 PollResult::Reset
             } else if usbsts & USBSTS::UI::mask != 0 {
+                trace!("========================");
+                trace!(
+                    "ENDPTCOMPLETE {:08X}",
+                    ral::read_reg!(ral::usb, usb.usb, ENDPTCOMPLETE)
+                );
+                trace!(
+                    "ENDPTSETUPSTAT {:08X}",
+                    ral::read_reg!(ral::usb, usb.usb, ENDPTSETUPSTAT)
+                );
                 // Note: could be complete in one register read, but this is a little
                 // easier to read...
                 let ep_out = ral::read_reg!(ral::usb, usb.usb, ENDPTCOMPLETE, ERCE);
