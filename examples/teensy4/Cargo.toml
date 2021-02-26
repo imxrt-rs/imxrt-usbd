@@ -1,0 +1,36 @@
+[package]
+name = "imxrt-usb-examples-teensy4"
+version = "0.1.0"
+authors = ["Ian McIntyre <ianpmcintyre@gmail.com>"]
+edition = "2018"
+publish = false  # This is an example package
+
+
+[dependencies.imxrt-hal]
+version = "0.4"
+features = ["imxrt1062", "rt"]
+
+[dependencies.imxrt-usb]
+path = "../../"
+
+[dependencies.cortex-m-rt]
+features = ["device"]
+version = "0.6.13"
+
+[dependencies.teensy4-fcb]
+version = "0.3.0"
+
+[dependencies.teensy4-panic]
+version = "0.1"
+
+[dependencies.teensy4-pins]
+version = "0.1"
+
+[dependencies.usb-device]
+version = "0.2"
+
+[dependencies.imxrt-uart-log]
+version = "0.2"
+
+[dependencies.log]
+version = "0.4"

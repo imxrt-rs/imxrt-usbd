@@ -11,3 +11,8 @@ bitflags = "1.2"
 cortex-m = "0.7"
 imxrt-ral = { version = "0.4.1", features = ["imxrt1062"] }  # TODO no hard-coded features
 usb-device = "0.2"
+
+[workspace]
+members = [
+    "examples/teensy4",
+]

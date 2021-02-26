@@ -23,11 +23,7 @@ impl Bus {
     /// Create a USB bus adapter from a `USB` object
     ///
     /// Make sure you've fully configured your USB device before wrapping it in `Bus`.
-    ///
-    /// # Safety
-    ///
-    /// The endpoint memory described by the `memory` and `size` pair must outlive the `Bus`.
-    pub unsafe fn new(usb: USB) -> Self {
+    pub fn new(usb: USB) -> Self {
         Bus {
             usb: Mutex::new(RefCell::new(usb)),
             endpoint_assigner: EndpointAssigner::new(),
