@@ -189,6 +189,10 @@ impl UsbBus for Bus {
                 return Err(usb_device::UsbError::WouldBlock);
             }
 
+
+            ep.clear_complete(&usb.usb);
+            ep.clear_nack(&usb.usb);
+
             if ep_addr.index() == 0 {
                 // Do they want to read the setup data? Let's guess...
                 if ep.has_setup(&usb.usb) && buf.len() >= 8 {
@@ -197,9 +201,6 @@ impl UsbBus for Bus {
                     return Ok(8);
                 }
             }
-
-            ep.clear_complete(&usb.usb);
-            ep.clear_nack(&usb.usb);
 
             let read = ep.read(buf);
             let max_packet_len = ep.max_packet_len();
