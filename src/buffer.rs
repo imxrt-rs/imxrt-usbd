@@ -15,7 +15,7 @@ impl Allocator {
     /// ensure that no one else is using this memory for anything else.
     pub unsafe fn new(start: NonNull<u8>, size: usize) -> Self {
         let start = start.as_ptr();
-        let ptr = start.add(size - 1);
+        let ptr = start.add(size);
         Allocator { start, ptr }
     }
     /// Allocates a buffer of `size`
@@ -47,6 +47,7 @@ mod test {
     use super::Allocator;
     use core::ptr::NonNull;
 
+    #[test]
     fn allocate_entire_buffer() {
         let mut buffer = [0; 32];
         let mut alloc = unsafe { Allocator::new(NonNull::new_unchecked(buffer.as_mut_ptr()), 32) };
@@ -58,6 +59,7 @@ mod test {
         assert!(ptr.is_none());
     }
 
+    #[test]
     fn allocate_partial_buffers() {
         let mut buffer = [0; 32];
         let mut alloc = unsafe { Allocator::new(NonNull::new_unchecked(buffer.as_mut_ptr()), 32) };
