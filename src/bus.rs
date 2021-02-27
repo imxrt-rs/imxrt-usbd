@@ -1,10 +1,10 @@
 //! USB bus implementation
 
+use crate::ral;
 use crate::USB;
 use core::cell::RefCell;
 use core::convert::TryInto;
 use cortex_m::interrupt::{self, Mutex};
-use imxrt_ral as ral;
 use usb_device::{
     bus::{PollResult, UsbBus},
     endpoint::{EndpointAddress, EndpointType},

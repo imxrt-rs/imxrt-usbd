@@ -1,38 +1,5 @@
-use crate::{buffer::Buffer, qh::QH, ral, td::TD};
+use crate::{buffer::Buffer, qh::QH, ral, ral::endpoint_control, td::TD};
 use usb_device::{endpoint::EndpointAddress, UsbDirection};
-
-/// The RAL API requires us to treat all endpoint control registers as unique.
-/// We can make it a little easier with this function, the `EndptCtrl` type,
-/// and the helper module.
-mod endpoint_control {
-    use imxrt_ral as ral;
-
-    #[allow(non_snake_case)]
-    pub struct EndptCtrl<'a> {
-        pub ENDPTCTRL: &'a ral::RWRegister<u32>,
-    }
-
-    #[allow(non_snake_case)]
-    pub mod ENDPTCTRL {
-        pub use imxrt_ral::usb::ENDPTCTRL1::*;
-    }
-
-    pub fn register<'a>(usb: &'a ral::usb::Instance, endpoint: usize) -> EndptCtrl<'a> {
-        EndptCtrl {
-            ENDPTCTRL: match endpoint {
-                0 => &usb.ENDPTCTRL0,
-                1 => &usb.ENDPTCTRL1,
-                2 => &usb.ENDPTCTRL2,
-                3 => &usb.ENDPTCTRL3,
-                4 => &usb.ENDPTCTRL4,
-                5 => &usb.ENDPTCTRL5,
-                6 => &usb.ENDPTCTRL6,
-                7 => &usb.ENDPTCTRL7,
-                _ => unreachable!("ENDPTCTRL register {} doesn't exist", endpoint),
-            },
-        }
-    }
-}
 
 /// Endpoint transfer status
 pub type Status = crate::td::Status;

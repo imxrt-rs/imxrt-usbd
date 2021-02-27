@@ -8,7 +8,10 @@ publish = false  # This is an example package
 # The library we're demonstrating
 [dependencies.imxrt-usb]
 path = "../../"
-# features = ["__log"]  # Only for driver development and debugging
+features = [
+    "double-instance",  # Required to pair with imxrt-[hal|ral]/imxrt1062
+    # "__log"  # Only for driver development and debugging
+]
 
 # Supporting other hardware access, start-up
 [dependencies.imxrt-hal]

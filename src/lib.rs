@@ -8,13 +8,13 @@ mod bus;
 mod endpoint;
 mod pll;
 mod qh;
+mod ral;
 mod td;
 mod vcell;
 
 pub use bus::Bus;
 
 use endpoint::{Endpoint, Status};
-use imxrt_ral as ral;
 use usb_device::{
     endpoint::{EndpointAddress, EndpointType},
     UsbDirection,
@@ -94,6 +94,7 @@ impl USB {
                 (ral::usb::USB1, ral::usbphy::USBPHY1) => {
                     (USB1_STATE.steal_qhs(), USB1_STATE.steal_tds())
                 }
+                #[cfg(feature = "double-instance")]
                 (ral::usb::USB2, ral::usbphy::USBPHY2) => {
                     (USB2_STATE.steal_qhs(), USB2_STATE.steal_tds())
                 }
@@ -413,6 +414,7 @@ const STATE_INIT: State = State {
 };
 
 static mut USB1_STATE: State = STATE_INIT;
+#[cfg(feature = "double-instance")]
 static mut USB2_STATE: State = STATE_INIT;
 
 impl State {
@@ -424,6 +426,7 @@ impl State {
         let ptr = unsafe {
             match &**usb as *const _ {
                 ral::usb::USB1 => USB1_STATE.qhs.0.as_ptr(),
+                #[cfg(feature = "double-instance")]
                 ral::usb::USB2 => USB2_STATE.qhs.0.as_ptr(),
                 _ => panic!("Unhandled USB instance"),
             }
