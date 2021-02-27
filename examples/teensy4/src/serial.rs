@@ -102,7 +102,7 @@ fn main() -> ! {
         }
     }
 
-    device.bus().configure_endpoints();
+    device.bus().configure();
     led.set();
 
     loop {
@@ -118,7 +118,7 @@ fn main() -> ! {
             Ok(count) => {
                 let s = core::str::from_utf8(&buf).unwrap();
                 log::info!("{}", s);
-                serial.write(&buf[..count]);
+                serial.write(&buf[..count]).ok();
             }
             Err(UsbError::WouldBlock) => log::warn!("WOULDBLOCK"),
             Err(_err) => panic!(),
