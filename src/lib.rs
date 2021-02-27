@@ -70,6 +70,12 @@ impl USB {
     /// # Panics
     ///
     /// Panics if the `usb` instance and the `phy` instances are mismatched.
+    ///
+    /// # Safety
+    ///
+    /// `new` is safe, since there is only one safe way to obtain the two
+    /// required instances from the RAL. But, if you use the RAL unsafely,
+    /// the behavior in `USB` is undefined.
     pub fn new(usb: ral::usb::Instance, phy: ral::usbphy::Instance) -> Self {
         // Safety: taking static memory. Assumes that the provided
         // USB instance is a singleton, which is the only safe way for it
@@ -96,7 +102,7 @@ impl USB {
     }
 
     /// Set the region of memory that can be used for transfers with endpoints
-    pub unsafe fn set_endpoint_memory(&mut self, buffer: &'static mut [u8]) {
+    pub fn set_endpoint_memory(&mut self, buffer: &'static mut [u8]) {
         self.buffer_allocator = buffer::Allocator::new(buffer);
     }
 
@@ -126,12 +132,7 @@ impl USB {
         ral::modify_reg!(ral::usb, self.usb, USBSTS, |usbsts| usbsts);
         ral::write_reg!(ral::usb, self.usb, USBINTR, 0);
 
-        ral::write_reg!(
-            ral::usb,
-            self.usb,
-            ASYNCLISTADDR,
-            self.qhs.as_ptr() as *const _ as u32
-        );
+        State::assign_endptlistaddr(&self.usb);
     }
 
     fn set_address(&mut self, address: u8) {
@@ -235,6 +236,28 @@ static mut USB1_STATE: State = STATE_INIT;
 static mut USB2_STATE: State = STATE_INIT;
 
 impl State {
+    /// Returns a pointer to the queue heads collection for this USB instance
+    ///
+    /// This is only safe to use when assigning the ENDPTLISTADDR to the USB
+    /// instance.
+    fn assign_endptlistaddr(usb: &ral::usb::Instance) {
+        let ptr = unsafe {
+            match &**usb as *const _ {
+                ral::usb::USB1 => USB1_STATE.qhs.0.as_ptr(),
+                ral::usb::USB2 => USB2_STATE.qhs.0.as_ptr(),
+                _ => panic!("Unhandled USB instance"),
+            }
+        };
+        ral::write_reg!(ral::usb, usb, ASYNCLISTADDR, ptr as u32);
+    }
+    /// "Steal" the queue heads for this USB state, and return an array of references to queue
+    /// heads
+    ///
+    /// # Safety
+    ///
+    /// This should only be called once. You must make sure that the static, mutable references
+    /// aren't mutably aliased. Consider taking them from this collection, and assigning them
+    /// elsewhere.
     unsafe fn steal_qhs(&'static mut self) -> [Option<&'static mut qh::QH>; QH_COUNT] {
         let mut qhs = [
             None, None, None, None, None, None, None, None, None, None, None, None, None, None,
@@ -245,6 +268,14 @@ impl State {
         }
         qhs
     }
+    /// "Steal" the transfer descriptors for this USB state, and return an array of transfer
+    /// descriptor references.
+    ///
+    /// # Safety
+    ///
+    /// This should only be called once. You must make sure that the static, mutable references
+    /// aren't mutably aliased. Consider taking them from this collection, and assigning them
+    /// elsewhere.
     unsafe fn steal_tds(&'static mut self) -> [Option<&'static mut td::TD>; QH_COUNT] {
         let mut tds = [
             None, None, None, None, None, None, None, None, None, None, None, None, None, None,
