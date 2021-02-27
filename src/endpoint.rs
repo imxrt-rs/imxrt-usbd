@@ -44,8 +44,8 @@ enum Kind {
 pub struct Endpoint {
     address: EndpointAddress,
     kind: Kind,
-    qh: &'static QH,
-    td: &'static TD,
+    qh: &'static mut QH,
+    td: &'static mut TD,
     buffer: *mut u8,
 }
 
@@ -62,8 +62,8 @@ pub struct Endpoint {
 /// queue head's max packet length. `buffer` must outlive the endpoint.
 pub unsafe fn control(
     address: EndpointAddress,
-    qh: &'static QH,
-    td: &'static TD,
+    qh: &'static mut QH,
+    td: &'static mut TD,
     buffer: NonNull<u8>,
 ) -> Endpoint {
     Endpoint::new(address, Kind::Control, qh, td, buffer)
@@ -82,8 +82,8 @@ pub unsafe fn control(
 /// queue head's max packet length. `buffer` must outlive the endpoint.
 pub unsafe fn bulk(
     address: EndpointAddress,
-    qh: &'static QH,
-    td: &'static TD,
+    qh: &'static mut QH,
+    td: &'static mut TD,
     buffer: NonNull<u8>,
 ) -> Endpoint {
     Endpoint::new(address, Kind::Bulk, qh, td, buffer)
@@ -102,19 +102,19 @@ pub unsafe fn bulk(
 /// queue head's max packet length. `buffer` must outlive the endpoint.
 pub unsafe fn interrupt(
     address: EndpointAddress,
-    qh: &'static QH,
-    td: &'static TD,
+    qh: &'static mut QH,
+    td: &'static mut TD,
     buffer: NonNull<u8>,
 ) -> Endpoint {
     Endpoint::new(address, Kind::Interrupt, qh, td, buffer)
 }
 
 impl Endpoint {
-    const unsafe fn new(
+    unsafe fn new(
         address: EndpointAddress,
         kind: Kind,
-        qh: &'static QH,
-        td: &'static TD,
+        qh: &'static mut QH,
+        td: &'static mut TD,
         buffer: NonNull<u8>,
     ) -> Self {
         Endpoint {
@@ -235,8 +235,8 @@ impl Endpoint {
         self.td.set_interrupt_on_complete(true);
         self.td.set_active();
 
-        self.qh.overlay().set_next(self.td);
-        self.qh.overlay().clear_status();
+        self.qh.overlay_mut().set_next(self.td);
+        self.qh.overlay_mut().clear_status();
 
         match self.address.direction() {
             UsbDirection::In => {

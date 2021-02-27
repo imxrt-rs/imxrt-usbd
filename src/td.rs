@@ -38,7 +38,7 @@ impl TD {
     /// Specifieds `size` as the total bytes expected to transfer. This may not
     /// be what's fully transferred; check `bytes_transferred` after the transfer
     /// completes.
-    pub fn set_buffer(&self, ptr: *mut u8, size: usize) {
+    pub fn set_buffer(&mut self, ptr: *mut u8, size: usize) {
         ral::modify_reg!(crate::td, self, TOKEN, TOTAL_BYTES: size as u32);
         self.last_transfer_size.set(size);
 
@@ -73,29 +73,29 @@ impl TD {
     }
 
     /// Clear all status flags in this transfer descriptor
-    pub fn clear_status(&self) {
+    pub fn clear_status(&mut self) {
         ral::modify_reg!(crate::td, self, TOKEN, STATUS: 0);
     }
 
     /// Set the terminate bit to indicate that this TD points to an invalid
     /// next TD
-    pub fn set_terminate(&self) {
+    pub fn set_terminate(&mut self) {
         ral::write_reg!(crate::td, self, NEXT, 1);
     }
 
     /// Set the next TD pointed at by this TD
-    pub fn set_next(&self, next: *const TD) {
+    pub fn set_next(&mut self, next: *const TD) {
         ral::write_reg!(crate::td, self, NEXT, next as u32);
     }
 
     /// Set the active flag
-    pub fn set_active(&self) {
+    pub fn set_active(&mut self) {
         ral::modify_reg!(crate::td, self, TOKEN, STATUS: ACTIVE);
     }
 
     /// Specify if transfer completion should be indicated as a
     /// USB interrupt (irrespective of an actual ISR run)
-    pub fn set_interrupt_on_complete(&self, ioc: bool) {
+    pub fn set_interrupt_on_complete(&mut self, ioc: bool) {
         ral::modify_reg!(crate::td, self, TOKEN, IOC: ioc as u32);
     }
 }
@@ -145,14 +145,14 @@ mod test {
 
     #[test]
     fn terminate() {
-        let td = TD::new();
+        let mut td = TD::new();
         td.set_terminate();
         assert_eq!(td.NEXT.read(), 1);
     }
 
     #[test]
     fn next() {
-        let td = TD::new();
+        let mut td = TD::new();
         td.set_terminate();
 
         let other = u32::max_value() & !(31);
@@ -183,7 +183,7 @@ mod test {
 
     #[test]
     fn set_buffer() {
-        let td = TD::new();
+        let mut td = TD::new();
         let mut buffer = [0; 32];
         td.set_buffer(buffer.as_mut_ptr(), buffer.len());
         assert_eq!(td.NEXT.read(), 0);
