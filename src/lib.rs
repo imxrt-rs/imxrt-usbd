@@ -331,6 +331,19 @@ impl USB {
         ep.initialize(&self.usb, kind);
         self.endpoints[index(addr)] = Some(ep);
     }
+
+    /// Enable all non-zero endpoints, and schedule OUT transfers
+    ///
+    /// This should only be called when the device is configured
+    fn enable_endpoints(&mut self) {
+        for ep in self.endpoints.iter_mut().flat_map(core::convert::identity) {
+            ep.enable(&self.usb);
+            if ep.address().direction() == UsbDirection::Out {
+                let max_packet_len = ep.max_packet_len();
+                ep.schedule_transfer(&self.usb, max_packet_len);
+            }
+        }
+    }
 }
 
 //

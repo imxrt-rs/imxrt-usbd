@@ -40,15 +40,10 @@ impl Bus {
         })
     }
 
-    pub fn configure_endpoints(&self) {
+    /// Invoke `configure()` once the USB device indicates that it's been configured
+    pub fn configure(&self) {
         self.with_usb_mut(|usb| {
-            for ep in usb.endpoints.iter_mut().flat_map(core::convert::identity) {
-                ep.configure(&usb.usb);
-                if ep.address().direction() == UsbDirection::Out {
-                    let max_packet_len = ep.max_packet_len();
-                    ep.schedule_transfer(&usb.usb, max_packet_len);
-                }
-            }
+            usb.enable_endpoints();
             debug!("CONFIGURED");
         });
     }

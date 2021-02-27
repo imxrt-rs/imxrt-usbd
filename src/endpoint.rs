@@ -225,10 +225,11 @@ impl Endpoint {
         }
     }
 
-    /// Configure the endpoint
+    /// Enable the endpoint
     ///
     /// This should be called only after the USB device has been configured.
-    pub fn configure(&mut self, usb: &ral::usb::Instance) {
+    pub fn enable(&mut self, usb: &ral::usb::Instance) {
+        // EP0 is always enabled
         if self.address.index() != 0 {
             let endptctrl = endpoint_control::register(usb, self.address.index());
             match self.address.direction() {
