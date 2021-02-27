@@ -1,25 +1,25 @@
-//! Logging interface, contingent on the hidden `log` feature
+//! Logging interface, contingent on the hidden `__log` feature
 //!
-//! Only enable `log` when debugging, and when you're certain that your
+//! Only enable `__log` when debugging, and when you're certain that your
 //! logger isn't using USB!
 
 macro_rules! trace {
     ($($args:tt)*) => {
-        #[cfg(feature = "log")]
-        ::log::trace!($($args)*)
+        #[cfg(feature = "__log")]
+        ::__log::trace!($($args)*)
     };
 }
 
 macro_rules! debug {
     ($($args:tt)*) => {
-        #[cfg(feature = "log")]
-        ::log::debug!($($args)*)
+        #[cfg(feature = "__log")]
+        ::__log::debug!($($args)*)
     };
 }
 
 macro_rules! warn {
     ($($args:tt)*) => {
-        #[cfg(feature = "log")]
-        ::log::warn!($($args)*)
+        #[cfg(feature = "__log")]
+        ::__log::warn!($($args)*)
     };
 }
