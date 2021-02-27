@@ -50,7 +50,12 @@ impl Bus {
         self.with_usb_mut(|usb| {
             for ep in usb.endpoints.iter_mut().flat_map(core::convert::identity) {
                 ep.configure(&usb.usb);
+                if ep.address().direction() == UsbDirection::Out {
+                    let max_packet_len = ep.max_packet_len();
+                    ep.schedule_transfer(&usb.usb, max_packet_len);
+                }
             }
+            debug!("CONFIGURED");
         });
     }
 }
@@ -211,16 +216,21 @@ impl UsbBus for Bus {
                     let setup = ep.read_setup(&usb.usb);
                     buf[..8].copy_from_slice(&setup.to_le_bytes());
 
+                    ep.flush(&usb.usb);
+                    ep.clear_complete(&usb.usb);
+                    let max_packet_len = ep.max_packet_len();
+                    ep.schedule_transfer(&usb.usb, max_packet_len);
+
                     return Ok(8);
-                } else {
-                    debug!(
-                        "EP{} {:?} READ {}",
-                        ep_addr.index(),
-                        ep_addr.direction(),
-                        buf.len()
-                    );
                 }
             }
+
+            debug!(
+                "EP{} {:?} READ {}",
+                ep_addr.index(),
+                ep_addr.direction(),
+                buf.len()
+            );
 
             let status = ep.status();
             if status.contains(Status::DATA_BUS_ERROR | Status::TRANSACTION_ERROR | Status::HALTED)
@@ -243,15 +253,6 @@ impl UsbBus for Bus {
             let read = ep.read(buf);
             let max_packet_len = ep.max_packet_len();
             ep.schedule_transfer(&usb.usb, max_packet_len);
-
-            if ep_addr.index() == 0 && buf.len() != 0 {
-                // Schedule reciprocal transfer for status phase
-                let ctrl_addr = EndpointAddress::from_parts(0, UsbDirection::In);
-                let ctrl = usb.endpoints[index(ctrl_addr)].as_mut().unwrap();
-                ctrl.flush(&usb.usb);
-                ctrl.clear_nack(&usb.usb);
-                ctrl.schedule_transfer(&usb.usb, 0);
-            }
 
             Ok(read)
         })

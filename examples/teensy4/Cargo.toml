@@ -36,6 +36,10 @@ version = "0.1"
 [dependencies.usb-device]
 version = "0.2"
 
+# USB CDC class
+[dependencies.usbd-serial]
+version = "0.1"
+
 # Logging over UART
 [dependencies.imxrt-uart-log]
 version = "0.2"
@@ -48,6 +52,10 @@ version = "0.4"
 [[bin]]
 name = "configured"
 path = "src/configured.rs"
+
+[[bin]]
+name = "serial"
+path = "src/serial.rs"
 
 [lib]
 name = "support"
