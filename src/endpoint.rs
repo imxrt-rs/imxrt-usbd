@@ -1,32 +1,40 @@
 use crate::{buffer::Buffer, qh::QH, ral, td::TD};
 use usb_device::{endpoint::EndpointAddress, UsbDirection};
 
-fn endpoint_control_register<'a>(usb: &'a ral::usb::Instance, endpoint: usize) -> EndptCtrl<'a> {
-    EndptCtrl {
-        ENDPTCTRL: match endpoint {
-            0 => &usb.ENDPTCTRL0,
-            1 => &usb.ENDPTCTRL1,
-            2 => &usb.ENDPTCTRL2,
-            3 => &usb.ENDPTCTRL3,
-            4 => &usb.ENDPTCTRL4,
-            5 => &usb.ENDPTCTRL5,
-            6 => &usb.ENDPTCTRL6,
-            7 => &usb.ENDPTCTRL7,
-            _ => unreachable!("ENDPTCTRL register {} doesn't exist", endpoint),
-        },
+/// The RAL API requires us to treat all endpoint control registers as unique.
+/// We can make it a little easier with this function, the `EndptCtrl` type,
+/// and the helper module.
+mod endpoint_control {
+    use imxrt_ral as ral;
+
+    #[allow(non_snake_case)]
+    pub struct EndptCtrl<'a> {
+        pub ENDPTCTRL: &'a ral::RWRegister<u32>,
+    }
+
+    #[allow(non_snake_case)]
+    pub mod ENDPTCTRL {
+        pub use imxrt_ral::usb::ENDPTCTRL1::*;
+    }
+
+    pub fn register<'a>(usb: &'a ral::usb::Instance, endpoint: usize) -> EndptCtrl<'a> {
+        EndptCtrl {
+            ENDPTCTRL: match endpoint {
+                0 => &usb.ENDPTCTRL0,
+                1 => &usb.ENDPTCTRL1,
+                2 => &usb.ENDPTCTRL2,
+                3 => &usb.ENDPTCTRL3,
+                4 => &usb.ENDPTCTRL4,
+                5 => &usb.ENDPTCTRL5,
+                6 => &usb.ENDPTCTRL6,
+                7 => &usb.ENDPTCTRL7,
+                _ => unreachable!("ENDPTCTRL register {} doesn't exist", endpoint),
+            },
+        }
     }
 }
 
-#[allow(non_snake_case)]
-struct EndptCtrl<'a> {
-    ENDPTCTRL: &'a ral::RWRegister<u32>,
-}
-
-#[allow(non_snake_case)]
-mod ENDPTCTRL {
-    pub use imxrt_ral::usb::ENDPTCTRL1::*;
-}
-
+/// Endpoint transfer status
 pub type Status = crate::td::Status;
 
 #[derive(Clone, Copy)]
@@ -109,7 +117,7 @@ pub unsafe fn interrupt(
 }
 
 impl Endpoint {
-    unsafe fn new(
+    fn new(
         address: EndpointAddress,
         kind: Kind,
         qh: &'static mut QH,
@@ -125,20 +133,22 @@ impl Endpoint {
         }
     }
 
+    /// Initialize the endpoint, should be called soon after it's assigned
     pub fn initialize(&mut self, usb: &ral::usb::Instance) {
         if self.address.index() != 0 {
-            let endptctrl = endpoint_control_register(usb, self.address.index());
+            let endptctrl = endpoint_control::register(usb, self.address.index());
             match self.address.direction() {
                 UsbDirection::In => {
-                    ral::modify_reg!(self, &endptctrl, ENDPTCTRL, TXE: 0, TXT: Kind::Bulk as u32)
+                    ral::modify_reg!(endpoint_control, &endptctrl, ENDPTCTRL, TXE: 0, TXT: Kind::Bulk as u32)
                 }
                 UsbDirection::Out => {
-                    ral::modify_reg!(self, &endptctrl, ENDPTCTRL, RXE: 0, RXT: Kind::Bulk as u32)
+                    ral::modify_reg!(endpoint_control, &endptctrl, ENDPTCTRL, RXE: 0, RXT: Kind::Bulk as u32)
                 }
             }
         }
     }
 
+    /// Returns the endpoint address
     pub fn address(&self) -> EndpointAddress {
         self.address
     }
@@ -199,6 +209,7 @@ impl Endpoint {
         self.buffer.volatile_write(&buffer[..size])
     }
 
+    /// Clear the complete bit for this endpoint
     pub fn clear_complete(&mut self, usb: &ral::usb::Instance) {
         match self.address.direction() {
             UsbDirection::In => {
@@ -234,25 +245,32 @@ impl Endpoint {
         while ral::read_reg!(ral::usb, usb, ENDPTPRIME) != 0 {}
     }
 
+    /// Returns the transfer status for the endpoint
     pub fn status(&self) -> Status {
         self.td.status()
     }
 
+    /// Stall or unstall the endpoint
     pub fn set_stalled(&mut self, usb: &ral::usb::Instance, stall: bool) {
-        let endptctrl = endpoint_control_register(usb, self.address.index());
+        let endptctrl = endpoint_control::register(usb, self.address.index());
 
         match self.address.direction() {
-            UsbDirection::In => ral::modify_reg!(self, &endptctrl, ENDPTCTRL, TXS: stall as u32),
-            UsbDirection::Out => ral::modify_reg!(self, &endptctrl, ENDPTCTRL, RXS: stall as u32),
+            UsbDirection::In => {
+                ral::modify_reg!(endpoint_control, &endptctrl, ENDPTCTRL, TXS: stall as u32)
+            }
+            UsbDirection::Out => {
+                ral::modify_reg!(endpoint_control, &endptctrl, ENDPTCTRL, RXS: stall as u32)
+            }
         }
     }
 
+    /// Indicates if the endpoint is stalled
     pub fn is_stalled(&self, usb: &ral::usb::Instance) -> bool {
-        let endptctrl = endpoint_control_register(usb, self.address.index());
+        let endptctrl = endpoint_control::register(usb, self.address.index());
 
         match self.address.direction() {
-            UsbDirection::In => ral::read_reg!(self, &endptctrl, ENDPTCTRL, TXS == 1),
-            UsbDirection::Out => ral::read_reg!(self, &endptctrl, ENDPTCTRL, RXS == 1),
+            UsbDirection::In => ral::read_reg!(endpoint_control, &endptctrl, ENDPTCTRL, TXS == 1),
+            UsbDirection::Out => ral::read_reg!(endpoint_control, &endptctrl, ENDPTCTRL, RXS == 1),
         }
     }
 
@@ -261,13 +279,13 @@ impl Endpoint {
     /// This should be called only after the USB device has been configured.
     pub fn configure(&mut self, usb: &ral::usb::Instance) {
         if self.address.index() != 0 {
-            let endptctrl = endpoint_control_register(usb, self.address.index());
+            let endptctrl = endpoint_control::register(usb, self.address.index());
             match self.address.direction() {
                 UsbDirection::In => {
-                    ral::modify_reg!(self, &endptctrl, ENDPTCTRL, TXE: 1, TXT: self.kind as u32)
+                    ral::modify_reg!(endpoint_control, &endptctrl, ENDPTCTRL, TXE: 1, TXT: self.kind as u32)
                 }
                 UsbDirection::Out => {
-                    ral::modify_reg!(self, &endptctrl, ENDPTCTRL, RXE: 1, RXT: self.kind as u32)
+                    ral::modify_reg!(endpoint_control, &endptctrl, ENDPTCTRL, RXE: 1, RXT: self.kind as u32)
                 }
             }
         }
@@ -285,6 +303,9 @@ impl Endpoint {
         }
     }
 
+    /// Flush the endpoint, which could cancel pending transfers
+    ///
+    /// Blocks until the flush is complete.
     pub fn flush(&mut self, usb: &ral::usb::Instance) {
         match self.address.direction() {
             UsbDirection::In => {
