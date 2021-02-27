@@ -66,81 +66,68 @@ impl USB {
         self.buffer_allocator = buffer::Allocator::new(memory, size);
     }
 
+    /// Initialize all USB physical, analog clocks, and core registers.
+    /// Assumes that the CCM clock gates are enabled.
+    ///
+    /// You **must** call this once, before creating the complete USB
+    /// bus.
     pub fn initialize(&mut self, ccm_analog: &ral::ccm_analog::Instance) {
         pll::initialize(ccm_analog);
-        initialize(&self.usb, &self.phy, ccm_analog);
-        set_enpoint_list_address(&self.usb, self.qhs.as_ptr() as *const _);
+
+        ral::write_reg!(ral::usbphy, self.phy, CTRL_SET, SFTRST: 1);
+        ral::write_reg!(ral::usbphy, self.phy, CTRL_CLR, SFTRST: 1);
+        ral::write_reg!(ral::usbphy, self.phy, CTRL_CLR, CLKGATE: 1);
+        ral::write_reg!(ral::usbphy, self.phy, PWD, 0);
+
+        ral::modify_reg!(ral::usb, self.usb, USBCMD, RST: 1);
+        while ral::read_reg!(ral::usb, self.usb, USBCMD, RST == 1) {}
+
+        ral::write_reg!(ral::usb, self.usb, USBMODE, CM: CM_2, SLOM: 1);
+
+        // This forces the bus to run at full speed, not high speed. Specifically,
+        // it disables the chirp. If you're interested in playing with a high-speed
+        // USB driver, you'll want to remove this line, or clear PFSC.
+        ral::modify_reg!(ral::usb, self.usb, PORTSC1, PFSC: 1);
+
+        ral::modify_reg!(ral::usb, self.usb, USBSTS, |usbsts| usbsts);
+        ral::write_reg!(ral::usb, self.usb, USBINTR, 0);
+
+        ral::write_reg!(
+            ral::usb,
+            self.usb,
+            ASYNCLISTADDR,
+            self.qhs.as_ptr() as *const _ as u32
+        );
     }
 
     fn set_address(&mut self, address: u8) {
-        set_address(&self.usb, address);
+        // See the "quirk" note in the UsbBus impl. We're using USBADRA to let
+        // the hardware set the address before the status phase.
+        ral::write_reg!(ral::usb, self.usb, DEVICEADDR, USBADR: address as u32, USBADRA: 1);
     }
 
     fn attach(&mut self) {
-        attach(&self.usb);
+        ral::write_reg!(ral::usb, self.usb, USBCMD, RS: 1);
     }
 
     fn bus_reset(&mut self) {
-        bus_reset(&self.usb);
+        ral::modify_reg!(ral::usb, self.usb, ENDPTSTAT, |endptstat| endptstat);
+
+        ral::modify_reg!(ral::usb, self.usb, ENDPTCOMPLETE, |endptcomplete| {
+            endptcomplete
+        });
+        ral::modify_reg!(ral::usb, self.usb, ENDPTNAK, |endptnak| endptnak);
+        ral::write_reg!(ral::usb, self.usb, ENDPTNAKEN, 0);
+
+        while ral::read_reg!(ral::usb, self.usb, ENDPTPRIME) != 0 {}
+        ral::write_reg!(ral::usb, self.usb, ENDPTFLUSH, u32::max_value());
+        while ral::read_reg!(ral::usb, self.usb, ENDPTFLUSH) != 0 {}
+
+        debug_assert!(
+            ral::read_reg!(ral::usb, self.usb, PORTSC1, PR == 1),
+            "Took too long to handle bus reset"
+        );
     }
-}
-
-//
-// Helpers
-//
-
-/// Initialize all USB physical, analog clocks, and core registers.
-/// Assumes that the CCM clock gates are enabled.
-fn initialize(
-    usb: &ral::usb::Instance,
-    phy: &ral::usbphy::Instance,
-    ccm_analog: &ral::ccm_analog::Instance,
-) {
-    pll::initialize(ccm_analog);
-
-    ral::write_reg!(ral::usbphy, phy, CTRL_SET, SFTRST: 1);
-    ral::write_reg!(ral::usbphy, phy, CTRL_CLR, SFTRST: 1);
-    ral::write_reg!(ral::usbphy, phy, CTRL_CLR, CLKGATE: 1);
-    ral::write_reg!(ral::usbphy, phy, PWD, 0);
-
-    ral::modify_reg!(ral::usb, usb, USBCMD, RST: 1);
-    while ral::read_reg!(ral::usb, usb, USBCMD, RST == 1) {}
-
-    ral::write_reg!(ral::usb, usb, USBMODE, CM: CM_2, SLOM: 1);
-    ral::modify_reg!(ral::usb, usb, PORTSC1, PFSC: 1);
-    ral::modify_reg!(ral::usb, usb, USBSTS, |usbsts| usbsts);
-    ral::write_reg!(ral::usb, usb, USBINTR, 0);
-}
-
-fn set_address(usb: &ral::usb::Instance, address: u8) {
-    ral::write_reg!(ral::usb, usb, DEVICEADDR, USBADR: address as u32, USBADRA: 1);
-}
-
-fn set_enpoint_list_address(usb: &ral::usb::Instance, eplistaddr: *const ()) {
-    ral::write_reg!(ral::usb, usb, ASYNCLISTADDR, eplistaddr as u32);
-}
-
-fn attach(usb: &ral::usb::Instance) {
-    ral::write_reg!(ral::usb, usb, USBCMD, RS: 1);
-}
-
-fn bus_reset(usb: &ral::usb::Instance) {
-    ral::modify_reg!(ral::usb, usb, ENDPTSTAT, |endptstat| endptstat);
-
-    ral::modify_reg!(ral::usb, usb, ENDPTCOMPLETE, |endptcomplete| {
-        endptcomplete
-    });
-    ral::modify_reg!(ral::usb, usb, ENDPTNAK, |endptnak| endptnak);
-    ral::write_reg!(ral::usb, usb, ENDPTNAKEN, 0);
-
-    while ral::read_reg!(ral::usb, usb, ENDPTPRIME) != 0 {}
-    ral::write_reg!(ral::usb, usb, ENDPTFLUSH, u32::max_value());
-    while ral::read_reg!(ral::usb, usb, ENDPTFLUSH) != 0 {}
-
-    debug_assert!(
-        ral::read_reg!(ral::usb, usb, PORTSC1, PR == 1),
-        "Took too long to handle bus reset"
-    );
 }
 
 //
