@@ -37,16 +37,17 @@ mod endpoint_control {
 /// Endpoint transfer status
 pub type Status = crate::td::Status;
 
-impl From<Status> for usb_device::UsbError {
-    fn from(status: Status) -> Self {
+impl core::convert::TryFrom<Status> for usb_device::UsbError {
+    type Error = ();
+    fn try_from(status: Status) -> Result<Self, ()> {
         // Keep this implementation in sync with any changes in
         // Endpoint::check_status()
         if status.contains(Status::DATA_BUS_ERROR | Status::TRANSACTION_ERROR | Status::HALTED) {
-            usb_device::UsbError::InvalidState
+            Ok(usb_device::UsbError::InvalidState)
         } else if status.contains(Status::ACTIVE) {
-            usb_device::UsbError::WouldBlock
+            Ok(usb_device::UsbError::WouldBlock)
         } else {
-            panic!("Unhandled Status => UsbError conversion");
+            Err(())
         }
     }
 }

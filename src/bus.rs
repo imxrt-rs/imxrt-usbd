@@ -2,6 +2,7 @@
 
 use crate::USB;
 use core::cell::RefCell;
+use core::convert::TryInto;
 use cortex_m::interrupt::{self, Mutex};
 use imxrt_ral as ral;
 use usb_device::{
@@ -136,7 +137,7 @@ impl UsbBus for Bus {
                     ep_addr.direction(),
                     status
                 );
-                status
+                status.try_into().unwrap()
             })?;
 
             Ok(written)
@@ -168,7 +169,7 @@ impl UsbBus for Bus {
                     ep_addr.direction(),
                     status
                 );
-                status
+                status.try_into().unwrap()
             })?;
 
             Ok(read)
