@@ -50,10 +50,7 @@ const EP_INIT: [Option<Endpoint>; QH_COUNT] = [
 /// usb.initialize(&ccm_analog);
 ///
 /// unsafe {
-///     // Safety: pointer is non-null
-///     let ptr = core::ptr::NonNull::new_unchecked(ENDPOINT_MEMORY.as_mut_ptr());
-///     // Safety: we're making sure that the memory isn't used by anyone else, somehow!
-///     usb.set_endpoint_memory(ptr, ENDPOINT_MEMORY.len());
+///     usb.set_endpoint_memory(&mut ENDPOINT_MEMORY);
 /// }
 pub struct USB {
     endpoints: [Option<Endpoint>; QH_COUNT],
@@ -99,13 +96,8 @@ impl USB {
     }
 
     /// Set the region of memory that can be used for transfers with endpoints
-    ///
-    /// # Safety
-    ///
-    /// Caller must ensure that `memory` is valid for the `size` bytes. Caller must ensure that
-    /// the allocation isn't used anywhere else.
-    pub unsafe fn set_endpoint_memory(&mut self, memory: core::ptr::NonNull<u8>, size: usize) {
-        self.buffer_allocator = buffer::Allocator::new(memory, size);
+    pub unsafe fn set_endpoint_memory(&mut self, buffer: &'static mut [u8]) {
+        self.buffer_allocator = buffer::Allocator::new(buffer);
     }
 
     /// Initialize all USB physical, analog clocks, and core registers.

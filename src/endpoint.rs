@@ -1,5 +1,4 @@
-use crate::{qh::QH, ral, td::TD};
-use core::ptr::NonNull;
+use crate::{buffer::Buffer, qh::QH, ral, td::TD};
 use usb_device::{endpoint::EndpointAddress, UsbDirection};
 
 fn endpoint_control_register<'a>(usb: &'a ral::usb::Instance, endpoint: usize) -> EndptCtrl<'a> {
@@ -46,7 +45,7 @@ pub struct Endpoint {
     kind: Kind,
     qh: &'static mut QH,
     td: &'static mut TD,
-    buffer: *mut u8,
+    buffer: Buffer,
 }
 
 /// Allocates a control endpoint that operates using the queue head, transfer descriptor,
@@ -64,7 +63,7 @@ pub unsafe fn control(
     address: EndpointAddress,
     qh: &'static mut QH,
     td: &'static mut TD,
-    buffer: NonNull<u8>,
+    buffer: Buffer,
 ) -> Endpoint {
     Endpoint::new(address, Kind::Control, qh, td, buffer)
 }
@@ -84,7 +83,7 @@ pub unsafe fn bulk(
     address: EndpointAddress,
     qh: &'static mut QH,
     td: &'static mut TD,
-    buffer: NonNull<u8>,
+    buffer: Buffer,
 ) -> Endpoint {
     Endpoint::new(address, Kind::Bulk, qh, td, buffer)
 }
@@ -104,7 +103,7 @@ pub unsafe fn interrupt(
     address: EndpointAddress,
     qh: &'static mut QH,
     td: &'static mut TD,
-    buffer: NonNull<u8>,
+    buffer: Buffer,
 ) -> Endpoint {
     Endpoint::new(address, Kind::Interrupt, qh, td, buffer)
 }
@@ -115,14 +114,14 @@ impl Endpoint {
         kind: Kind,
         qh: &'static mut QH,
         td: &'static mut TD,
-        buffer: NonNull<u8>,
+        buffer: Buffer,
     ) -> Self {
         Endpoint {
             address,
             kind,
             qh,
             td,
-            buffer: buffer.as_ptr(),
+            buffer,
         }
     }
 
@@ -188,14 +187,7 @@ impl Endpoint {
             .max_packet_len()
             .min(buffer.len())
             .min(self.td.bytes_transferred());
-        buffer
-            .iter_mut()
-            .take(size)
-            .fold(self.buffer, |src, dst| unsafe {
-                *dst = src.read_volatile();
-                src.add(1)
-            });
-        size
+        self.buffer.volatile_read(&mut buffer[..size])
     }
 
     /// Write `buffer` to the endpoint buffer
@@ -204,14 +196,7 @@ impl Endpoint {
     /// by the max packet length.
     pub fn write(&mut self, buffer: &[u8]) -> usize {
         let size = self.qh.max_packet_len().min(buffer.len());
-        buffer
-            .iter()
-            .take(size)
-            .fold(self.buffer, |dst, src| unsafe {
-                dst.write_volatile(*src);
-                dst.add(1)
-            });
-        size
+        self.buffer.volatile_write(&buffer[..size])
     }
 
     pub fn clear_complete(&mut self, usb: &ral::usb::Instance) {
@@ -231,7 +216,7 @@ impl Endpoint {
     /// transfer resulted in an error or halt.
     pub fn schedule_transfer(&mut self, usb: &ral::usb::Instance, size: usize) {
         self.td.set_terminate();
-        self.td.set_buffer(self.buffer, size);
+        self.td.set_buffer(self.buffer.as_ptr_mut(), size);
         self.td.set_interrupt_on_complete(true);
         self.td.set_active();
 

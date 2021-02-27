@@ -60,9 +60,6 @@ impl Bus {
     }
 }
 
-unsafe impl Send for crate::buffer::Allocator {}
-unsafe impl Send for crate::Endpoint {}
-
 impl UsbBus for Bus {
     /// The USB hardware can guarantee that we set the status before we receive
     /// the status, and we're taking advantage of that. We expect this flag to

@@ -31,10 +31,8 @@ pub fn set_endpoint_memory(usb: &mut imxrt_usb::USB) {
     }
 
     unsafe {
-        // Safety: ENDPOINT_MEMORY is unlikely to be null
-        let ptr = core::ptr::NonNull::new_unchecked(ENDPOINT_MEMORY.as_mut_ptr());
-        // Safety: ENDPOINT_MEMORY valid for it's length. With proper scoping
-        // and a runtime flag, we ensure it's only available to a single caller.
-        usb.set_endpoint_memory(ptr, ENDPOINT_MEMORY.len());
+        // Safety: With proper scoping and a runtime flag, we ensure the memory is
+        // only available to a single caller.
+        usb.set_endpoint_memory(&mut ENDPOINT_MEMORY);
     }
 }
