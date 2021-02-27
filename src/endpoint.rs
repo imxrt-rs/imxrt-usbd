@@ -37,112 +37,68 @@ mod endpoint_control {
 /// Endpoint transfer status
 pub type Status = crate::td::Status;
 
-#[derive(Clone, Copy)]
-#[repr(u32)]
-enum Kind {
-    Control = 0,
-    // Isochronous = 1,
-    // Not implemented, no support in usb_device ecosystem
-    Bulk = 2,
-    Interrupt = 3,
+impl From<Status> for usb_device::UsbError {
+    fn from(status: Status) -> Self {
+        // Keep this implementation in sync with any changes in
+        // Endpoint::check_status()
+        if status.contains(Status::DATA_BUS_ERROR | Status::TRANSACTION_ERROR | Status::HALTED) {
+            usb_device::UsbError::InvalidState
+        } else if status.contains(Status::ACTIVE) {
+            usb_device::UsbError::WouldBlock
+        } else {
+            panic!("Unhandled Status => UsbError conversion");
+        }
+    }
 }
 
 /// A USB endpoint
 pub struct Endpoint {
     address: EndpointAddress,
-    kind: Kind,
     qh: &'static mut QH,
     td: &'static mut TD,
     buffer: Buffer,
-}
-
-/// Allocates a control endpoint that operates using the queue head, transfer descriptor,
-/// and buffer.
-///
-/// Expects both the queue head and transfer descriptor to be initialized. Specifically,
-/// queue head should describe a max packet length.
-///
-/// # Safety
-///
-/// All of the queue head, transfer descriptor, and buffer must only be used by this
-/// endpoint. `buffer` must point to an allocation that's at least as large as the
-/// queue head's max packet length. `buffer` must outlive the endpoint.
-pub unsafe fn control(
-    address: EndpointAddress,
-    qh: &'static mut QH,
-    td: &'static mut TD,
-    buffer: Buffer,
-) -> Endpoint {
-    Endpoint::new(address, Kind::Control, qh, td, buffer)
-}
-
-/// Allocates a bulk endpoint that operates using the queue head, transfer descriptor,
-/// and buffer. The endpoint address is 0.
-///
-/// Expects both the queue head and transfer descriptor to be initialized. Specifically,
-/// queue head should describe a max packet length.
-///
-/// # Safety
-///
-/// All of the queue head, transfer descriptor, and buffer must only be used by this
-/// endpoint. `buffer` must point to an allocation that's at least as large as the
-/// queue head's max packet length. `buffer` must outlive the endpoint.
-pub unsafe fn bulk(
-    address: EndpointAddress,
-    qh: &'static mut QH,
-    td: &'static mut TD,
-    buffer: Buffer,
-) -> Endpoint {
-    Endpoint::new(address, Kind::Bulk, qh, td, buffer)
-}
-
-/// Allocates an interrupt endpoint that operates using the queue head, transfer descriptor,
-/// and buffer. The endpoint address is 0.
-///
-/// Expects both the queue head and transfer descriptor to be initialized. Specifically,
-/// queue head should describe a max packet length.
-///
-/// # Safety
-///
-/// All of the queue head, transfer descriptor, and buffer must only be used by this
-/// endpoint. `buffer` must point to an allocation that's at least as large as the
-/// queue head's max packet length. `buffer` must outlive the endpoint.
-pub unsafe fn interrupt(
-    address: EndpointAddress,
-    qh: &'static mut QH,
-    td: &'static mut TD,
-    buffer: Buffer,
-) -> Endpoint {
-    Endpoint::new(address, Kind::Interrupt, qh, td, buffer)
 }
 
 impl Endpoint {
-    fn new(
+    pub fn new(
         address: EndpointAddress,
-        kind: Kind,
         qh: &'static mut QH,
         td: &'static mut TD,
         buffer: Buffer,
     ) -> Self {
         Endpoint {
             address,
-            kind,
             qh,
             td,
             buffer,
         }
     }
 
+    /// Check for any transfer status, which is signaled through
+    /// an error
+    pub fn check_status(&self) -> Result<(), Status> {
+        let status = self.td.status();
+        if status.is_empty() {
+            Ok(())
+        } else {
+            Err(status)
+        }
+    }
+
     /// Initialize the endpoint, should be called soon after it's assigned
-    pub fn initialize(&mut self, usb: &ral::usb::Instance) {
+    pub fn initialize(
+        &mut self,
+        usb: &ral::usb::Instance,
+        ep_type: usb_device::endpoint::EndpointType,
+    ) {
         if self.address.index() != 0 {
             let endptctrl = endpoint_control::register(usb, self.address.index());
             match self.address.direction() {
                 UsbDirection::In => {
-                    ral::modify_reg!(endpoint_control, &endptctrl, ENDPTCTRL, TXE: 0, TXT: Kind::Bulk as u32)
+                    ral::modify_reg!(endpoint_control, &endptctrl, ENDPTCTRL, TXE: 0, TXT: ep_type as u32)
                 }
                 UsbDirection::Out => {
-                    ral::modify_reg!(endpoint_control, &endptctrl, ENDPTCTRL, RXE: 0, RXT: Kind::Bulk as u32)
+                    ral::modify_reg!(endpoint_control, &endptctrl, ENDPTCTRL, RXE: 0, RXT: ep_type as u32)
                 }
             }
         }
@@ -245,11 +201,6 @@ impl Endpoint {
         while ral::read_reg!(ral::usb, usb, ENDPTPRIME) != 0 {}
     }
 
-    /// Returns the transfer status for the endpoint
-    pub fn status(&self) -> Status {
-        self.td.status()
-    }
-
     /// Stall or unstall the endpoint
     pub fn set_stalled(&mut self, usb: &ral::usb::Instance, stall: bool) {
         let endptctrl = endpoint_control::register(usb, self.address.index());
@@ -282,10 +233,10 @@ impl Endpoint {
             let endptctrl = endpoint_control::register(usb, self.address.index());
             match self.address.direction() {
                 UsbDirection::In => {
-                    ral::modify_reg!(endpoint_control, &endptctrl, ENDPTCTRL, TXE: 1, TXT: self.kind as u32)
+                    ral::modify_reg!(endpoint_control, &endptctrl, ENDPTCTRL, TXE: 1)
                 }
                 UsbDirection::Out => {
-                    ral::modify_reg!(endpoint_control, &endptctrl, ENDPTCTRL, RXE: 1, RXT: self.kind as u32)
+                    ral::modify_reg!(endpoint_control, &endptctrl, ENDPTCTRL, RXE: 1)
                 }
             }
         }

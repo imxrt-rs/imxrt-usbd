@@ -13,12 +13,21 @@ mod vcell;
 
 pub use bus::Bus;
 
-use endpoint::Endpoint;
+use endpoint::{Endpoint, Status};
 use imxrt_ral as ral;
+use usb_device::{
+    endpoint::{EndpointAddress, EndpointType},
+    UsbDirection,
+};
 
 const EP_INIT: [Option<Endpoint>; QH_COUNT] = [
     None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None,
 ];
+
+/// Produces an index into the EPs, QHs, and TDs collections
+fn index(ep_addr: EndpointAddress) -> usize {
+    (ep_addr.index() * 2) + (UsbDirection::In == ep_addr.direction()) as usize
+}
 
 /// A USB driver
 ///
@@ -163,6 +172,164 @@ impl USB {
             ral::read_reg!(ral::usb, self.usb, PORTSC1, PR == 1),
             "Took too long to handle bus reset"
         );
+    }
+
+    /// Check if the endpoint is valid
+    fn is_allocated(&self, addr: EndpointAddress) -> bool {
+        self.endpoints
+            .get(index(addr))
+            .map(|ep| ep.is_some())
+            .unwrap_or(false)
+    }
+
+    /// Read either a setup, or a data buffer, from EP0 OUT
+    ///
+    /// Return the status if there's a pending transaction, or an error.
+    ///
+    /// # Panics
+    ///
+    /// Panics if EP0 OUT isn't allocated.
+    fn ctrl0_read(&mut self, buffer: &mut [u8]) -> Result<usize, Status> {
+        let ctrl_out = self.endpoints[0].as_mut().unwrap();
+        if ctrl_out.has_setup(&self.usb) && buffer.len() >= 8 {
+            let setup = ctrl_out.read_setup(&self.usb);
+            buffer[..8].copy_from_slice(&setup.to_le_bytes());
+
+            ctrl_out.flush(&self.usb);
+            ctrl_out.clear_complete(&self.usb);
+            let max_packet_len = ctrl_out.max_packet_len();
+            ctrl_out.schedule_transfer(&self.usb, max_packet_len);
+
+            return Ok(8);
+        } else {
+            ctrl_out.check_status()?;
+
+            ctrl_out.clear_complete(&self.usb);
+            ctrl_out.clear_nack(&self.usb);
+
+            let read = ctrl_out.read(buffer);
+            let max_packet_len = ctrl_out.max_packet_len();
+            ctrl_out.schedule_transfer(&self.usb, max_packet_len);
+
+            Ok(read)
+        }
+    }
+
+    /// Write to the host from EP0 IN
+    ///
+    /// Schedules the next OUT transfer to satisfy a status phase.
+    ///
+    /// # Panics
+    ///
+    /// Panics if EP0 IN isn't allocated, or if EP0 OUT isn't allocated.
+    fn ctrl0_write(&mut self, buffer: &[u8]) -> Result<usize, Status> {
+        let ctrl_in = self.endpoints[1].as_mut().unwrap();
+        ctrl_in.check_status()?;
+
+        ctrl_in.clear_nack(&self.usb);
+
+        let written = ctrl_in.write(buffer);
+        ctrl_in.schedule_transfer(&self.usb, written);
+
+        if !buffer.is_empty() {
+            // Schedule an OUT transfer for the status phase...
+            let ctrl_out = self.endpoints[0].as_mut().unwrap();
+            ctrl_out.flush(&self.usb);
+            ctrl_out.clear_complete(&self.usb);
+            ctrl_out.clear_nack(&self.usb);
+            ctrl_out.schedule_transfer(&self.usb, 0);
+        }
+
+        Ok(written)
+    }
+
+    /// Read data from an endpoint, and schedule the next transfer
+    ///
+    /// # Panics
+    ///
+    /// Panics if the endpoint isn't allocated.
+    fn ep_read(&mut self, buffer: &mut [u8], addr: EndpointAddress) -> Result<usize, Status> {
+        let ep = self.endpoints[index(addr)].as_mut().unwrap();
+        ep.check_status()?;
+
+        ep.clear_complete(&self.usb);
+        ep.clear_nack(&self.usb);
+
+        let read = ep.read(buffer);
+
+        let max_packet_len = ep.max_packet_len();
+        ep.schedule_transfer(&self.usb, max_packet_len);
+
+        Ok(read)
+    }
+
+    /// Write data to an endpoint
+    ///
+    /// # Panics
+    ///
+    /// Panics if the endpoint isn't allocated.
+    fn ep_write(&mut self, buffer: &[u8], addr: EndpointAddress) -> Result<usize, Status> {
+        let ep = self.endpoints[index(addr)].as_mut().unwrap();
+        ep.check_status()?;
+
+        ep.clear_nack(&self.usb);
+
+        let written = ep.write(buffer);
+        ep.schedule_transfer(&self.usb, written);
+
+        Ok(written)
+    }
+
+    /// Stall an endpoint
+    ///
+    /// # Panics
+    ///
+    /// Panics if the endpoint isn't allocated
+    fn ep_stall(&mut self, stall: bool, addr: EndpointAddress) {
+        self.endpoints[index(addr)]
+            .as_mut()
+            .unwrap()
+            .set_stalled(&self.usb, stall);
+    }
+
+    /// Checks if an endpoint is stalled
+    ///
+    /// # Panics
+    ///
+    /// Panics if the endpoint isn't allocated
+    fn is_ep_stalled(&self, addr: EndpointAddress) -> bool {
+        self.endpoints[index(addr)]
+            .as_ref()
+            .unwrap()
+            .is_stalled(&self.usb)
+    }
+
+    /// Allocate a buffer from the endpoint memory
+    fn allocate_buffer(&mut self, max_packet_len: usize) -> Option<buffer::Buffer> {
+        self.buffer_allocator.allocate(max_packet_len)
+    }
+
+    /// Allocate a specific endpoint
+    ///
+    /// # Panics
+    ///
+    /// Panics if the endpoint is already allocated.
+    fn allocate_ep(&mut self, addr: EndpointAddress, buffer: buffer::Buffer, kind: EndpointType) {
+        let qh = self.qhs[index(addr)].take().unwrap();
+        let td = self.tds[index(addr)].take().unwrap();
+
+        qh.set_max_packet_len(buffer.len());
+        qh.set_zero_length_termination(false);
+        qh.set_interrupt_on_setup(
+            EndpointType::Control == kind && addr.direction() == UsbDirection::Out,
+        );
+
+        td.set_terminate();
+        td.clear_status();
+
+        let mut ep = Endpoint::new(addr, qh, td, buffer);
+        ep.initialize(&self.usb, kind);
+        self.endpoints[index(addr)] = Some(ep);
     }
 }
 

@@ -98,6 +98,11 @@ impl Buffer {
     pub fn as_ptr_mut(&mut self) -> *mut u8 {
         self.ptr
     }
+
+    /// Returns the size of the buffer
+    pub fn len(&self) -> usize {
+        self.len
+    }
 }
 
 #[cfg(test)]
