@@ -21,6 +21,41 @@ const EP_INIT: [Option<Endpoint>; QH_COUNT] = [
     None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None,
 ];
 
+/// A USB driver
+///
+/// `USB` itself doesn't provide much of an API. After you allocate a `USB` with [`new()`](USB::new),
+/// you must
+///
+/// - call [`initialize()`](USB::initialize) once
+/// - supply endpoint memory with [`set_endpoint_memory()`](USB::set_endpoint_memory)
+///
+/// After that, you should wrap it with a [`Bus`](crate::Bus), and combine the bus with the `usb_device`
+/// interfaces.
+///
+/// # Example
+///
+/// This example shows a bare-minimum setup for the USB driver.
+///
+/// ```no_run
+/// use imxrt_usb::USB;
+/// use imxrt_ral::{usb, usbphy, ccm_analog};
+///
+/// static mut ENDPOINT_MEMORY: [u8; 1024] = [0; 1024];
+///
+/// let mut usb = USB::new(
+///     usb::USB1::take().unwrap(),
+///     usbphy::USBPHY1::take().unwrap(),
+/// );
+///
+/// let ccm_analog = ccm_analog::CCM_ANALOG::take().unwrap();
+/// usb.initialize(&ccm_analog);
+///
+/// unsafe {
+///     // Safety: pointer is non-null
+///     let ptr = core::ptr::NonNull::new_unchecked(ENDPOINT_MEMORY.as_mut_ptr());
+///     // Safety: we're making sure that the memory isn't used by anyone else, somehow!
+///     usb.set_endpoint_memory(ptr, ENDPOINT_MEMORY.len());
+/// }
 pub struct USB {
     endpoints: [Option<Endpoint>; QH_COUNT],
     usb: ral::usb::Instance,
@@ -31,6 +66,14 @@ pub struct USB {
 }
 
 impl USB {
+    /// Create a new `USB` driver
+    ///
+    /// Creation does nothing except for assign static memory to the driver.
+    /// After creating the driver, call [`initialize()`](USB::initialize).
+    ///
+    /// # Panics
+    ///
+    /// Panics if the `usb` instance and the `phy` instances are mismatched.
     pub fn new(usb: ral::usb::Instance, phy: ral::usbphy::Instance) -> Self {
         // Safety: taking static memory. Assumes that the provided
         // USB instance is a singleton, which is the only safe way for it
@@ -107,6 +150,7 @@ impl USB {
     }
 
     fn attach(&mut self) {
+        // TODO should probably be a modify...
         ral::write_reg!(ral::usb, self.usb, USBCMD, RS: 1);
     }
 
@@ -185,7 +229,7 @@ const QH_LIST_INIT: QHList = QHList([
     qh::QH::new(),
 ]);
 
-/// USB driver state
+/// Just a helper type for static initialization
 struct State {
     qhs: QHList,
     tds: TDList,
