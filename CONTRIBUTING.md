@@ -37,6 +37,10 @@ You should be able to just `cargo build` in one of the example packages.
 Note that this library can build for your host system, and also for your
 embedded ARM target.
 
+To run **tests**, change `cargo build` to `cargo test` in the above examples.
+Rustdoc tests are only guaranteed to compile for `imxrt-ral/imxrt1062`. Library
+tests will work for all systems.
+
 If you use **VSCode with rust-analyzer**, you may want to add a
 `.vscode/settings.json` configuration when developing for this project.
 Otherwise, rust-analyzer won't like the build. The following

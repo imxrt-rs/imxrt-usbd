@@ -42,7 +42,7 @@ fn index(ep_addr: EndpointAddress) -> usize {
 ///
 /// # Example
 ///
-/// This example shows a bare-minimum setup for the USB driver.
+/// This example shows a bare-minimum setup for the USB driver on an i.MX RT 1062:
 ///
 /// ```no_run
 /// use imxrt_usb::USB;
