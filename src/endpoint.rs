@@ -41,11 +41,11 @@ enum Kind {
 }
 
 /// A USB endpoint
-pub struct Endpoint<'a> {
+pub struct Endpoint {
     address: EndpointAddress,
     kind: Kind,
-    qh: &'a QH,
-    td: &'a TD,
+    qh: &'static QH,
+    td: &'static TD,
     buffer: *mut u8,
 }
 
@@ -60,12 +60,12 @@ pub struct Endpoint<'a> {
 /// All of the queue head, transfer descriptor, and buffer must only be used by this
 /// endpoint. `buffer` must point to an allocation that's at least as large as the
 /// queue head's max packet length. `buffer` must outlive the endpoint.
-pub unsafe fn control<'a>(
+pub unsafe fn control(
     address: EndpointAddress,
-    qh: &'a QH,
-    td: &'a TD,
+    qh: &'static QH,
+    td: &'static TD,
     buffer: NonNull<u8>,
-) -> Endpoint<'a> {
+) -> Endpoint {
     Endpoint::new(address, Kind::Control, qh, td, buffer)
 }
 
@@ -80,12 +80,12 @@ pub unsafe fn control<'a>(
 /// All of the queue head, transfer descriptor, and buffer must only be used by this
 /// endpoint. `buffer` must point to an allocation that's at least as large as the
 /// queue head's max packet length. `buffer` must outlive the endpoint.
-pub unsafe fn bulk<'a>(
+pub unsafe fn bulk(
     address: EndpointAddress,
-    qh: &'a QH,
-    td: &'a TD,
+    qh: &'static QH,
+    td: &'static TD,
     buffer: NonNull<u8>,
-) -> Endpoint<'a> {
+) -> Endpoint {
     Endpoint::new(address, Kind::Bulk, qh, td, buffer)
 }
 
@@ -100,21 +100,21 @@ pub unsafe fn bulk<'a>(
 /// All of the queue head, transfer descriptor, and buffer must only be used by this
 /// endpoint. `buffer` must point to an allocation that's at least as large as the
 /// queue head's max packet length. `buffer` must outlive the endpoint.
-pub unsafe fn interrupt<'a>(
+pub unsafe fn interrupt(
     address: EndpointAddress,
-    qh: &'a QH,
-    td: &'a TD,
+    qh: &'static QH,
+    td: &'static TD,
     buffer: NonNull<u8>,
-) -> Endpoint<'a> {
+) -> Endpoint {
     Endpoint::new(address, Kind::Interrupt, qh, td, buffer)
 }
 
-impl<'a> Endpoint<'a> {
+impl Endpoint {
     const unsafe fn new(
         address: EndpointAddress,
         kind: Kind,
-        qh: &'a QH,
-        td: &'a TD,
+        qh: &'static QH,
+        td: &'static TD,
         buffer: NonNull<u8>,
     ) -> Self {
         Endpoint {

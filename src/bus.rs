@@ -100,8 +100,8 @@ impl UsbBus for Bus {
                 None => return Err(usb_device::UsbError::BufferOverflow),
             };
 
-            let qh: &'static crate::qh::QH = &usb.qhs[index(ep_addr)];
-            let td: &'static crate::td::TD = &usb.tds[index(ep_addr)];
+            let qh: &'static mut crate::qh::QH = usb.qhs[index(ep_addr)].take().unwrap();
+            let td: &'static mut crate::td::TD = usb.tds[index(ep_addr)].take().unwrap();
 
             qh.set_max_packet_len(max_packet_size as usize);
             qh.set_zero_length_termination(false);

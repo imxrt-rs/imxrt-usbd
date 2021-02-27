@@ -13,9 +13,8 @@ mod vcell;
 
 pub use bus::Bus;
 
+use endpoint::Endpoint;
 use imxrt_ral as ral;
-
-type Endpoint = endpoint::Endpoint<'static>;
 
 const EP_INIT: [Option<Endpoint>; QH_COUNT] = [
     None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None,
@@ -60,8 +59,8 @@ pub struct USB {
     endpoints: [Option<Endpoint>; QH_COUNT],
     usb: ral::usb::Instance,
     phy: ral::usbphy::Instance,
-    qhs: &'static [qh::QH; QH_COUNT],
-    tds: &'static [td::TD; QH_COUNT],
+    qhs: [Option<&'static mut qh::QH>; QH_COUNT],
+    tds: [Option<&'static mut td::TD>; QH_COUNT],
     buffer_allocator: buffer::Allocator,
 }
 
@@ -78,24 +77,24 @@ impl USB {
         // Safety: taking static memory. Assumes that the provided
         // USB instance is a singleton, which is the only safe way for it
         // to exist.
-        match (&*usb as *const _, &*phy as *const _) {
-            (ral::usb::USB1, ral::usbphy::USBPHY1) => USB {
+        unsafe {
+            let (qhs, tds) = match (&*usb as *const _, &*phy as *const _) {
+                (ral::usb::USB1, ral::usbphy::USBPHY1) => {
+                    (USB1_STATE.steal_qhs(), USB1_STATE.steal_tds())
+                }
+                (ral::usb::USB2, ral::usbphy::USBPHY2) => {
+                    (USB2_STATE.steal_qhs(), USB2_STATE.steal_tds())
+                }
+                _ => panic!("Mismatch USB and USBPHY"),
+            };
+            USB {
+                endpoints: EP_INIT,
                 usb,
                 phy,
-                endpoints: EP_INIT,
-                qhs: &USB1_STATE.qhs.0,
-                tds: &USB1_STATE.tds.0,
+                qhs,
+                tds,
                 buffer_allocator: buffer::Allocator::empty(),
-            },
-            (ral::usb::USB2, ral::usbphy::USBPHY2) => USB {
-                usb,
-                phy,
-                endpoints: EP_INIT,
-                qhs: &USB2_STATE.qhs.0,
-                tds: &USB2_STATE.tds.0,
-                buffer_allocator: buffer::Allocator::empty(),
-            },
-            _ => panic!("Mismatch USB and USBPHY"),
+            }
         }
     }
 
@@ -240,11 +239,28 @@ const STATE_INIT: State = State {
     tds: TD_LIST_INIT,
 };
 
-static USB1_STATE: State = STATE_INIT;
-static USB2_STATE: State = STATE_INIT;
+static mut USB1_STATE: State = STATE_INIT;
+static mut USB2_STATE: State = STATE_INIT;
 
-unsafe impl Send for qh::QH {}
-unsafe impl Send for td::TD {}
-
-unsafe impl Sync for qh::QH {}
-unsafe impl Sync for td::TD {}
+impl State {
+    unsafe fn steal_qhs(&'static mut self) -> [Option<&'static mut qh::QH>; QH_COUNT] {
+        let mut qhs = [
+            None, None, None, None, None, None, None, None, None, None, None, None, None, None,
+            None, None,
+        ];
+        for (dst, src) in qhs.iter_mut().zip(self.qhs.0.iter_mut()) {
+            *dst = Some(src);
+        }
+        qhs
+    }
+    unsafe fn steal_tds(&'static mut self) -> [Option<&'static mut td::TD>; QH_COUNT] {
+        let mut tds = [
+            None, None, None, None, None, None, None, None, None, None, None, None, None, None,
+            None, None,
+        ];
+        for (dst, src) in tds.iter_mut().zip(self.tds.0.iter_mut()) {
+            *dst = Some(src);
+        }
+        tds
+    }
+}
