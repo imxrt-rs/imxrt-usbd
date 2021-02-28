@@ -13,7 +13,6 @@
 #![no_std]
 #![no_main]
 
-use hal::ral;
 use imxrt_hal as hal;
 use teensy4_pins as pins;
 
@@ -51,17 +50,11 @@ fn main() -> ! {
     let (tx, _) = uart.split();
     imxrt_uart_log::dma::init(tx, channel, Default::default()).unwrap();
 
-    let usb1 = ral::usb::USB1::take().unwrap();
-    let phy1 = ral::usbphy::USBPHY1::take().unwrap();
-    let mut usb = imxrt_usb::USB::new(usb1, phy1);
-
     let (ccm, ccm_analog) = ccm.handle.raw();
-    ral::modify_reg!(ral::ccm, ccm, CCGR6, CG1: 0b11, CG0: 0b11);
+    support::ccm::initialize(ccm, ccm_analog);
 
-    usb.initialize(ccm_analog);
-    support::set_endpoint_memory(&mut usb);
+    let bus_adapter = support::new_bus_adapter();
 
-    let bus_adapter = imxrt_usb::BusAdapter::new(usb);
     let bus = usb_device::bus::UsbBusAllocator::new(bus_adapter);
     let mut device = UsbDeviceBuilder::new(&bus, UsbVidPid(0x5824, 0x27dd))
         .product("imxrt-usb")

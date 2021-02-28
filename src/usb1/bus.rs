@@ -1,7 +1,7 @@
 //! USB bus implementation
 
+use super::driver::USB1;
 use crate::ral;
-use crate::USB;
 use core::cell::RefCell;
 use core::convert::TryInto;
 use cortex_m::interrupt::{self, Mutex};
@@ -13,13 +13,15 @@ use usb_device::{
 
 /// A `UsbBus` implementation
 ///
-/// After you set up your [`USB`](crate::USB) handle, you can create a `BusAdapter`
-/// and supply that as the implementation of your `usb-device` device.
+/// The `BusAdapter` adapts the RAL instances, and exposes a `UsbBus` implementation.
 ///
 /// # Requirements
 ///
+/// The driver assumes that you've prepared all USB clocks (CCM clock gates, CCM analog PLLs).
+/// You may use the `imxrt-ral` APIs to configure USB clocks.
+///
 /// When you build your final `usb-device`, you must set the endpoint 0 max packet
-/// size to 64 bytes. See the `UsbDeviceBuilder::max_packet_size_0` for more information.
+/// size to 64 bytes. See `UsbDeviceBuilder::max_packet_size_0` for more information.
 /// Failure to increase the control endpoint max packet size will result in a USB device
 /// that cannot communicate with the host.
 ///
@@ -27,29 +29,29 @@ use usb_device::{
 /// *after* your device has been configured. This can be accomplished by polling the USB
 /// device and checking its state until it's been configured. Once configured, use `UsbDevice::bus()`
 /// to access the i.MX RT `BusAdapter`, and call `configure()`. You should only do this once.
-/// after that, you may poll for class traffic.
+/// After that, you may poll for class traffic.
 ///
 /// # Example
 ///
 /// This example shows you how to create a `BusAdapter`, build a simple USB device, and
-/// prepare the device for class traffic. It assumes that you're familiar with how
-/// to initialize a [`USB`](crate::USB) driver.
+/// prepare the device for class traffic.
 ///
 /// Note that this example does not demonstrate USB class allocation or polling. See
-/// your USB class' documentation for details.
+/// your USB class' documentation for details. This example also skips the clock initialization.
 ///
 /// ```no_run
-/// # use imxrt_usb::USB;
-/// # use imxrt_ral::{usb, usbphy};
-/// // From the USB example...
-/// let usb = USB::new(
+/// use imxrt_usb::usb1::BusAdapter;
+/// use imxrt_ral::{usb, usbphy};
+///
+/// static mut ENDPOINT_MEMORY: [u8; 1024] = [0; 1024];
+///
+/// // TODO initialize clocks...
+///
+/// let bus_adapter = BusAdapter::new(
 ///     usb::USB1::take().unwrap(),
 ///     usbphy::USBPHY1::take().unwrap(),
+///     unsafe { &mut ENDPOINT_MEMORY }
 /// );
-///
-/// // Construct the bus...
-/// use imxrt_usb::BusAdapter;
-/// let bus_adapter = BusAdapter::new(usb);
 ///
 /// // Create the USB device...
 /// use usb_device::prelude::*;
@@ -76,28 +78,49 @@ use usb_device::{
 /// // Ready for class traffic!
 /// ```
 pub struct BusAdapter {
-    usb: Mutex<RefCell<USB>>,
+    usb: Mutex<RefCell<USB1>>,
 }
 
 impl BusAdapter {
-    /// Create a USB bus adapter from a `USB` object
+    /// Create a USB bus adapter
     ///
-    /// Make sure you've fully configured your USB device before wrapping it in the adapter.
-    pub fn new(usb: USB) -> Self {
+    /// The two USB instances come from the `imxrt-ral` register access layer. When this
+    /// function returns, the `BusAdapter` has initialized the PHY and USB core registers.
+    ///
+    /// You must also provide a region of memory that will used for endpoint I/O. The
+    /// memory region will be partitioned for the endpoints, based on their requirements.
+    ///
+    /// You must ensure that no one else is using the endpoint memory!
+    ///
+    /// # Panics
+    ///
+    /// Panics if the USB instances are mismatched (a USB1 instance with a USBPHY2 instance).
+    pub fn new(
+        usb: ral::usb::Instance,
+        phy: ral::usbphy::Instance,
+        buffer: &'static mut [u8],
+    ) -> Self {
+        let mut usb = USB1::new(usb, phy);
+
+        usb.initialize();
+        usb.set_endpoint_memory(buffer);
+
         BusAdapter {
             usb: Mutex::new(RefCell::new(usb)),
         }
     }
+
     /// Interrupt-safe, immutable access to the USB peripheral
-    fn with_usb<R>(&self, func: impl FnOnce(&USB) -> R) -> R {
+    fn with_usb<R>(&self, func: impl FnOnce(&USB1) -> R) -> R {
         interrupt::free(|cs| {
             let usb = self.usb.borrow(cs);
             let usb = usb.borrow();
             func(&*usb)
         })
     }
+
     /// Interrupt-safe, mutable access to the USB peripheral
-    fn with_usb_mut<R>(&self, func: impl FnOnce(&mut USB) -> R) -> R {
+    fn with_usb_mut<R>(&self, func: impl FnOnce(&mut USB1) -> R) -> R {
         interrupt::free(|cs| {
             let usb = self.usb.borrow(cs);
             let mut usb = usb.borrow_mut();
@@ -256,48 +279,14 @@ impl UsbBus for BusAdapter {
     }
 
     fn suspend(&self) {
-        unimplemented!("Nothing to do; not signaling suspend / resume from poll")
+        // TODO
     }
 
     fn resume(&self) {
-        unimplemented!("Nothing to do; not signaling suspend / resume from poll")
+        // TODO
     }
 
     fn poll(&self) -> PollResult {
-        self.with_usb_mut(|usb| {
-            let usbsts = ral::read_reg!(ral::usb, usb.usb, USBSTS);
-            ral::write_reg!(ral::usb, usb.usb, USBSTS, usbsts);
-
-            use ral::usb::USBSTS;
-            if usbsts & USBSTS::URI::mask != 0 {
-                PollResult::Reset
-            } else if usbsts & USBSTS::UI::mask != 0 {
-                trace!("========================");
-                trace!(
-                    "ENDPTCOMPLETE {:08X}",
-                    ral::read_reg!(ral::usb, usb.usb, ENDPTCOMPLETE)
-                );
-                trace!(
-                    "ENDPTSETUPSTAT {:08X}",
-                    ral::read_reg!(ral::usb, usb.usb, ENDPTSETUPSTAT)
-                );
-                // Note: could be complete in one register read, but this is a little
-                // easier to read...
-                let ep_out = ral::read_reg!(ral::usb, usb.usb, ENDPTCOMPLETE, ERCE);
-
-                let ep_in_complete = ral::read_reg!(ral::usb, usb.usb, ENDPTCOMPLETE, ETCE);
-                ral::write_reg!(ral::usb, usb.usb, ENDPTCOMPLETE, ETCE: ep_in_complete);
-
-                let ep_setup = ral::read_reg!(ral::usb, usb.usb, ENDPTSETUPSTAT) as u16;
-
-                PollResult::Data {
-                    ep_out: ep_out as u16,
-                    ep_in_complete: ep_in_complete as u16,
-                    ep_setup,
-                }
-            } else {
-                PollResult::None
-            }
-        })
+        self.with_usb_mut(|usb| usb.poll())
     }
 }

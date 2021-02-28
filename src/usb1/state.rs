@@ -1,6 +1,6 @@
 //! Static state that's 'owned' by a USB instance
 
-use super::QH_COUNT;
+use crate::QH_COUNT;
 use crate::{qh, ral, td};
 
 /// A list of transfer descriptors
