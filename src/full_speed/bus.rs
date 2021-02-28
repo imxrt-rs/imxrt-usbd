@@ -40,7 +40,7 @@ use usb_device::{
 /// your USB class' documentation for details. This example also skips the clock initialization.
 ///
 /// ```no_run
-/// use imxrt_usbd::usb1::BusAdapter;
+/// use imxrt_usbd::full_speed::BusAdapter;
 /// use imxrt_ral::{usb, usbphy};
 ///
 /// static mut ENDPOINT_MEMORY: [u8; 1024] = [0; 1024];
