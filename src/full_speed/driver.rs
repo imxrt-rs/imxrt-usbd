@@ -111,9 +111,20 @@ impl FullSpeed {
         ral::modify_reg!(ral::usb, self.usb, PORTSC1, PFSC: 1);
 
         ral::modify_reg!(ral::usb, self.usb, USBSTS, |usbsts| usbsts);
+        // Disable interrupts by default
         ral::write_reg!(ral::usb, self.usb, USBINTR, 0);
 
         state::assign_endptlistaddr(&self.usb);
+    }
+
+    /// Enable (`true`) or disable (`false`) USB interrupts
+    pub fn set_interrupts(&mut self, interrupts: bool) {
+        if interrupts {
+            // Keep this in sync with the poll() behaviors
+            ral::write_reg!(ral::usb, self.usb, USBINTR, UE: 1, URE: 1);
+        } else {
+            ral::write_reg!(ral::usb, self.usb, USBINTR, 0);
+        }
     }
 
     pub fn set_address(&mut self, address: u8) {

@@ -110,6 +110,11 @@ impl BusAdapter {
         }
     }
 
+    /// Enable (`true`) or disable (`false`) interrupts for this USB peripheral
+    pub fn set_interrupts(&self, interrupts: bool) {
+        self.with_usb_mut(|usb| usb.set_interrupts(interrupts));
+    }
+
     /// Interrupt-safe, immutable access to the USB peripheral
     fn with_usb<R>(&self, func: impl FnOnce(&FullSpeed) -> R) -> R {
         interrupt::free(|cs| {
