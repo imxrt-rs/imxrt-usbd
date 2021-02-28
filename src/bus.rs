@@ -11,6 +11,70 @@ use usb_device::{
     UsbDirection,
 };
 
+/// A `UsbBus` implementation
+///
+/// After you set up your [`USB`](crate::USB) handle, you can create a `Bus`
+/// and supply that as the implementation of your `usb-device` device.
+///
+/// # Requirements
+///
+/// When you build your final `usb-device`, you must set the endpoint 0 max packet
+/// size to 64 bytes. See the `UsbDeviceBuilder::max_packet_size_0` for more information.
+/// Failure to increase the control endpoint max packet size will result in a USB device
+/// that cannot communicate with the host.
+///
+/// Additionally, before polling for USB class traffic, you must call [`configure()`](Bus::configure())
+/// *after* your device has been configured. This can be accomplished by polling the USB
+/// device and checking its state until it's been configured. Once configured, use `UsbDevice::bus()`
+/// to access the i.MX RT `Bus`, and call `configure()`. You should only do this once.
+/// after that, you may poll for class traffic.
+///
+/// # Example
+///
+/// This example shows you how to create a `Bus`, build a simple USB device, and
+/// prepare the device for class traffic. It assumes that you're familiar with how
+/// to initialize a [`USB`](crate::USB) driver.
+///
+/// Note that this example does not demonstrate USB class allocation or polling. See
+/// your USB class' documentation for details.
+///
+/// ```no_run
+/// # use imxrt_usb::USB;
+/// # use imxrt_ral::{usb, usbphy};
+/// // From the USB example...
+/// let usb = USB::new(
+///     usb::USB1::take().unwrap(),
+///     usbphy::USBPHY1::take().unwrap(),
+/// );
+///
+/// // Construct the bus...
+/// use imxrt_usb::Bus;
+/// let bus = Bus::new(usb);
+///
+/// // Create the USB device...
+/// use usb_device::prelude::*;
+/// let bus_allocator = usb_device::bus::UsbBusAllocator::new(bus);
+/// let mut device = UsbDeviceBuilder::new(&bus_allocator, UsbVidPid(0x5824, 0x27dd))
+///     .product("imxrt-usb")
+///     .max_packet_size_0(64) // <---- Set the control OUT/IN max packet size to 64
+///     // Other builder methods...
+///     .build();
+///
+/// // Poll until configured...
+/// loop {
+///     if device.poll(&mut []) {
+///         let state = device.state();
+///         if state == usb_device::device::UsbDeviceState::Configured {
+///             break;
+///         }
+///     }
+/// }
+///
+/// // Configure the bus
+/// device.bus().configure();
+///
+/// // Ready for class traffic!
+/// ```
 pub struct Bus {
     usb: Mutex<RefCell<USB>>,
 }
@@ -41,7 +105,10 @@ impl Bus {
         })
     }
 
-    /// Invoke `configure()` once the USB device indicates that it's been configured
+    /// Apply device configurations, and perform other post-configuration actions
+    ///
+    /// You must invoke this once, and only after your device has been configured. See
+    /// the top-level example for how this could be achieved.
     pub fn configure(&self) {
         self.with_usb_mut(|usb| {
             usb.enable_endpoints();

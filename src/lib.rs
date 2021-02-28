@@ -1,3 +1,44 @@
+//! A USB driver for i.MX RT processors
+//!
+//! `imxrt-usb` provides a [`usb-device`] USB bus implementation, allowing you
+//! to add USB device features to your embedded Rust program. The package
+//! supports all of the i.MX RT chips available in the [`imxrt-ral`] register
+//! access layer.
+//!
+//! # Build
+//!
+//! `imxrt-usb` will not build in isolation. It requires that an [`imxrt-ral`]
+//! chip-specific feature is enabled in your dependency chain. If that `imxrt-ral`
+//! feature is *any* of the following features,
+//!
+//! - `"imxrt1051"`
+//! - `"imxrt1052"`
+//! - `"imxrt1061"`
+//! - `"imxrt1062"`
+//!
+//! then you **must** enable this crate's `"double-instance"` feature to properly
+//! support the two available USB instances. Failure to specify features will
+//! result in a failed build.
+//!
+//! # Usage
+//!
+//! This library currently focuses on the `usb-device` USB bus implementation,
+//! so there are not many i.MX RT device-specific features exposed from this
+//! API. Here's how to get started with `usb-device` support.
+//!
+//! 1. Depend on this crate, the `usb-device` crate, and a USB class crate that
+//!    supports `usb-device`.
+//! 2. Instantiate a [`USB`](USB) driver from the `imxrt-ral` USB instances. See
+//!    the `USB` docs for more information.
+//! 3. Wrap your `USB` instance in a [`Bus`](Bus), which implements the USB bus
+//!    trait
+//! 4. Supply your `Bus` to the `usb-device` devices.
+//!
+//! See the [`USB`] and [`Bus`] documentation for requirements and examples.
+//!
+//! [`imxrt-ral`]: https://crates.io/crates/imxrt-ral
+//! [`usb-device`]: https://crates.io/crates/usb-device
+
 #![no_std]
 
 #[macro_use]
@@ -38,15 +79,15 @@ fn index(ep_addr: EndpointAddress) -> usize {
 /// - supply endpoint memory with [`set_endpoint_memory()`](USB::set_endpoint_memory)
 ///
 /// After that, you should wrap it with a [`Bus`](crate::Bus), and combine the bus with the `usb_device`
-/// interfaces.
+/// APIs.
 ///
 /// # Example
 ///
-/// This example shows a bare-minimum setup for the USB driver on an i.MX RT 1062:
+/// This example shows a bare-minimum setup for the USB driver on an i.MX RT 1062 processor.
 ///
 /// ```no_run
 /// use imxrt_usb::USB;
-/// use imxrt_ral::{usb, usbphy, ccm_analog};
+/// use imxrt_ral::{usb, usbphy, ccm, ccm_analog};
 ///
 /// static mut ENDPOINT_MEMORY: [u8; 1024] = [0; 1024];
 ///
@@ -56,11 +97,19 @@ fn index(ep_addr: EndpointAddress) -> usize {
 /// );
 ///
 /// let ccm_analog = ccm_analog::CCM_ANALOG::take().unwrap();
+/// let ccm = ccm::CCM::take().unwrap();
+///
+/// // Enable the USB1 clock gates
+/// imxrt_ral::modify_reg!(ccm, ccm, CCGR6, CG1: 0b11, CG0: 0b11);
 /// usb.initialize(&ccm_analog);
 ///
 /// unsafe {
+///     // Safety: guarantee that we won't use ENDPOINT_MEMORY
+///     // for anything else.
 ///     usb.set_endpoint_memory(&mut ENDPOINT_MEMORY);
 /// }
+///
+/// // Construct the Bus...
 pub struct USB {
     endpoints: [Option<Endpoint>; QH_COUNT],
     usb: ral::usb::Instance,
@@ -79,12 +128,6 @@ impl USB {
     /// # Panics
     ///
     /// Panics if the `usb` instance and the `phy` instances are mismatched.
-    ///
-    /// # Safety
-    ///
-    /// `new` is safe, since there is only one safe way to obtain the two
-    /// required instances from the RAL. But, if you use the RAL unsafely,
-    /// the behavior in `USB` is undefined.
     pub fn new(usb: ral::usb::Instance, phy: ral::usbphy::Instance) -> Self {
         // Safety: taking static memory. Assumes that the provided
         // USB instance is a singleton, which is the only safe way for it
@@ -111,12 +154,20 @@ impl USB {
         }
     }
 
-    /// Set the region of memory that can be used for transfers with endpoints
+    /// Set the region of memory that can be used for endpoint I/O
+    ///
+    /// This memory will be shared across all endpoints. you should size it
+    /// to support all the endpoints that might be allocated by your USB classes.
+    ///
+    /// After this call, `USB` assumes that it's the sole owner of `buffer`.
+    /// You assume the `unsafe`ty to make that true.
     pub fn set_endpoint_memory(&mut self, buffer: &'static mut [u8]) {
         self.buffer_allocator = buffer::Allocator::new(buffer);
     }
 
-    /// Initialize all USB physical, analog clocks, and core registers.
+    /// Initialize the USB physical layer, the analog clocks, and the USB
+    /// core registers
+    ///
     /// Assumes that the CCM clock gates are enabled.
     ///
     /// You **must** call this once, before creating the complete USB
