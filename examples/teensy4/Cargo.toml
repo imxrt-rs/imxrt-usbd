@@ -1,12 +1,12 @@
 [package]
-name = "imxrt-usb-examples-teensy4"
+name = "imxrt-usbd-examples-teensy4"
 version = "0.1.0"
 authors = ["Ian McIntyre <ianpmcintyre@gmail.com>"]
 edition = "2018"
 publish = false  # This is an example package
 
 # The library we're demonstrating
-[dependencies.imxrt-usb]
+[dependencies.imxrt-usbd]
 path = "../../"
 features = [
     "double-instance",  # Required to pair with imxrt-[hal|ral]/imxrt1062

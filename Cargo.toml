@@ -1,5 +1,5 @@
 [package]
-name = "imxrt-usb"
+name = "imxrt-usbd"
 version = "0.1.0"
 authors = ["Ian McIntyre <ianpmcintyre@gmail.com>"]
 edition = "2018"
@@ -24,7 +24,7 @@ version = "0.4"
 
 [features]
 # Signals that your i.MX RT has two USB instances. This
-# affects how imxrt-usb use imxrt-ral.
+# affects how imxrt-usbd use imxrt-ral.
 #
 # You must enable this feature when your dependency graph
 # includes any of these imxrt-ral features:

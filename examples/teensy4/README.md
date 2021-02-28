@@ -1,11 +1,11 @@
-# imxrt-usb examples for the Teensy 4
+# imxrt-usbd examples for the Teensy 4
 
 The programs in this package run on a Teensy 4 (4.0 and 4.1), and demonstrate
-how to use `imxrt-usb` on an embedded system.
+how to use `imxrt-usbd` on an embedded system.
 
 ## Dependencies
 
-You'll need all of the dependencies for the `imxrt-usb` project. See the
+You'll need all of the dependencies for the `imxrt-usbd` project. See the
 project documentation for more details.
 
 You'll also need

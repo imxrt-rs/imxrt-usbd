@@ -3,7 +3,7 @@
 //! on your Teensy 4. You should observe
 //!
 //! - the LED turns on
-//! - a USB device, product string "imxrt-usb," connected to
+//! - a USB device, product string "imxrt-usbd," connected to
 //!   your system
 //!
 //! This example also instruments lightweight logging on UART2,
@@ -57,7 +57,7 @@ fn main() -> ! {
 
     let bus = usb_device::bus::UsbBusAllocator::new(bus_adapter);
     let mut device = UsbDeviceBuilder::new(&bus, UsbVidPid(0x5824, 0x27dd))
-        .product("imxrt-usb")
+        .product("imxrt-usbd")
         .max_packet_size_0(64)
         .build();
 

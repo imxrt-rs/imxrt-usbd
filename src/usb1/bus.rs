@@ -40,7 +40,7 @@ use usb_device::{
 /// your USB class' documentation for details. This example also skips the clock initialization.
 ///
 /// ```no_run
-/// use imxrt_usb::usb1::BusAdapter;
+/// use imxrt_usbd::usb1::BusAdapter;
 /// use imxrt_ral::{usb, usbphy};
 ///
 /// static mut ENDPOINT_MEMORY: [u8; 1024] = [0; 1024];
@@ -57,7 +57,7 @@ use usb_device::{
 /// use usb_device::prelude::*;
 /// let bus_allocator = usb_device::bus::UsbBusAllocator::new(bus_adapter);
 /// let mut device = UsbDeviceBuilder::new(&bus_allocator, UsbVidPid(0x5824, 0x27dd))
-///     .product("imxrt-usb")
+///     .product("imxrt-usbd")
 ///     .max_packet_size_0(64) // <---- Set the control OUT/IN max packet size to 64
 ///     // Other builder methods...
 ///     .build();

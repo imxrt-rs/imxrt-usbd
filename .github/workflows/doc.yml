@@ -22,7 +22,7 @@ jobs:
       run: cargo rustdoc --features imxrt-ral/imxrt1062 --features double-instance --target thumbv7em-none-eabihf
 
     - name: Write redirect
-      run: echo "<meta http-equiv=\"refresh\" content=\"0;url=imxrt_usb\">" > target/thumbv7em-none-eabihf/doc/index.html
+      run: echo "<meta http-equiv=\"refresh\" content=\"0;url=imxrt_usbd\">" > target/thumbv7em-none-eabihf/doc/index.html
 
     - name: Deploy to GitHub pages
       uses: peaceiris/actions-gh-pages@v3

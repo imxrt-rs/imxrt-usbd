@@ -78,7 +78,7 @@ fn main() -> ! {
 
     let mut serial = usbd_serial::SerialPort::new(&bus);
     let mut device = UsbDeviceBuilder::new(&bus, UsbVidPid(0x5824, 0x27dd))
-        .product("imxrt-usb")
+        .product("imxrt-usbd")
         .max_packet_size_0(64)
         .device_class(usbd_serial::USB_CLASS_CDC)
         .build();
