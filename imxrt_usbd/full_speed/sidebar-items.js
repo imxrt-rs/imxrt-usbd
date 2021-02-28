@@ -1,0 +1,1 @@
+initSidebarItems({"struct":[["BusAdapter","A `UsbBus` implementation"]]});

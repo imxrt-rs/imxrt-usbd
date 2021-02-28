@@ -1,0 +1,49 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="API documentation for the Rust `full_speed` mod in crate `imxrt_usbd`."><meta name="keywords" content="rust, rustlang, rust-lang, full_speed"><title>imxrt_usbd::full_speed - Rust</title><link rel="stylesheet" type="text/css" href="../../normalize.css"><link rel="stylesheet" type="text/css" href="../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../light.css"  id="themeStyle"><link rel="stylesheet" type="text/css" href="../../dark.css" disabled ><link rel="stylesheet" type="text/css" href="../../ayu.css" disabled ><script id="default-settings"></script><script src="../../storage.js"></script><noscript><link rel="stylesheet" href="../../noscript.css"></noscript><link rel="icon" type="image/svg+xml" href="../../favicon.svg">
+<link rel="alternate icon" type="image/png" href="../../favicon-16x16.png">
+<link rel="alternate icon" type="image/png" href="../../favicon-32x32.png"><style type="text/css">#crate-search{background-image:url("../../down-arrow.svg");}</style></head><body class="rustdoc mod"><!--[if lte IE 8]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="sidebar-menu">&#9776;</div><a href='../../imxrt_usbd/index.html'><div class='logo-container rust-logo'><img src='../../rust-logo.png' alt='logo'></div></a><p class="location">Module full_speed</p><div class="sidebar-elems"><div class="block items"><ul><li><a href="#structs">Structs</a></li></ul></div><p class="location"><a href="../index.html">imxrt_usbd</a></p><script>window.sidebarCurrent = {name: "full_speed", ty: "mod", relpath: "../"};</script><script defer src="../sidebar-items.js"></script></div></nav><div class="theme-picker"><button id="theme-picker" aria-label="Pick another theme!" aria-haspopup="menu"><img src="../../brush.svg" width="18" alt="Pick another theme!"></button><div id="theme-choices" role="menu"></div></div><script src="../../theme.js"></script><nav class="sub"><form class="search-form"><div class="search-container"><div><select id="crate-search"><option value="All crates">All crates</option></select><input class="search-input" name="search" disabled autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"></div><button type="button" class="help-button">?</button>
+                <a id="settings-menu" href="../../settings.html"><img src="../../wheel.svg" width="18" alt="Change settings"></a></div></form></nav><section id="main" class="content"><h1 class="fqn"><span class="out-of-band"><span id="render-detail"><a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">[<span class="inner">&#x2212;</span>]</a></span><a class="srclink" href="../../src/imxrt_usbd/full_speed.rs.html#1-63" title="goto source code">[src]</a></span><span class="in-band">Module <a href="../index.html">imxrt_usbd</a>::<wbr><a class="mod" href="">full_speed</a></span></h1><div class="docblock"><p>A USB1 full-speed i.MX RT driver, supporting the <code>usb-device</code> ecosystem</p>
+<h1 id="usage" class="section-header"><a href="#usage">Usage</a></h1>
+<ol>
+<li>Depend on this crate, the <code>usb-device</code> crate, a USB class crate that
+supports <code>usb-device</code>, and <a href="https://crates.io/crates/imxrt-ral"><code>imxrt-ral</code></a>.</li>
+<li>Create a <code>BusAdapter</code> from <code>imxrt-ral</code> USB instances.</li>
+<li>Use the <code>BusAdapter</code> with <code>usb-device</code>,</li>
+</ol>
+<p>See the <a href="../../imxrt_usbd/full_speed/struct.BusAdapter.html" title="BusAdapter"><code>BusAdapter</code></a> documentation for requirements and examples.</p>
+<h1 id="design" class="section-header"><a href="#design">Design</a></h1>
+<p>This section talks about the full-speed driver design. It assumes that
+you're familiar with the details of the i.MX RT USB peripheral. If you
+just want to use the driver, you can skip this section.</p>
+<h2 id="packets-and-transfers" class="section-header"><a href="#packets-and-transfers">Packets and transfers</a></h2>
+<p>All i.MX RT USB drivers manage queue heads (QH), and transfer
+descriptors (TD). For the full-speed driver, each (QH) is assigned
+only one (TD) to perform I/O. We then assume each TD describes a single
+packet. This is simple to implement, but it means that the full-speed
+driver can only have one packet in flight per endpoint. You're expected
+to quickly respond to <code>poll()</code> outputs, and schedule the next transfer
+in the time required for full-speed devices.</p>
+<p>We do this because that's the behaviors expected by the <code>usb-device</code>
+implementation. Specifically, <code>UsbBus::read()</code> and <code>write()</code> are expected
+to send <em>packets</em>. Furthermore, <code>UsbBus::poll()</code> is expected to signal
+<em>packet</em> completion. Although a TD can describe a transfer of <em>N</em> packets,
+we cannot know how many packets to associate with each transfer without
+implementing our own state machine.</p>
+<p>This detail reveals why we must increase the max packet size for the
+control endpoint. Consider a <code>GET_DESCRIPTOR</code> device request that expects
+18 bytes, and a control endpoint that supports a max packet size of 8 bytes.
+The USB device will call <code>write()</code> three times to send 3 packets. To properly
+relay the data to the host, we would need to buffer the 18 bytes, then
+schedule a single TD to send the 3 packets. However, supporting this would
+complicate the driver, and we might be tricking the USB device into thinking
+we actually sent the data. Instead, we simplify the driver, and require one packet
+per TD. This works until you need to send more than 64 bytes to satsify an EP0
+IN data phase, so we're betting that won't happen.</p>
+<h2 id="future-work" class="section-header"><a href="#future-work">Future work</a></h2>
+<p>This design does not take advangate of the high-speed driver design available
+in i.MX RT processors. Although the only difference between high- and full-speed
+is the data bandwidth, we've not tested high-speed I/O with this design, and we will
+not support it. Therefore, the full-speed driver restricts the potential of the
+bus. A future high-speed driver should account for these limitations.</p>
+</div><h2 id="structs" class="section-header"><a href="#structs">Structs</a></h2>
+<table><tr class="module-item"><td><a class="struct" href="struct.BusAdapter.html" title="imxrt_usbd::full_speed::BusAdapter struct">BusAdapter</a></td><td class="docblock-short"><p>A <code>UsbBus</code> implementation</p>
+</td></tr></table></section><section id="search" class="content hidden"></section><section class="footer"></section><script>window.rootPath = "../../";window.currentCrate = "imxrt_usbd";</script><script src="../../main.js"></script><script defer src="../../search-index.js"></script></body></html>
