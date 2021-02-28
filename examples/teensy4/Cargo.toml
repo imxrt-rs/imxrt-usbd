@@ -63,3 +63,10 @@ path = "src/serial.rs"
 [lib]
 name = "support"
 path = "src/support.rs"
+
+[[bin]]
+name = "test_class"
+path = "src/test_class.rs"
+
+[patch.crates-io.usb-device]
+path = "../../../usb-device"
