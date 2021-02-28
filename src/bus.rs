@@ -13,7 +13,7 @@ use usb_device::{
 
 /// A `UsbBus` implementation
 ///
-/// After you set up your [`USB`](crate::USB) handle, you can create a `Bus`
+/// After you set up your [`USB`](crate::USB) handle, you can create a `BusAdapter`
 /// and supply that as the implementation of your `usb-device` device.
 ///
 /// # Requirements
@@ -23,15 +23,15 @@ use usb_device::{
 /// Failure to increase the control endpoint max packet size will result in a USB device
 /// that cannot communicate with the host.
 ///
-/// Additionally, before polling for USB class traffic, you must call [`configure()`](Bus::configure())
+/// Additionally, before polling for USB class traffic, you must call [`configure()`](BusAdapter::configure())
 /// *after* your device has been configured. This can be accomplished by polling the USB
 /// device and checking its state until it's been configured. Once configured, use `UsbDevice::bus()`
-/// to access the i.MX RT `Bus`, and call `configure()`. You should only do this once.
+/// to access the i.MX RT `BusAdapter`, and call `configure()`. You should only do this once.
 /// after that, you may poll for class traffic.
 ///
 /// # Example
 ///
-/// This example shows you how to create a `Bus`, build a simple USB device, and
+/// This example shows you how to create a `BusAdapter`, build a simple USB device, and
 /// prepare the device for class traffic. It assumes that you're familiar with how
 /// to initialize a [`USB`](crate::USB) driver.
 ///
@@ -48,12 +48,12 @@ use usb_device::{
 /// );
 ///
 /// // Construct the bus...
-/// use imxrt_usb::Bus;
-/// let bus = Bus::new(usb);
+/// use imxrt_usb::BusAdapter;
+/// let bus_adapter = BusAdapter::new(usb);
 ///
 /// // Create the USB device...
 /// use usb_device::prelude::*;
-/// let bus_allocator = usb_device::bus::UsbBusAllocator::new(bus);
+/// let bus_allocator = usb_device::bus::UsbBusAllocator::new(bus_adapter);
 /// let mut device = UsbDeviceBuilder::new(&bus_allocator, UsbVidPid(0x5824, 0x27dd))
 ///     .product("imxrt-usb")
 ///     .max_packet_size_0(64) // <---- Set the control OUT/IN max packet size to 64
@@ -75,16 +75,16 @@ use usb_device::{
 ///
 /// // Ready for class traffic!
 /// ```
-pub struct Bus {
+pub struct BusAdapter {
     usb: Mutex<RefCell<USB>>,
 }
 
-impl Bus {
+impl BusAdapter {
     /// Create a USB bus adapter from a `USB` object
     ///
-    /// Make sure you've fully configured your USB device before wrapping it in `Bus`.
+    /// Make sure you've fully configured your USB device before wrapping it in the adapter.
     pub fn new(usb: USB) -> Self {
-        Bus {
+        BusAdapter {
             usb: Mutex::new(RefCell::new(usb)),
         }
     }
@@ -117,7 +117,7 @@ impl Bus {
     }
 }
 
-impl UsbBus for Bus {
+impl UsbBus for BusAdapter {
     /// The USB hardware can guarantee that we set the status before we receive
     /// the status, and we're taking advantage of that. We expect this flag to
     /// result in a call to set_address before the status happens. This means

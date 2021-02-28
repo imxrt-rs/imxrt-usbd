@@ -61,7 +61,7 @@ fn main() -> ! {
     usb.initialize(ccm_analog);
     support::set_endpoint_memory(&mut usb);
 
-    let bus_adapter = imxrt_usb::Bus::new(usb);
+    let bus_adapter = imxrt_usb::BusAdapter::new(usb);
     let bus = usb_device::bus::UsbBusAllocator::new(bus_adapter);
     let mut device = UsbDeviceBuilder::new(&bus, UsbVidPid(0x5824, 0x27dd))
         .product("imxrt-usb")

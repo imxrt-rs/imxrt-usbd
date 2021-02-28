@@ -30,11 +30,11 @@
 //!    supports `usb-device`.
 //! 2. Instantiate a [`USB`](USB) driver from the `imxrt-ral` USB instances. See
 //!    the `USB` docs for more information.
-//! 3. Wrap your `USB` instance in a [`Bus`](Bus), which implements the USB bus
+//! 3. Wrap your `USB` instance in a [`BusAdapter`](BusAdapter), which implements the USB bus
 //!    trait
-//! 4. Supply your `Bus` to the `usb-device` devices.
+//! 4. Supply your `BusAdapter` to the `usb-device` devices.
 //!
-//! See the [`USB`] and [`Bus`] documentation for requirements and examples.
+//! See the [`USB`] and [`BusAdapter`] documentation for requirements and examples.
 //!
 //! [`imxrt-ral`]: https://crates.io/crates/imxrt-ral
 //! [`usb-device`]: https://crates.io/crates/usb-device
@@ -53,7 +53,7 @@ mod ral;
 mod td;
 mod vcell;
 
-pub use bus::Bus;
+pub use bus::BusAdapter;
 
 use endpoint::{Endpoint, Status};
 use usb_device::{
@@ -78,8 +78,8 @@ fn index(ep_addr: EndpointAddress) -> usize {
 /// - call [`initialize()`](USB::initialize) once
 /// - supply endpoint memory with [`set_endpoint_memory()`](USB::set_endpoint_memory)
 ///
-/// After that, you should wrap it with a [`Bus`](crate::Bus), and combine the bus with the `usb_device`
-/// APIs.
+/// After that, you should wrap it with a [`BusAdapter`](crate::BusAdapter), and combine the bus
+/// with the `usb_device` APIs.
 ///
 /// # Example
 ///
