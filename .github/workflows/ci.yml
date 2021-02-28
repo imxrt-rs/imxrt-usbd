@@ -1,0 +1,123 @@
+name: CI
+
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+
+jobs:
+
+  # Ensure Rust code formatting is consistent across all source code
+  #
+  # This checks the main library, and all examples.
+  format:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+    - run: rustup component add rustfmt
+    - name: Check library formatting
+      uses: actions-rs/cargo@v1
+      with:
+        command: fmt
+        args: --verbose --all -- --check
+    - name: Check examples/teensy4 formatting
+      uses: actions-rs/cargo@v1
+      with:
+        command: fmt
+        args: --manifest-path examples/teensy4/Cargo.toml --verbose --all -- --check
+  
+  # For each chip, build and lint the main library
+  clippy:
+    strategy:
+      matrix:
+        features:
+        - "imxrt-ral/imxrt1011"
+        - "imxrt-ral/imxrt1015"
+        - "imxrt-ral/imxrt1021"
+        - "imxrt-ral/imxrt1051,double-instance"
+        - "imxrt-ral/imxrt1052,double-instance"
+        - "imxrt-ral/imxrt1061,double-instance"
+        - "imxrt-ral/imxrt1062,double-instance"
+        - "imxrt-ral/imxrt1062,double-instance,__log"
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+    - uses: actions-rs/toolchain@v1
+      with:
+        toolchain: stable
+        components: clippy
+        target: thumbv7em-none-eabihf
+        override: true
+        profile: minimal
+    - uses: actions-rs/clippy-check@v1
+      with:
+        token: ${{ secrets.GITHUB_TOKEN }}
+        args: --verbose --features ${{ matrix.features }} --target thumbv7em-none-eabihf -- -D warnings
+        name: Lint the library
+
+  # Run unit and documentation tests for a chip
+  #
+  # Documentation tests currently assume a "double-instance" chip
+  test:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+    - name: Run unit and documentation tests
+      uses: actions-rs/cargo@v1
+      with:
+        command: test
+        args: --verbose --features imxrt-ral/imxrt1062 --features double-instance
+
+  # Build & lint the teensy4 examples
+  teensy4-clippy:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+    - uses: actions-rs/toolchain@v1
+      with:
+        toolchain: stable
+        components: clippy
+        target: thumbv7em-none-eabihf
+        override: true
+        profile: minimal
+    - uses: actions-rs/clippy-check@v1
+      with:
+        token: ${{ secrets.GITHUB_TOKEN }}
+        args: --manifest-path examples/teensy4/Cargo.toml --verbose --target thumbv7em-none-eabihf -- -D warnings
+        name: Lint the teensy4 examples
+
+  # Ensure that the Teensy 4 examples build across all hosts
+  teensy4-xplat:
+    strategy:
+      matrix:
+        host: [ macos-latest, ubuntu-latest, windows-latest ]
+    runs-on: ${{ matrix.host }}
+    steps:
+    - uses: actions/checkout@v2
+    - uses: actions-rs/toolchain@v1
+      with:
+          profile: minimal
+          toolchain: stable
+          target: thumbv7em-none-eabihf
+          override: true
+    - name: Build examples/teensy4 for ${{ matrix.os }}
+      uses: actions-rs/cargo@v1
+      env:
+        RUSTFLAGS: -C link-arg=-Tlink.x
+      with:
+        command: build
+        args: --manifest-path examples/teensy4/Cargo.toml --verbose --target thumbv7em-none-eabihf
+
+  # Make sure documentation builds, and doclinks are valid
+  doc:
+    env:
+      RUSTDOCFLAGS: -D warnings
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+    - name: Check documentation and doclinks
+      uses: actions-rs/cargo@v1
+      with:
+        command: rustdoc
+        args: --features imxrt-ral/imxrt1062 --features double-instance
