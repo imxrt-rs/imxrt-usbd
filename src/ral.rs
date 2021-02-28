@@ -45,7 +45,7 @@ pub mod endpoint_control {
         pub use super::ral::usb::ENDPTCTRL1::*;
     }
 
-    pub fn register<'a>(usb: &'a ral::usb::Instance, endpoint: usize) -> EndptCtrl<'a> {
+    pub fn register(usb: &ral::usb::Instance, endpoint: usize) -> EndptCtrl {
         EndptCtrl {
             ENDPTCTRL: match endpoint {
                 0 => &usb.ENDPTCTRL0,
