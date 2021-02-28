@@ -177,7 +177,7 @@ impl USB {
     /// You **must** call this once, before creating the complete USB
     /// bus.
     pub fn initialize(&mut self, ccm_analog: &ral::ccm_analog::Instance) {
-        pll::initialize(ccm_analog);
+        pll::initialize(ccm_analog, &self.usb);
 
         ral::write_reg!(ral::usbphy, self.phy, CTRL_SET, SFTRST: 1);
         ral::write_reg!(ral::usbphy, self.phy, CTRL_CLR, SFTRST: 1);
