@@ -6,7 +6,6 @@
 #![allow(non_snake_case, non_upper_case_globals)]
 
 use crate::{ral, vcell::VCell};
-use core::cell::Cell;
 
 #[repr(C)]
 pub struct TD {
@@ -14,7 +13,7 @@ pub struct TD {
     TOKEN: VCell<u32>,
     BUFFER_POINTERS: [VCell<u32>; 5],
     // Reserved memory for other information
-    last_transfer_size: Cell<usize>,
+    last_transfer_size: usize,
 }
 
 impl TD {
@@ -29,7 +28,7 @@ impl TD {
                 VCell::new(0),
                 VCell::new(0),
             ],
-            last_transfer_size: Cell::new(0),
+            last_transfer_size: 0,
         }
     }
 
@@ -40,7 +39,7 @@ impl TD {
     /// completes.
     pub fn set_buffer(&mut self, ptr: *mut u8, size: usize) {
         ral::modify_reg!(crate::td, self, TOKEN, TOTAL_BYTES: size as u32);
-        self.last_transfer_size.set(size);
+        self.last_transfer_size = size;
 
         if size != 0 {
             const PTR_ALIGNMENT: u32 = 4096;
@@ -54,7 +53,7 @@ impl TD {
                 self.BUFFER_POINTERS[idx].write(ptr);
             }
         } else {
-            for buffer_pointer in self.BUFFER_POINTERS.iter() {
+            for buffer_pointer in self.BUFFER_POINTERS.iter_mut() {
                 buffer_pointer.write(0);
             }
         }
@@ -63,7 +62,7 @@ impl TD {
     /// Returns the number of bytes transferred in the previous transfer
     pub fn bytes_transferred(&self) -> usize {
         let total_bytes = ral::read_reg!(crate::td, self, TOKEN, TOTAL_BYTES) as usize;
-        self.last_transfer_size.get() - total_bytes
+        self.last_transfer_size - total_bytes
     }
 
     /// Read the status of the current / previous transfer
@@ -170,22 +169,22 @@ mod test {
 
     #[test]
     fn status() {
-        let td = TD::new();
-        ral::write_reg!(super, &td, TOKEN, STATUS: u32::max_value());
+        let mut td = TD::new();
+        ral::write_reg!(super, &mut td, TOKEN, STATUS: u32::max_value());
         assert_eq!(td.TOKEN.read(), 0b11111111);
     }
 
     #[test]
     fn ioc() {
-        let td = TD::new();
-        ral::write_reg!(super, &td, TOKEN, IOC: u32::max_value());
+        let mut td = TD::new();
+        ral::write_reg!(super, &mut td, TOKEN, IOC: u32::max_value());
         assert_eq!(td.TOKEN.read(), 1 << 15);
     }
 
     #[test]
     fn total_bytes() {
-        let td = TD::new();
-        ral::write_reg!(super, &td, TOKEN, TOTAL_BYTES: u32::max_value());
+        let mut td = TD::new();
+        ral::write_reg!(super, &mut td, TOKEN, TOTAL_BYTES: u32::max_value());
         assert_eq!(td.TOKEN.read(), 0x7FFF << 16);
     }
 

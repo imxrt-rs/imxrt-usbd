@@ -1,9 +1,5 @@
 //! Static state that's 'owned' by a USB instance
 
-// This is really, really convenient. We'll allow this behavior
-// only in this module...
-#![allow(clippy::clippy::declare_interior_mutable_const)]
-
 use super::QH_COUNT;
 use crate::{qh, ral, td};
 
