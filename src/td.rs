@@ -98,6 +98,14 @@ impl TD {
     pub fn set_interrupt_on_complete(&mut self, ioc: bool) {
         ral::modify_reg!(crate::td, self, TOKEN, IOC: ioc as u32);
     }
+
+    /// Clean and invalidate this TD from DCache
+    pub fn clean_invalidate_dcache(&self) {
+        crate::cache::clean_invalidate_dcache_by_address(
+            &self as *const _ as usize,
+            core::mem::size_of_val(self),
+        );
+    }
 }
 
 bitflags::bitflags! {

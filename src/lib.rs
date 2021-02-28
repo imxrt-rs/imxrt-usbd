@@ -46,6 +46,7 @@ mod log;
 
 mod buffer;
 mod bus;
+mod cache;
 mod endpoint;
 mod pll;
 mod qh;

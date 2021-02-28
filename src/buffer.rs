@@ -103,6 +103,13 @@ impl Buffer {
     pub fn len(&self) -> usize {
         self.len
     }
+
+    /// Clean and invalidate at least `len` buffer from DCache
+    ///
+    /// Cleans at most `len()` bytes.
+    pub fn clean_invalidate_dcache(&self, len: usize) {
+        crate::cache::clean_invalidate_dcache_by_address(self.ptr as usize, self.len.min(len));
+    }
 }
 
 #[cfg(test)]

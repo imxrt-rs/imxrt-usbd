@@ -62,6 +62,14 @@ impl QH {
     pub fn set_interrupt_on_setup(&mut self, ios: bool) {
         ral::modify_reg!(crate::qh, self, CAPABILITIES, IOS: ios as u32);
     }
+
+    /// Clean and invalidate this QH from DCache
+    pub fn clean_invalidate_dcache(&self) {
+        crate::cache::clean_invalidate_dcache_by_address(
+            &self as *const _ as usize,
+            core::mem::size_of_val(self),
+        );
+    }
 }
 
 mod CAPABILITIES {

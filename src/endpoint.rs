@@ -130,7 +130,9 @@ impl Endpoint {
     /// by the max packet length.
     pub fn write(&mut self, buffer: &[u8]) -> usize {
         let size = self.qh.max_packet_len().min(buffer.len());
-        self.buffer.volatile_write(&buffer[..size])
+        let written = self.buffer.volatile_write(&buffer[..size]);
+        self.buffer.clean_invalidate_dcache(size);
+        written
     }
 
     /// Clear the complete bit for this endpoint
@@ -154,9 +156,11 @@ impl Endpoint {
         self.td.set_buffer(self.buffer.as_ptr_mut(), size);
         self.td.set_interrupt_on_complete(true);
         self.td.set_active();
+        self.td.clean_invalidate_dcache();
 
         self.qh.overlay_mut().set_next(self.td);
         self.qh.overlay_mut().clear_status();
+        self.qh.clean_invalidate_dcache();
 
         match self.address.direction() {
             UsbDirection::In => {
