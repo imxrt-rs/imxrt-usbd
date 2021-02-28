@@ -64,3 +64,19 @@ To test on **hardware**, either
 
 - use an existing example package, or
 - contribute a new example package for your system
+
+For **design** information, see the API docs. Most modules include a high-level
+blurb that talks about what's going on. There are also public-facing design
+documentation in some modules.
+
+If you'd like **references**, see
+
+- this [application note][an3631]. Although the AN is for a different
+  NXP processor, the USB driver design is the same.
+- the i.MX RT reference manuals, available from NXP. Go
+  [here][imx-rt-series], and select your processor. Then, go to
+  "Documentation," and scroll down to "Reference Manual." You'll need a free
+  NXP account to access the reference manuals.
+
+[an3631]: https://www.nxp.com/docs/en/application-note/AN3631.pdf
+[imx-rt-series]: https://www.nxp.com/products/processors-and-microcontrollers/arm-microcontrollers/i-mx-rt-crossover-mcus:IMX-RT-SERIES
