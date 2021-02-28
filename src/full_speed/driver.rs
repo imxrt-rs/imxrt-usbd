@@ -120,6 +120,7 @@ impl FullSpeed {
         // See the "quirk" note in the UsbBus impl. We're using USBADRA to let
         // the hardware set the address before the status phase.
         ral::write_reg!(ral::usb, self.usb, DEVICEADDR, USBADR: address as u32, USBADRA: 1);
+        info!("ADDRESS {}", address);
     }
 
     pub fn attach(&mut self) {
@@ -144,6 +145,7 @@ impl FullSpeed {
             ral::read_reg!(ral::usb, self.usb, PORTSC1, PR == 1),
             "Took too long to handle bus reset"
         );
+        info!("RESET");
     }
 
     /// Check if the endpoint is valid
@@ -164,6 +166,7 @@ impl FullSpeed {
     pub fn ctrl0_read(&mut self, buffer: &mut [u8]) -> Result<usize, Status> {
         let ctrl_out = self.endpoints[0].as_mut().unwrap();
         if ctrl_out.has_setup(&self.usb) && buffer.len() >= 8 {
+            debug!("EP0 Out SETUP");
             let setup = ctrl_out.read_setup(&self.usb);
             buffer[..8].copy_from_slice(&setup.to_le_bytes());
 
@@ -180,6 +183,7 @@ impl FullSpeed {
             ctrl_out.clear_nack(&self.usb);
 
             let read = ctrl_out.read(buffer);
+            debug!("EP0 Out {}", read);
             let max_packet_len = ctrl_out.max_packet_len();
             ctrl_out.schedule_transfer(&self.usb, max_packet_len);
 
@@ -196,6 +200,7 @@ impl FullSpeed {
     /// Panics if EP0 IN isn't allocated, or if EP0 OUT isn't allocated.
     pub fn ctrl0_write(&mut self, buffer: &[u8]) -> Result<usize, Status> {
         let ctrl_in = self.endpoints[1].as_mut().unwrap();
+        debug!("EP1 In {}", buffer.len());
         ctrl_in.check_status()?;
 
         ctrl_in.clear_nack(&self.usb);
@@ -295,7 +300,8 @@ impl FullSpeed {
         let qh = self.qhs[index(addr)].take().unwrap();
         let td = self.tds[index(addr)].take().unwrap();
 
-        qh.set_max_packet_len(buffer.len());
+        let max_packet_size = buffer.len();
+        qh.set_max_packet_len(max_packet_size);
         qh.set_zero_length_termination(false);
         qh.set_interrupt_on_setup(
             EndpointType::Control == kind && addr.direction() == UsbDirection::Out,
@@ -307,6 +313,14 @@ impl FullSpeed {
         let mut ep = Endpoint::new(addr, qh, td, buffer);
         ep.initialize(&self.usb, kind);
         self.endpoints[index(addr)] = Some(ep);
+
+        info!(
+            "ALLOC EP{} {:?} {:?} {}",
+            addr.index(),
+            addr.direction(),
+            kind,
+            max_packet_size
+        );
     }
 
     /// Enable all non-zero endpoints, and schedule OUT transfers

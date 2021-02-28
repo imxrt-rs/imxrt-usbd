@@ -187,7 +187,6 @@ impl UsbBus for BusAdapter {
     fn set_device_address(&self, addr: u8) {
         self.with_usb_mut(|usb| {
             usb.set_address(addr);
-            debug!("ADDRESS {}", addr);
         });
     }
 
@@ -198,7 +197,6 @@ impl UsbBus for BusAdapter {
     fn reset(&self) {
         self.with_usb_mut(|usb| {
             usb.bus_reset();
-            debug!("RESET");
         });
     }
 
@@ -207,13 +205,6 @@ impl UsbBus for BusAdapter {
             if !usb.is_allocated(ep_addr) {
                 return Err(usb_device::UsbError::InvalidEndpoint);
             }
-
-            debug!(
-                "EP{} {:?} WRITE {}",
-                ep_addr.index(),
-                ep_addr.direction(),
-                buf.len()
-            );
 
             let written = if ep_addr.index() == 0 {
                 usb.ctrl0_write(buf)
@@ -239,13 +230,6 @@ impl UsbBus for BusAdapter {
             if !usb.is_allocated(ep_addr) {
                 return Err(usb_device::UsbError::InvalidEndpoint);
             }
-
-            debug!(
-                "EP{} {:?} READ {}",
-                ep_addr.index(),
-                ep_addr.direction(),
-                buf.len()
-            );
 
             let read = if ep_addr.index() == 0 {
                 usb.ctrl0_read(buf)

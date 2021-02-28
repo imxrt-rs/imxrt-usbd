@@ -10,7 +10,7 @@ publish = false  # This is an example package
 path = "../../"
 features = [
     "double-instance",  # Required to pair with imxrt-[hal|ral]/imxrt1062
-    # "__log"  # Only for driver development and debugging
+    "__log"  # Only for driver development and debugging
 ]
 
 # Supporting other hardware access, start-up
@@ -51,6 +51,7 @@ version = "0.2"
 # examples
 [dependencies.log]
 version = "0.4"
+features = ["release_max_level_info"]
 
 [[bin]]
 name = "configured"
