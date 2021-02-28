@@ -2,6 +2,9 @@
 //!
 //! The goal is to keep this somewhat agnostic from the usb-device
 //! bus behaviors, so that it could be used separately.
+//!
+//! The full-speed driver forces a full speed data rate. See the
+//! notes in the `initialize()` implementation.
 
 use super::{
     endpoint::{Endpoint, Status},
