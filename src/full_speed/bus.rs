@@ -1,6 +1,6 @@
 //! USB bus implementation
 
-use super::driver::USB1;
+use super::driver::FullSpeed;
 use crate::ral;
 use core::cell::RefCell;
 use core::convert::TryInto;
@@ -78,7 +78,7 @@ use usb_device::{
 /// // Ready for class traffic!
 /// ```
 pub struct BusAdapter {
-    usb: Mutex<RefCell<USB1>>,
+    usb: Mutex<RefCell<FullSpeed>>,
 }
 
 impl BusAdapter {
@@ -100,7 +100,7 @@ impl BusAdapter {
         phy: ral::usbphy::Instance,
         buffer: &'static mut [u8],
     ) -> Self {
-        let mut usb = USB1::new(usb, phy);
+        let mut usb = FullSpeed::new(usb, phy);
 
         usb.initialize();
         usb.set_endpoint_memory(buffer);
@@ -111,7 +111,7 @@ impl BusAdapter {
     }
 
     /// Interrupt-safe, immutable access to the USB peripheral
-    fn with_usb<R>(&self, func: impl FnOnce(&USB1) -> R) -> R {
+    fn with_usb<R>(&self, func: impl FnOnce(&FullSpeed) -> R) -> R {
         interrupt::free(|cs| {
             let usb = self.usb.borrow(cs);
             let usb = usb.borrow();
@@ -120,7 +120,7 @@ impl BusAdapter {
     }
 
     /// Interrupt-safe, mutable access to the USB peripheral
-    fn with_usb_mut<R>(&self, func: impl FnOnce(&mut USB1) -> R) -> R {
+    fn with_usb_mut<R>(&self, func: impl FnOnce(&mut FullSpeed) -> R) -> R {
         interrupt::free(|cs| {
             let usb = self.usb.borrow(cs);
             let mut usb = usb.borrow_mut();

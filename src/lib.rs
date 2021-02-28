@@ -35,7 +35,7 @@ mod ral;
 mod td;
 mod vcell;
 
-pub mod usb1;
+pub mod full_speed;
 
 /// Eight endpoints, two directions
 const QH_COUNT: usize = 8 * 2;

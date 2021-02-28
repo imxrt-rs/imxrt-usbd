@@ -23,14 +23,14 @@ fn index(ep_addr: EndpointAddress) -> usize {
     (ep_addr.index() * 2) + (UsbDirection::In == ep_addr.direction()) as usize
 }
 
-/// A USB1 driver
+/// A full-speed USB driver
 ///
-/// `USB1` itself doesn't provide much of an API. After you allocate a `USB1` with [`new()`](USB1::new),
+/// `FullSpeed` itself doesn't provide much of an API. After you allocate a `FullSpeed` with [`new()`](FullSpeed::new),
 /// you must
 ///
-/// - call [`initialize()`](USB1::initialize) once
+/// - call [`initialize()`](FullSpeed::initialize) once
 /// - supply endpoint memory with [`set_endpoint_memory()`](USB::set_endpoint_memory)
-pub struct USB1 {
+pub struct FullSpeed {
     endpoints: [Option<Endpoint>; QH_COUNT],
     usb: ral::usb::Instance,
     phy: ral::usbphy::Instance,
@@ -39,8 +39,8 @@ pub struct USB1 {
     buffer_allocator: buffer::Allocator,
 }
 
-impl USB1 {
-    /// Create a new `USB1` driver
+impl FullSpeed {
+    /// Create a new `FullSpeed` driver
     ///
     /// Creation does nothing except for assign static memory to the driver.
     /// After creating the driver, call [`initialize()`](USB::initialize).
@@ -63,7 +63,7 @@ impl USB1 {
                 }
                 _ => panic!("Mismatch USB and USBPHY"),
             };
-            USB1 {
+            FullSpeed {
                 endpoints: EP_INIT,
                 usb,
                 phy,
@@ -79,7 +79,7 @@ impl USB1 {
     /// This memory will be shared across all endpoints. you should size it
     /// to support all the endpoints that might be allocated by your USB classes.
     ///
-    /// After this call, `USB1` assumes that it's the sole owner of `buffer`.
+    /// After this call, `FullSpeed` assumes that it's the sole owner of `buffer`.
     /// You assume the `unsafe`ty to make that true.
     pub fn set_endpoint_memory(&mut self, buffer: &'static mut [u8]) {
         self.buffer_allocator = buffer::Allocator::new(buffer);

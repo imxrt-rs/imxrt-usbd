@@ -5,7 +5,7 @@
 //! 1. Depend on this crate, the `usb-device` crate, a USB class crate that
 //!    supports `usb-device`, and [`imxrt-ral`].
 //! 2. Create a `BusAdapter` from `imxrt-ral` USB instances.
-//! 4. Supply your `BusAdapter` to the `usb-device` devices.
+//! 4. Use the `BusAdapter` with `usb-device`,
 //!
 //! See the [`BusAdapter`] documentation for requirements and examples.
 //!

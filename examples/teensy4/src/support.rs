@@ -22,7 +22,7 @@ pub fn configure_led(pad: common::P13) -> LED {
 ///
 /// Panics if the USB1 and USBPHY1 imxrt-ral instances are
 /// already taken.
-pub fn new_bus_adapter() -> imxrt_usbd::usb1::BusAdapter {
+pub fn new_bus_adapter() -> imxrt_usbd::full_speed::BusAdapter {
     let usb = ral::usb::USB1::take().unwrap();
     let usbphy = ral::usbphy::USBPHY1::take().unwrap();
 
@@ -32,6 +32,6 @@ pub fn new_bus_adapter() -> imxrt_usbd::usb1::BusAdapter {
     unsafe {
         // Safety: With proper scoping and checks for singleton access, we ensure the memory is
         // only available to a single caller.
-        imxrt_usbd::usb1::BusAdapter::new(usb, usbphy, &mut ENDPOINT_MEMORY)
+        imxrt_usbd::full_speed::BusAdapter::new(usb, usbphy, &mut ENDPOINT_MEMORY)
     }
 }
