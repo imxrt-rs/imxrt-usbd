@@ -1,23 +1,11 @@
-use crate::{buffer::Buffer, qh::QH, ral, ral::endpoint_control, td::TD};
-use usb_device::{endpoint::EndpointAddress, UsbDirection};
-
-/// Endpoint transfer status
-pub type Status = crate::td::Status;
-
-impl core::convert::TryFrom<Status> for usb_device::UsbError {
-    type Error = ();
-    fn try_from(status: Status) -> Result<Self, ()> {
-        // Keep this implementation in sync with any changes in
-        // Endpoint::check_status()
-        if status.contains(Status::DATA_BUS_ERROR | Status::TRANSACTION_ERROR | Status::HALTED) {
-            Ok(usb_device::UsbError::InvalidState)
-        } else if status.contains(Status::ACTIVE) {
-            Ok(usb_device::UsbError::WouldBlock)
-        } else {
-            Err(())
-        }
-    }
-}
+use crate::{
+    buffer::Buffer,
+    qh::QH,
+    ral,
+    ral::endpoint_control,
+    td::{Status, TD},
+};
+use usb_device::{endpoint::EndpointAddress, UsbDirection, UsbError};
 
 /// A USB endpoint
 pub struct Endpoint {
@@ -42,14 +30,23 @@ impl Endpoint {
         }
     }
 
+    /// Indicates if the transfer descriptor is active
+    pub fn is_primed(&self, usb: &ral::usb::Instance) -> bool {
+        (match self.address.direction() {
+            UsbDirection::In => ral::read_reg!(ral::usb, usb, ENDPTSTAT, ETBR),
+            UsbDirection::Out => ral::read_reg!(ral::usb, usb, ENDPTSTAT, ERBR),
+        } & (1 << self.address.index()))
+            != 0
+    }
+
     /// Check for any transfer status, which is signaled through
     /// an error
-    pub fn check_status(&self) -> Result<(), Status> {
+    pub fn check_errors(&self) -> Result<(), UsbError> {
         let status = self.td.status();
-        if status.is_empty() {
-            Ok(())
+        if status.contains(Status::TRANSACTION_ERROR | Status::DATA_BUS_ERROR | Status::HALTED) {
+            Err(UsbError::InvalidState)
         } else {
-            Err(status)
+            Ok(())
         }
     }
 

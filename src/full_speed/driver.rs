@@ -6,15 +6,12 @@
 //! The full-speed driver forces a full speed data rate. See the
 //! notes in the `initialize()` implementation.
 
-use super::{
-    endpoint::{Endpoint, Status},
-    state,
-};
+use super::{endpoint::Endpoint, state};
 use crate::{buffer, qh, ral, td, QH_COUNT};
 use usb_device::{
     bus::PollResult,
     endpoint::{EndpointAddress, EndpointType},
-    UsbDirection,
+    UsbDirection, UsbError,
 };
 
 const EP_INIT: [Option<Endpoint>; QH_COUNT] = [
@@ -158,26 +155,29 @@ impl FullSpeed {
 
     /// Read either a setup, or a data buffer, from EP0 OUT
     ///
-    /// Return the status if there's a pending transaction, or an error.
-    ///
     /// # Panics
     ///
     /// Panics if EP0 OUT isn't allocated.
-    pub fn ctrl0_read(&mut self, buffer: &mut [u8]) -> Result<usize, Status> {
+    pub fn ctrl0_read(&mut self, buffer: &mut [u8]) -> Result<usize, UsbError> {
         let ctrl_out = self.endpoints[0].as_mut().unwrap();
         if ctrl_out.has_setup(&self.usb) && buffer.len() >= 8 {
             debug!("EP0 Out SETUP");
             let setup = ctrl_out.read_setup(&self.usb);
             buffer[..8].copy_from_slice(&setup.to_le_bytes());
 
-            ctrl_out.flush(&self.usb);
-            ctrl_out.clear_complete(&self.usb);
-            let max_packet_len = ctrl_out.max_packet_len();
-            ctrl_out.schedule_transfer(&self.usb, max_packet_len);
+            if !ctrl_out.is_primed(&self.usb) {
+                ctrl_out.clear_nack(&self.usb);
+                let max_packet_len = ctrl_out.max_packet_len();
+                ctrl_out.schedule_transfer(&self.usb, max_packet_len);
+            }
 
             Ok(8)
         } else {
-            ctrl_out.check_status()?;
+            ctrl_out.check_errors()?;
+
+            if ctrl_out.is_primed(&self.usb) {
+                return Err(UsbError::WouldBlock);
+            }
 
             ctrl_out.clear_complete(&self.usb);
             ctrl_out.clear_nack(&self.usb);
@@ -198,20 +198,23 @@ impl FullSpeed {
     /// # Panics
     ///
     /// Panics if EP0 IN isn't allocated, or if EP0 OUT isn't allocated.
-    pub fn ctrl0_write(&mut self, buffer: &[u8]) -> Result<usize, Status> {
+    pub fn ctrl0_write(&mut self, buffer: &[u8]) -> Result<usize, UsbError> {
         let ctrl_in = self.endpoints[1].as_mut().unwrap();
         debug!("EP1 In {}", buffer.len());
-        ctrl_in.check_status()?;
+        ctrl_in.check_errors()?;
+
+        if ctrl_in.is_primed(&self.usb) {
+            return Err(UsbError::WouldBlock);
+        }
 
         ctrl_in.clear_nack(&self.usb);
 
         let written = ctrl_in.write(buffer);
         ctrl_in.schedule_transfer(&self.usb, written);
 
-        if !buffer.is_empty() {
-            // Schedule an OUT transfer for the status phase...
-            let ctrl_out = self.endpoints[0].as_mut().unwrap();
-            ctrl_out.flush(&self.usb);
+        // Might need an OUT schedule for a status phase...
+        let ctrl_out = self.endpoints[0].as_mut().unwrap();
+        if !ctrl_out.is_primed(&self.usb) {
             ctrl_out.clear_complete(&self.usb);
             ctrl_out.clear_nack(&self.usb);
             ctrl_out.schedule_transfer(&self.usb, 0);
@@ -225,9 +228,13 @@ impl FullSpeed {
     /// # Panics
     ///
     /// Panics if the endpoint isn't allocated.
-    pub fn ep_read(&mut self, buffer: &mut [u8], addr: EndpointAddress) -> Result<usize, Status> {
+    pub fn ep_read(&mut self, buffer: &mut [u8], addr: EndpointAddress) -> Result<usize, UsbError> {
         let ep = self.endpoints[index(addr)].as_mut().unwrap();
-        ep.check_status()?;
+        ep.check_errors()?;
+
+        if ep.is_primed(&self.usb) {
+            return Err(UsbError::WouldBlock);
+        }
 
         ep.clear_complete(&self.usb);
         ep.clear_nack(&self.usb);
@@ -245,9 +252,13 @@ impl FullSpeed {
     /// # Panics
     ///
     /// Panics if the endpoint isn't allocated.
-    pub fn ep_write(&mut self, buffer: &[u8], addr: EndpointAddress) -> Result<usize, Status> {
+    pub fn ep_write(&mut self, buffer: &[u8], addr: EndpointAddress) -> Result<usize, UsbError> {
         let ep = self.endpoints[index(addr)].as_mut().unwrap();
-        ep.check_status()?;
+        ep.check_errors()?;
+
+        if ep.is_primed(&self.usb) {
+            return Err(UsbError::WouldBlock);
+        }
 
         ep.clear_nack(&self.usb);
 
@@ -345,6 +356,11 @@ impl FullSpeed {
         if usbsts & USBSTS::URI::mask != 0 {
             PollResult::Reset
         } else if usbsts & USBSTS::UI::mask != 0 {
+            trace!(
+                "{:X} {:X}",
+                ral::read_reg!(ral::usb, self.usb, ENDPTSETUPSTAT),
+                ral::read_reg!(ral::usb, self.usb, ENDPTCOMPLETE)
+            );
             // Note: could be complete in one register read, but this is a little
             // easier to comprehend...
             let ep_out = ral::read_reg!(ral::usb, self.usb, ENDPTCOMPLETE, ERCE);
