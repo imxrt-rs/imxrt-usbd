@@ -76,28 +76,33 @@ fn main() -> ! {
         .max_packet_size_0(64)
         .build();
 
-    loop {
-        imxrt_uart_log::dma::poll();
-        if !device.poll(&mut [&mut test_class]) {
-            continue;
-        }
-        let state = device.state();
-        if state == usb_device::device::UsbDeviceState::Configured {
-            break;
-        }
-    }
-
-    device.bus().configure();
-    led.set();
-
     gpt1.set_enable(true);
     gpt1.set_output_compare_duration(GPT_OCR, TESTING_BLINK_PERIOD);
 
-    loop {
-        time_elapse(&mut gpt1, || led.toggle());
+    'reset: loop {
+        led.clear();
         imxrt_uart_log::dma::poll();
         if !device.poll(&mut [&mut test_class]) {
-            continue;
+            continue 'reset;
+        }
+
+        if device.state() != usb_device::device::UsbDeviceState::Configured {
+            continue 'reset;
+        }
+
+        device.bus().configure();
+        led.set();
+
+        'configured: loop {
+            time_elapse(&mut gpt1, || led.toggle());
+            imxrt_uart_log::dma::poll();
+            if !device.poll(&mut [&mut test_class]) {
+                continue 'configured;
+            }
+            if device.state() != usb_device::device::UsbDeviceState::Configured {
+                break 'configured;
+            }
+            test_class.poll();
         }
     }
 }

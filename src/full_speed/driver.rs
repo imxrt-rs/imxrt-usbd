@@ -117,7 +117,7 @@ impl FullSpeed {
         // See the "quirk" note in the UsbBus impl. We're using USBADRA to let
         // the hardware set the address before the status phase.
         ral::write_reg!(ral::usb, self.usb, DEVICEADDR, USBADR: address as u32, USBADRA: 1);
-        info!("ADDRESS {}", address);
+        debug!("ADDRESS {}", address);
     }
 
     pub fn attach(&mut self) {
@@ -142,7 +142,7 @@ impl FullSpeed {
             ral::read_reg!(ral::usb, self.usb, PORTSC1, PR == 1),
             "Took too long to handle bus reset"
         );
-        info!("RESET");
+        debug!("RESET");
     }
 
     /// Check if the endpoint is valid
@@ -200,7 +200,7 @@ impl FullSpeed {
     /// Panics if EP0 IN isn't allocated, or if EP0 OUT isn't allocated.
     pub fn ctrl0_write(&mut self, buffer: &[u8]) -> Result<usize, UsbError> {
         let ctrl_in = self.endpoints[1].as_mut().unwrap();
-        debug!("EP1 In {}", buffer.len());
+        debug!("EP0 In {}", buffer.len());
         ctrl_in.check_errors()?;
 
         if ctrl_in.is_primed(&self.usb) {
@@ -230,6 +230,7 @@ impl FullSpeed {
     /// Panics if the endpoint isn't allocated.
     pub fn ep_read(&mut self, buffer: &mut [u8], addr: EndpointAddress) -> Result<usize, UsbError> {
         let ep = self.endpoints[index(addr)].as_mut().unwrap();
+        debug!("EP{} Out", ep.address().index());
         ep.check_errors()?;
 
         if ep.is_primed(&self.usb) {
@@ -321,11 +322,10 @@ impl FullSpeed {
         td.set_terminate();
         td.clear_status();
 
-        let mut ep = Endpoint::new(addr, qh, td, buffer);
-        ep.initialize(&self.usb, kind);
+        let ep = Endpoint::new(addr, qh, td, buffer, kind);
         self.endpoints[index(addr)] = Some(ep);
 
-        info!(
+        debug!(
             "ALLOC EP{} {:?} {:?} {}",
             addr.index(),
             addr.direction(),
@@ -334,16 +334,41 @@ impl FullSpeed {
         );
     }
 
-    /// Enable all non-zero endpoints, and schedule OUT transfers
+    /// Invoked when the device transitions into the configured state
+    pub fn on_configured(&mut self) {
+        self.enable_endpoints();
+        self.prime_endpoints();
+    }
+
+    /// Enable all non-zero endpoints
     ///
     /// This should only be called when the device is configured
-    pub fn enable_endpoints(&mut self) {
+    fn enable_endpoints(&mut self) {
         for ep in self.endpoints.iter_mut().flat_map(core::convert::identity) {
             ep.enable(&self.usb);
-            if ep.address().direction() == UsbDirection::Out {
+        }
+    }
+
+    /// Prime all non-zero, enabled OUT endpoints
+    fn prime_endpoints(&mut self) {
+        for ep in self.endpoints[2..]
+            .iter_mut()
+            .flat_map(core::convert::identity)
+            .filter(|ep| UsbDirection::Out == ep.address().direction())
+        {
+            if ep.is_enabled(&self.usb) {
                 let max_packet_len = ep.max_packet_len();
                 ep.schedule_transfer(&self.usb, max_packet_len);
             }
+        }
+    }
+
+    fn initialize_endpoints(&mut self) {
+        for ep in self.endpoints[2..]
+            .iter_mut()
+            .flat_map(core::convert::identity)
+        {
+            ep.initialize(&self.usb);
         }
     }
 
@@ -354,8 +379,14 @@ impl FullSpeed {
 
         use ral::usb::USBSTS;
         if usbsts & USBSTS::URI::mask != 0 {
-            PollResult::Reset
-        } else if usbsts & USBSTS::UI::mask != 0 {
+            return PollResult::Reset;
+        } 
+        
+        if usbsts & USBSTS::PCI::mask != 0 {
+            self.initialize_endpoints();
+        }
+
+        if usbsts & USBSTS::UI::mask != 0 {
             trace!(
                 "{:X} {:X}",
                 ral::read_reg!(ral::usb, self.usb, ENDPTSETUPSTAT),

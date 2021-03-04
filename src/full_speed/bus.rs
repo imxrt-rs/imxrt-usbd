@@ -134,7 +134,7 @@ impl BusAdapter {
     /// the top-level example for how this could be achieved.
     pub fn configure(&self) {
         self.with_usb_mut(|usb| {
-            usb.enable_endpoints();
+            usb.on_configured();
             debug!("CONFIGURED");
         });
     }
