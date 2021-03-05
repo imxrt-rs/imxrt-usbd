@@ -37,6 +37,16 @@ pub struct FullSpeed {
     qhs: [Option<&'static mut qh::QH>; QH_COUNT],
     tds: [Option<&'static mut td::TD>; QH_COUNT],
     buffer_allocator: buffer::Allocator,
+    /// Track which read endpoints have completed, so as to not
+    /// confuse the device and appear out of sync with poll() calls.
+    ///
+    /// Persisting the ep_out mask across poll() calls lets us make
+    /// sure that results of ep_read calls match what's signaled from
+    /// poll() calls. During testing, we saw that poll() wouldn't signal
+    /// ep_out complete. But, the class could still call ep_read(), and
+    /// it would return data. The usb-device test_class treats that as
+    /// a failure, so we should keep behaviors consistent.
+    ep_out: u16,
 }
 
 impl FullSpeed {
@@ -70,6 +80,7 @@ impl FullSpeed {
                 qhs,
                 tds,
                 buffer_allocator: buffer::Allocator::empty(),
+                ep_out: 0,
             }
         }
     }
@@ -118,7 +129,7 @@ impl FullSpeed {
     pub fn set_interrupts(&mut self, interrupts: bool) {
         if interrupts {
             // Keep this in sync with the poll() behaviors
-            ral::write_reg!(ral::usb, self.usb, USBINTR, UE: 1, URE: 1);
+            ral::write_reg!(ral::usb, self.usb, USBINTR, UE: 1, URE: 1, PCE: 1);
         } else {
             ral::write_reg!(ral::usb, self.usb, USBINTR, 0);
         }
@@ -244,11 +255,11 @@ impl FullSpeed {
         debug!("EP{} Out", ep.address().index());
         ep.check_errors()?;
 
-        if ep.is_primed(&self.usb) {
+        if ep.is_primed(&self.usb) || (self.ep_out & (1 << ep.address().index()) == 0) {
             return Err(UsbError::WouldBlock);
         }
 
-        ep.clear_complete(&self.usb);
+        ep.clear_complete(&self.usb); // Clears self.ep_out bit on the next poll() call...
         ep.clear_nack(&self.usb);
 
         let read = ep.read(buffer);
@@ -391,8 +402,8 @@ impl FullSpeed {
         use ral::usb::USBSTS;
         if usbsts & USBSTS::URI::mask != 0 {
             return PollResult::Reset;
-        } 
-        
+        }
+
         if usbsts & USBSTS::PCI::mask != 0 {
             self.initialize_endpoints();
         }
@@ -405,7 +416,7 @@ impl FullSpeed {
             );
             // Note: could be complete in one register read, but this is a little
             // easier to comprehend...
-            let ep_out = ral::read_reg!(ral::usb, self.usb, ENDPTCOMPLETE, ERCE);
+            self.ep_out = ral::read_reg!(ral::usb, self.usb, ENDPTCOMPLETE, ERCE) as u16;
 
             let ep_in_complete = ral::read_reg!(ral::usb, self.usb, ENDPTCOMPLETE, ETCE);
             ral::write_reg!(ral::usb, self.usb, ENDPTCOMPLETE, ETCE: ep_in_complete);
@@ -413,7 +424,7 @@ impl FullSpeed {
             let ep_setup = ral::read_reg!(ral::usb, self.usb, ENDPTSETUPSTAT) as u16;
 
             PollResult::Data {
-                ep_out: ep_out as u16,
+                ep_out: self.ep_out,
                 ep_in_complete: ep_in_complete as u16,
                 ep_setup,
             }

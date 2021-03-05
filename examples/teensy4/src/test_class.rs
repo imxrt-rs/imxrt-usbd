@@ -12,12 +12,9 @@
 use imxrt_hal as hal;
 use teensy4_pins as pins;
 
-use embedded_hal::timer::CountDown;
-
 const UART_BAUD: u32 = 115_200;
 const GPT_OCR: hal::gpt::OutputCompareRegister = hal::gpt::OutputCompareRegister::One;
 const TESTING_BLINK_PERIOD: core::time::Duration = core::time::Duration::from_millis(200);
-const USB_PERIOD: core::time::Duration = core::time::Duration::from_micros(250);
 
 #[cortex_m_rt::entry]
 fn main() -> ! {
@@ -28,7 +25,6 @@ fn main() -> ! {
         uart,
         mut dcdc,
         gpt1,
-        pit,
         ..
     } = hal::Peripherals::take().unwrap();
     let pins = pins::t40::into_pins(iomuxc);
@@ -44,7 +40,6 @@ fn main() -> ! {
         hal::ccm::perclk::PODF::DIVIDE_3,
         hal::ccm::perclk::CLKSEL::IPG(ipg_hz),
     );
-    let (mut usb_timer, _, _, _) = pit.clock(&mut cfg);
 
     let mut gpt1 = gpt1.clock(&mut cfg);
 
@@ -73,43 +68,35 @@ fn main() -> ! {
     hal::ral::modify_reg!(hal::ral::ccm, ccm, CCGR6, CG1: 0b11, CG0: 0b11);
 
     let bus_adapter = support::new_bus_adapter();
-    let bus = usb_device::bus::UsbBusAllocator::new(bus_adapter);
+    bus_adapter.set_interrupts(true);
 
-    let mut test_class = usb_device::test_class::TestClass::new(&bus);
-    let mut device = test_class
-        .make_device_builder(&bus)
-        .max_packet_size_0(64)
-        .build();
+    unsafe {
+        let bus = usb_device::bus::UsbBusAllocator::new(bus_adapter);
+        BUS = Some(bus);
+        let bus = BUS.as_ref().unwrap();
+
+        let test_class = usb_device::test_class::TestClass::new(bus);
+        CLASS = Some(test_class);
+        let test_class = CLASS.as_ref().unwrap();
+
+        let device = test_class
+            .make_device_builder(bus)
+            .max_packet_size_0(64)
+            .build();
+
+        DEVICE = Some(device);
+
+        core::sync::atomic::fence(core::sync::atomic::Ordering::SeqCst);
+        cortex_m::peripheral::NVIC::unmask(interrupt::USB_OTG1);
+    }
 
     gpt1.set_enable(true);
     gpt1.set_output_compare_duration(GPT_OCR, TESTING_BLINK_PERIOD);
-
-    'reset: loop {
-        led.clear();
+    led.set();
+    loop {
         imxrt_uart_log::dma::poll();
-        if !device.poll(&mut [&mut test_class]) {
-            continue 'reset;
-        }
-
-        if device.state() != usb_device::device::UsbDeviceState::Configured {
-            continue 'reset;
-        }
-
-        device.bus().configure();
-        led.set();
-
-        'configured: loop {
-            usb_timer.start(USB_PERIOD);
-            nb::block!(usb_timer.wait()).unwrap();
-            time_elapse(&mut gpt1, || led.toggle());
-            imxrt_uart_log::dma::poll();
-            if device.poll(&mut [&mut test_class]) {
-                test_class.poll();
-            }
-            if device.state() != usb_device::device::UsbDeviceState::Configured {
-                break 'configured;
-            }
-        }
+        time_elapse(&mut gpt1, || led.toggle());
+        cortex_m::asm::wfi();
     }
 }
 
@@ -118,5 +105,39 @@ fn time_elapse(gpt: &mut hal::gpt::GPT, func: impl FnOnce()) {
     if status.is_set() {
         status.clear();
         func();
+    }
+}
+
+type Bus = imxrt_usbd::full_speed::BusAdapter;
+type Class = usb_device::test_class::TestClass<'static, Bus>;
+static mut CLASS: Option<Class> = None;
+static mut BUS: Option<usb_device::bus::UsbBusAllocator<Bus>> = None;
+static mut DEVICE: Option<usb_device::device::UsbDevice<'static, Bus>> = None;
+
+use hal::ral::interrupt;
+
+#[cortex_m_rt::interrupt]
+fn USB_OTG1() {
+    // Must track when the device transitions into / out of configuration,
+    // so that we can call configure...
+    static mut IS_CONFIGURED: bool = false;
+
+    // Safety: we only unmask the interrupt once all three static mut variables
+    // are initialized. We're the only ones to use those variables after they're
+    // set.
+    let device = unsafe { DEVICE.as_mut().unwrap() };
+    let class = unsafe { CLASS.as_mut().unwrap() };
+
+    if device.poll(&mut [class]) {
+        if device.state() == usb_device::device::UsbDeviceState::Configured {
+            if !*IS_CONFIGURED {
+                device.bus().configure();
+            }
+            *IS_CONFIGURED = true;
+
+            class.poll();
+        } else {
+            *IS_CONFIGURED = false;
+        }
     }
 }

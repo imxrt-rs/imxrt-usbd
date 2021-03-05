@@ -5,7 +5,10 @@ use crate::{
     ral::endpoint_control,
     td::{Status, TD},
 };
-use usb_device::{endpoint::{EndpointAddress, EndpointType}, UsbDirection, UsbError};
+use usb_device::{
+    endpoint::{EndpointAddress, EndpointType},
+    UsbDirection, UsbError,
+};
 
 /// A USB endpoint
 pub struct Endpoint {
@@ -13,7 +16,7 @@ pub struct Endpoint {
     qh: &'static mut QH,
     td: &'static mut TD,
     buffer: Buffer,
-    kind: EndpointType
+    kind: EndpointType,
 }
 
 impl Endpoint {
@@ -54,10 +57,7 @@ impl Endpoint {
     }
 
     /// Initialize the endpoint, should be called soon after it's assigned
-    pub fn initialize(
-        &mut self,
-        usb: &ral::usb::Instance,
-    ) {
+    pub fn initialize(&mut self, usb: &ral::usb::Instance) {
         if self.address.index() != 0 {
             let endptctrl = endpoint_control::register(usb, self.address.index());
             match self.address.direction() {
@@ -205,10 +205,10 @@ impl Endpoint {
             let endptctrl = endpoint_control::register(usb, self.address.index());
             match self.address.direction() {
                 UsbDirection::In => {
-                    ral::modify_reg!(endpoint_control, &endptctrl, ENDPTCTRL, TXE: 1, TXT: self.kind as u32)
+                    ral::modify_reg!(endpoint_control, &endptctrl, ENDPTCTRL, TXE: 1, TXR: 1, TXT: self.kind as u32)
                 }
                 UsbDirection::Out => {
-                    ral::modify_reg!(endpoint_control, &endptctrl, ENDPTCTRL, RXE: 1, RXT: self.kind as u32)
+                    ral::modify_reg!(endpoint_control, &endptctrl, ENDPTCTRL, RXE: 1, RXR: 1, RXT: self.kind as u32)
                 }
             }
         }

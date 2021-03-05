@@ -56,13 +56,8 @@ path = "../../../uart-log"
 version = "0.4"
 features = ["release_max_level_info"]
 
-# For calling HAL methods on imxrt-hal types
-[dependencies.embedded-hal]
-version = "0.2"
-
-# Helper for blocking clock waits
-[dependencies.nb]
-version = "0.1"
+[dependencies.cortex-m]
+version = "0.7"
 
 [[bin]]
 name = "configured"
