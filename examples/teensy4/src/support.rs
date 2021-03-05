@@ -3,7 +3,6 @@
 #![no_std]
 
 use teensy4_fcb as _;
-use teensy4_panic as _;
 
 use hal::ral;
 use imxrt_hal as hal;
@@ -34,4 +33,13 @@ pub fn new_bus_adapter() -> imxrt_usbd::full_speed::BusAdapter {
         // only available to a single caller.
         imxrt_usbd::full_speed::BusAdapter::new(usb, usbphy, &mut ENDPOINT_MEMORY)
     }
+}
+
+#[panic_handler]
+fn panic(info: &core::panic::PanicInfo) -> ! {
+    log::error!("{}", info);
+    for _ in 0..10_000 {
+        imxrt_uart_log::dma::poll();
+    }
+    teensy4_panic::sos()
 }

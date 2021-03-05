@@ -10,7 +10,7 @@ publish = false  # This is an example package
 path = "../../"
 features = [
     "double-instance",  # Required to pair with imxrt-[hal|ral]/imxrt1062
-    "__log"  # Only for driver development and debugging
+    # "__log"  # Only for driver development and debugging
 ]
 
 # Supporting other hardware access, start-up
@@ -30,6 +30,8 @@ version = "0.3.0"
 # Simple panic handler
 [dependencies.teensy4-panic]
 version = "0.1"
+path = "../../../../teensy4-rs/bsp/teensy4-panic"
+default-features = false
 
 # Pin API
 [dependencies.teensy4-pins]
@@ -53,6 +55,14 @@ path = "../../../uart-log"
 [dependencies.log]
 version = "0.4"
 features = ["release_max_level_info"]
+
+# For calling HAL methods on imxrt-hal types
+[dependencies.embedded-hal]
+version = "0.2"
+
+# Helper for blocking clock waits
+[dependencies.nb]
+version = "0.1"
 
 [[bin]]
 name = "configured"

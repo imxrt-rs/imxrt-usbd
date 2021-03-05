@@ -12,9 +12,12 @@
 use imxrt_hal as hal;
 use teensy4_pins as pins;
 
+use embedded_hal::timer::CountDown;
+
 const UART_BAUD: u32 = 115_200;
 const GPT_OCR: hal::gpt::OutputCompareRegister = hal::gpt::OutputCompareRegister::One;
 const TESTING_BLINK_PERIOD: core::time::Duration = core::time::Duration::from_millis(200);
+const USB_PERIOD: core::time::Duration = core::time::Duration::from_micros(250);
 
 #[cortex_m_rt::entry]
 fn main() -> ! {
@@ -25,6 +28,7 @@ fn main() -> ! {
         uart,
         mut dcdc,
         gpt1,
+        pit,
         ..
     } = hal::Peripherals::take().unwrap();
     let pins = pins::t40::into_pins(iomuxc);
@@ -40,6 +44,7 @@ fn main() -> ! {
         hal::ccm::perclk::PODF::DIVIDE_3,
         hal::ccm::perclk::CLKSEL::IPG(ipg_hz),
     );
+    let (mut usb_timer, _, _, _) = pit.clock(&mut cfg);
 
     let mut gpt1 = gpt1.clock(&mut cfg);
 
@@ -94,15 +99,16 @@ fn main() -> ! {
         led.set();
 
         'configured: loop {
+            usb_timer.start(USB_PERIOD);
+            nb::block!(usb_timer.wait()).unwrap();
             time_elapse(&mut gpt1, || led.toggle());
             imxrt_uart_log::dma::poll();
-            if !device.poll(&mut [&mut test_class]) {
-                continue 'configured;
+            if device.poll(&mut [&mut test_class]) {
+                test_class.poll();
             }
             if device.state() != usb_device::device::UsbDeviceState::Configured {
                 break 'configured;
             }
-            test_class.poll();
         }
     }
 }
