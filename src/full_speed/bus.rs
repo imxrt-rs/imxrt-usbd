@@ -3,7 +3,6 @@
 use super::driver::FullSpeed;
 use crate::ral;
 use core::cell::RefCell;
-use core::convert::TryInto;
 use cortex_m::interrupt::{self, Mutex};
 use usb_device::{
     bus::{PollResult, UsbBus},
@@ -223,7 +222,7 @@ impl UsbBus for BusAdapter {
                     ep_addr.direction(),
                     status
                 );
-                status.try_into().unwrap()
+                status
             })?;
 
             Ok(written)
@@ -248,7 +247,7 @@ impl UsbBus for BusAdapter {
                     ep_addr.direction(),
                     status
                 );
-                status.try_into().unwrap()
+                status
             })?;
 
             Ok(read)
