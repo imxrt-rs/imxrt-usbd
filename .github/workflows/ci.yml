@@ -104,7 +104,7 @@ jobs:
     - name: Build examples/teensy4 for ${{ matrix.os }}
       uses: actions-rs/cargo@v1
       env:
-        RUSTFLAGS: -C link-arg=-Tlink.x
+        RUSTFLAGS: -C link-arg=-Tt4link.x
       with:
         command: build
         args: --manifest-path examples/teensy4/Cargo.toml --verbose --target thumbv7em-none-eabihf
