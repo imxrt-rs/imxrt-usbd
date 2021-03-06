@@ -19,19 +19,16 @@ pub fn configure_led(pad: common::P13) -> LED {
 ///
 /// # Panics
 ///
-/// Panics if the USB1 and USBPHY1 imxrt-ral instances are
+/// Panics if the USB1, USBPHY1, or USBNC1 imxrt-ral instances are
 /// already taken.
 pub fn new_bus_adapter() -> imxrt_usbd::full_speed::BusAdapter {
-    let usb = ral::usb::USB1::take().unwrap();
-    let usbphy = ral::usbphy::USBPHY1::take().unwrap();
-
     // If we're here, we have exclusive access to ENDPOINT_MEMORY
     static mut ENDPOINT_MEMORY: [u8; 4096] = [0; 4096];
 
     unsafe {
         // Safety: With proper scoping and checks for singleton access, we ensure the memory is
         // only available to a single caller.
-        imxrt_usbd::full_speed::BusAdapter::new(usb, usbphy, &mut ENDPOINT_MEMORY)
+        imxrt_usbd::full_speed::BusAdapter::new(Instances::usb1(), &mut ENDPOINT_MEMORY)
     }
 }
 
@@ -42,4 +39,40 @@ fn panic(info: &core::panic::PanicInfo) -> ! {
         imxrt_uart_log::dma::poll();
     }
     teensy4_panic::sos()
+}
+
+//
+// Keep in sync with the imxrt_usbd::Peripherals example!
+//
+
+use imxrt_usbd::Peripherals;
+use ral::{usb, usbnc, usbphy};
+
+struct Instances {
+    usb: usb::Instance,
+    usbnc: usbnc::Instance,
+    usbphy: usbphy::Instance,
+}
+
+impl Instances {
+    /// Panics if the instancs are already taken
+    fn usb1() -> Instances {
+        Self {
+            usb: usb::USB1::take().unwrap(),
+            usbnc: usbnc::USBNC1::take().unwrap(),
+            usbphy: usbphy::USBPHY1::take().unwrap(),
+        }
+    }
+}
+
+unsafe impl Peripherals for Instances {
+    fn core(&self) -> *const () {
+        &*self.usb as *const _ as _
+    }
+    fn non_core(&self) -> *const () {
+        &*self.usbnc as *const _ as _
+    }
+    fn phy(&self) -> *const () {
+        &*self.usbphy as *const _ as _
+    }
 }

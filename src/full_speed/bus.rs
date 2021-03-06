@@ -34,15 +34,16 @@ use usb_device::{
 ///
 /// ```no_run
 /// use imxrt_usbd::full_speed::BusAdapter;
-/// use imxrt_ral::{usb, usbphy};
 ///
+/// # struct Ps;
+/// # unsafe impl imxrt_usbd::Peripherals for Ps { fn core(&self) -> *const () { panic!() } fn non_core(&self) -> *const () { panic!() } fn phy(&self) -> *const () { panic!() }}
 /// static mut ENDPOINT_MEMORY: [u8; 1024] = [0; 1024];
 ///
 /// // TODO initialize clocks...
 ///
+/// # let my_usb_peripherals = Ps;
 /// let bus_adapter = BusAdapter::new(
-///     usb::USB1::take().unwrap(),
-///     usbphy::USBPHY1::take().unwrap(),
+///     my_usb_peripherals,
 ///     unsafe { &mut ENDPOINT_MEMORY }
 /// );
 ///

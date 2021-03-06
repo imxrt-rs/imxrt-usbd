@@ -28,19 +28,6 @@ package = "log"
 optional = true
 version = "0.4"
 
-[features]
-# Signals that your i.MX RT has two USB instances. This
-# affects how imxrt-usbd use imxrt-ral.
-#
-# You must enable this feature when your dependency graph
-# includes any of these imxrt-ral features:
-#
-# - imxrt105*
-# - imxrt106*
-#
-# Otherwise, do not enable this feature
-double-instance = []
-
 [package.metadata.docs.rs]
-features = ["imxrt-ral/imxrt1062", "double-instance"]
+features = ["imxrt-ral/imxrt1062"]
 default-target = "thumbv7em-none-eabihf"

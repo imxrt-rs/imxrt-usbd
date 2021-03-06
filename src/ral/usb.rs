@@ -1,6 +1,6 @@
 //! USB core registers and fields from the imxrt-ral
 #![allow(non_snake_case, non_upper_case_globals, non_camel_case_types, unused)]
-
+#![allow(clippy::module_inception)]
 use super::{RORegister, RWRegister};
 
 /// Identification register

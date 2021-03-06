@@ -1,13 +1,6 @@
-//! Re-exporting the imxrt-ral APIS
-//!
-//! The imxrt-ral APIs have inconsistencies, depending on the
-//! version we're using. This module makes the APIs consistent
-//! based on the "double-instance" feature.
-//!
-//! It also adds some enhancements for endpoint control access.
+//! imxrt-ral-like API for USB access
 
 pub mod usb;
-pub mod usb_analog;
 pub mod usbnc;
 pub mod usbphy;
 
@@ -67,8 +60,6 @@ mod usb2 {
     pub const USBPHY: *const super::usbphy::RegisterBlock = 0x400da000 as *const _;
 }
 
-const USB_ANALOG: *const usb_analog::RegisterBlock = 0x400d8000 as *const _;
-
 pub struct Instance<RB> {
     pub addr: *const RB,
 }
@@ -76,7 +67,6 @@ pub struct Instance<RB> {
 pub type USB = Instance<usb::RegisterBlock>;
 pub type USBNC = Instance<usbnc::RegisterBlock>;
 pub type USBPHY = Instance<usbphy::RegisterBlock>;
-pub type USBANALOG = Instance<usb_analog::RegisterBlock>;
 
 pub enum Inst {
     One,
@@ -87,7 +77,6 @@ pub struct Instances {
     pub usb: USB,
     pub usbnc: USBNC,
     pub usbphy: USBPHY,
-    pub usbanalog: USBANALOG,
 }
 
 impl USB {
@@ -133,18 +122,6 @@ impl USBPHY {
     }
 }
 
-impl USBANALOG {
-    /// # Safety
-    ///
-    /// Allows fabrication of a singleton without taking ownership of the existing
-    /// singleton.
-    unsafe fn new<P: super::Peripherals>(p: &P) -> Self {
-        Self {
-            addr: p.analog() as *const _,
-        }
-    }
-}
-
 impl<RB> ::core::ops::Deref for Instance<RB> {
     type Target = RB;
     #[inline(always)]
@@ -163,9 +140,6 @@ unsafe impl<RB> Send for Instance<RB> {}
 /// Panics if the pointers are invalid, or if there's a USB1
 /// to USB2 mismatch.
 fn assert_peripherals<P: super::Peripherals>(p: &P) {
-    let analog = p.analog() as *const _;
-    assert_eq!(analog, USB_ANALOG);
-
     let usb = p.core() as *const _;
     let usbphy = p.phy() as *const _;
     let usbnc = p.non_core() as *const _;
@@ -193,16 +167,10 @@ impl Instances {
         // into separate singletons.
         unsafe {
             let usb = USB::new(&peripherals);
-            let usbanalog = USBANALOG::new(&peripherals);
             let usbnc = USBNC::new(&peripherals);
             let usbphy = USBPHY::new(&peripherals);
 
-            Instances {
-                usb,
-                usbanalog,
-                usbnc,
-                usbphy,
-            }
+            Instances { usb, usbnc, usbphy }
         }
     }
 }

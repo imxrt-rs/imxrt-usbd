@@ -9,7 +9,6 @@ publish = false  # This is an example package
 [dependencies.imxrt-usbd]
 path = "../../"
 features = [
-    "double-instance",  # Required to pair with imxrt-[hal|ral]/imxrt1062
     # "__log"  # Only for driver development and debugging
 ]
 
