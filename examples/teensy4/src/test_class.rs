@@ -2,9 +2,10 @@
 //!
 //! This example turns the Teensy 4 into a USB device that can be tested
 //! from the usb-device host-side test framework. See the usb-device
-//! documentation for more information.
+//! documentation for more information on the test, and see the CONTRIBUTING
+//! guide for how to use the test framework.
 //!
-//! Once we're configured and ready for the test, the LED should blink.
+//! This example also shows how you may use an ISR to poll your USB device.
 
 #![no_std]
 #![no_main]
