@@ -3,7 +3,6 @@
 use super::driver::FullSpeed;
 use crate::ral;
 use core::cell::RefCell;
-use core::convert::TryInto;
 use cortex_m::interrupt::{self, Mutex};
 use usb_device::{
     bus::{PollResult, UsbBus},
@@ -110,6 +109,11 @@ impl BusAdapter {
         }
     }
 
+    /// Enable (`true`) or disable (`false`) interrupts for this USB peripheral
+    pub fn set_interrupts(&self, interrupts: bool) {
+        self.with_usb_mut(|usb| usb.set_interrupts(interrupts));
+    }
+
     /// Interrupt-safe, immutable access to the USB peripheral
     fn with_usb<R>(&self, func: impl FnOnce(&FullSpeed) -> R) -> R {
         interrupt::free(|cs| {
@@ -134,7 +138,7 @@ impl BusAdapter {
     /// the top-level example for how this could be achieved.
     pub fn configure(&self) {
         self.with_usb_mut(|usb| {
-            usb.enable_endpoints();
+            usb.on_configured();
             debug!("CONFIGURED");
         });
     }
@@ -187,7 +191,6 @@ impl UsbBus for BusAdapter {
     fn set_device_address(&self, addr: u8) {
         self.with_usb_mut(|usb| {
             usb.set_address(addr);
-            debug!("ADDRESS {}", addr);
         });
     }
 
@@ -198,7 +201,6 @@ impl UsbBus for BusAdapter {
     fn reset(&self) {
         self.with_usb_mut(|usb| {
             usb.bus_reset();
-            debug!("RESET");
         });
     }
 
@@ -207,13 +209,6 @@ impl UsbBus for BusAdapter {
             if !usb.is_allocated(ep_addr) {
                 return Err(usb_device::UsbError::InvalidEndpoint);
             }
-
-            debug!(
-                "EP{} {:?} WRITE {}",
-                ep_addr.index(),
-                ep_addr.direction(),
-                buf.len()
-            );
 
             let written = if ep_addr.index() == 0 {
                 usb.ctrl0_write(buf)
@@ -227,7 +222,7 @@ impl UsbBus for BusAdapter {
                     ep_addr.direction(),
                     status
                 );
-                status.try_into().unwrap()
+                status
             })?;
 
             Ok(written)
@@ -239,13 +234,6 @@ impl UsbBus for BusAdapter {
             if !usb.is_allocated(ep_addr) {
                 return Err(usb_device::UsbError::InvalidEndpoint);
             }
-
-            debug!(
-                "EP{} {:?} READ {}",
-                ep_addr.index(),
-                ep_addr.direction(),
-                buf.len()
-            );
 
             let read = if ep_addr.index() == 0 {
                 usb.ctrl0_read(buf)
@@ -259,7 +247,7 @@ impl UsbBus for BusAdapter {
                     ep_addr.direction(),
                     status
                 );
-                status.try_into().unwrap()
+                status
             })?;
 
             Ok(read)

@@ -1,23 +1,14 @@
-use crate::{buffer::Buffer, qh::QH, ral, ral::endpoint_control, td::TD};
-use usb_device::{endpoint::EndpointAddress, UsbDirection};
-
-/// Endpoint transfer status
-pub type Status = crate::td::Status;
-
-impl core::convert::TryFrom<Status> for usb_device::UsbError {
-    type Error = ();
-    fn try_from(status: Status) -> Result<Self, ()> {
-        // Keep this implementation in sync with any changes in
-        // Endpoint::check_status()
-        if status.contains(Status::DATA_BUS_ERROR | Status::TRANSACTION_ERROR | Status::HALTED) {
-            Ok(usb_device::UsbError::InvalidState)
-        } else if status.contains(Status::ACTIVE) {
-            Ok(usb_device::UsbError::WouldBlock)
-        } else {
-            Err(())
-        }
-    }
-}
+use crate::{
+    buffer::Buffer,
+    qh::QH,
+    ral,
+    ral::endpoint_control,
+    td::{Status, TD},
+};
+use usb_device::{
+    endpoint::{EndpointAddress, EndpointType},
+    UsbDirection, UsbError,
+};
 
 /// A USB endpoint
 pub struct Endpoint {
@@ -25,6 +16,7 @@ pub struct Endpoint {
     qh: &'static mut QH,
     td: &'static mut TD,
     buffer: Buffer,
+    kind: EndpointType,
 }
 
 impl Endpoint {
@@ -33,40 +25,47 @@ impl Endpoint {
         qh: &'static mut QH,
         td: &'static mut TD,
         buffer: Buffer,
+        kind: EndpointType,
     ) -> Self {
         Endpoint {
             address,
             qh,
             td,
             buffer,
+            kind,
         }
+    }
+
+    /// Indicates if the transfer descriptor is active
+    pub fn is_primed(&self, usb: &ral::usb::Instance) -> bool {
+        (match self.address.direction() {
+            UsbDirection::In => ral::read_reg!(ral::usb, usb, ENDPTSTAT, ETBR),
+            UsbDirection::Out => ral::read_reg!(ral::usb, usb, ENDPTSTAT, ERBR),
+        } & (1 << self.address.index()))
+            != 0
     }
 
     /// Check for any transfer status, which is signaled through
     /// an error
-    pub fn check_status(&self) -> Result<(), Status> {
+    pub fn check_errors(&self) -> Result<(), UsbError> {
         let status = self.td.status();
-        if status.is_empty() {
-            Ok(())
+        if status.contains(Status::TRANSACTION_ERROR | Status::DATA_BUS_ERROR | Status::HALTED) {
+            Err(UsbError::InvalidState)
         } else {
-            Err(status)
+            Ok(())
         }
     }
 
     /// Initialize the endpoint, should be called soon after it's assigned
-    pub fn initialize(
-        &mut self,
-        usb: &ral::usb::Instance,
-        ep_type: usb_device::endpoint::EndpointType,
-    ) {
+    pub fn initialize(&mut self, usb: &ral::usb::Instance) {
         if self.address.index() != 0 {
             let endptctrl = endpoint_control::register(usb, self.address.index());
             match self.address.direction() {
                 UsbDirection::In => {
-                    ral::modify_reg!(endpoint_control, &endptctrl, ENDPTCTRL, TXE: 0, TXT: ep_type as u32)
+                    ral::write_reg!(endpoint_control, &endptctrl, ENDPTCTRL, TXE: 0, TXT: EndpointType::Bulk as u32)
                 }
                 UsbDirection::Out => {
-                    ral::modify_reg!(endpoint_control, &endptctrl, ENDPTCTRL, RXE: 0, RXT: ep_type as u32)
+                    ral::write_reg!(endpoint_control, &endptctrl, ENDPTCTRL, RXE: 0, RXT: EndpointType::Bulk as u32)
                 }
             }
         }
@@ -206,12 +205,27 @@ impl Endpoint {
             let endptctrl = endpoint_control::register(usb, self.address.index());
             match self.address.direction() {
                 UsbDirection::In => {
-                    ral::modify_reg!(endpoint_control, &endptctrl, ENDPTCTRL, TXE: 1)
+                    ral::modify_reg!(endpoint_control, &endptctrl, ENDPTCTRL, TXE: 1, TXR: 1, TXT: self.kind as u32)
                 }
                 UsbDirection::Out => {
-                    ral::modify_reg!(endpoint_control, &endptctrl, ENDPTCTRL, RXE: 1)
+                    ral::modify_reg!(endpoint_control, &endptctrl, ENDPTCTRL, RXE: 1, RXR: 1, RXT: self.kind as u32)
                 }
             }
+        }
+    }
+
+    /// Indicates if this endpoint is enabled
+    ///
+    /// Endpoint 0, the control endpoint, is always enabled.
+    pub fn is_enabled(&self, usb: &ral::usb::Instance) -> bool {
+        if self.address.index() == 0 {
+            return true;
+        }
+
+        let endptctrl = endpoint_control::register(usb, self.address.index());
+        match self.address.direction() {
+            UsbDirection::In => ral::read_reg!(endpoint_control, &endptctrl, ENDPTCTRL, TXE == 1),
+            UsbDirection::Out => ral::read_reg!(endpoint_control, &endptctrl, ENDPTCTRL, RXE == 1),
         }
     }
 
@@ -225,20 +239,5 @@ impl Endpoint {
                 ral::write_reg!(ral::usb, usb, ENDPTNAK, EPRN: 1 << self.address.index())
             }
         }
-    }
-
-    /// Flush the endpoint, which could cancel pending transfers
-    ///
-    /// Blocks until the flush is complete.
-    pub fn flush(&mut self, usb: &ral::usb::Instance) {
-        match self.address.direction() {
-            UsbDirection::In => {
-                ral::write_reg!(ral::usb, usb, ENDPTFLUSH, FETB: 1 << self.address.index())
-            }
-            UsbDirection::Out => {
-                ral::write_reg!(ral::usb, usb, ENDPTFLUSH, FERB: 1 << self.address.index())
-            }
-        }
-        while ral::read_reg!(ral::usb, usb, ENDPTFLUSH) != 0 {}
     }
 }

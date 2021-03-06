@@ -2,12 +2,11 @@
 
 #![no_std]
 
-use teensy4_fcb as _;
-use teensy4_panic as _;
+pub use bsp::hal;
+pub use hal::ral;
+pub use teensy4_bsp as bsp;
 
-use hal::ral;
-use imxrt_hal as hal;
-use teensy4_pins::common;
+use bsp::common;
 
 pub type LED = hal::gpio::GPIO<common::P13, hal::gpio::Output>;
 pub fn configure_led(pad: common::P13) -> LED {
@@ -34,4 +33,13 @@ pub fn new_bus_adapter() -> imxrt_usbd::full_speed::BusAdapter {
         // only available to a single caller.
         imxrt_usbd::full_speed::BusAdapter::new(usb, usbphy, &mut ENDPOINT_MEMORY)
     }
+}
+
+#[panic_handler]
+fn panic(info: &core::panic::PanicInfo) -> ! {
+    log::error!("{}", info);
+    for _ in 0..10_000 {
+        imxrt_uart_log::dma::poll();
+    }
+    teensy4_panic::sos()
 }

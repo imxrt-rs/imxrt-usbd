@@ -32,14 +32,3 @@ cargo objcopy --bin serial --target thumbv7em-none-eabihf --release -- -O ihex m
 ```
 
 Flash the hex file to your Teensy 4!
-
-## See also
-
-Note the `.cargo/config.toml` configuration, which specifies the linker script.
-You'll need a similar Cargo configuration for your project. To understand these
-linking requirements, study the [`cortex-m-rt` documentation][cmrt].
-
-[cmrt]: https://docs.rs/cortex-m-rt/0.6.13/cortex_m_rt/
-
-[Cargo.toml](./Cargo.toml) describes all `imxrt-ral` feature selections, and
-other dependencies required for these examples.

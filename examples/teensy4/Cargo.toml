@@ -14,26 +14,26 @@ features = [
 ]
 
 # Supporting other hardware access, start-up
-[dependencies.imxrt-hal]
-version = "0.4"
-features = ["imxrt1062", "rt"]
+[dependencies.teensy4-bsp]
+version = "0.2"
+default-features = false  # Disable the BSP's USB driver
+features = ["rt"]
 
 # Runtime support
 [dependencies.cortex-m-rt]
 features = ["device"]
 version = "0.6.13"
 
-# Necessary for booting the Teensy 4
-[dependencies.teensy4-fcb]
-version = "0.3.0"
-
 # Simple panic handler
+#
+# The 0.1 release, plus a patch to expose the S.O.S. blink
+# routine independent of the panic handler. This lets us
+# implement our own panic handler that logs over serial,
+# yet still blinks the same way.
 [dependencies.teensy4-panic]
-version = "0.1"
-
-# Pin API
-[dependencies.teensy4-pins]
-version = "0.1"
+git = "https://github.com/mciantyre/teensy4-rs.git"
+rev = "9e5b3a3"
+default-features = false
 
 # USB device
 [dependencies.usb-device]
@@ -51,6 +51,10 @@ version = "0.2"
 # examples
 [dependencies.log]
 version = "0.4"
+features = ["release_max_level_info"]
+
+[dependencies.cortex-m]
+version = "0.7"
 
 [[bin]]
 name = "configured"
@@ -63,3 +67,11 @@ path = "src/serial.rs"
 [lib]
 name = "support"
 path = "src/support.rs"
+
+[[bin]]
+name = "test_class"
+path = "src/test_class.rs"
+
+[patch.crates-io.usb-device]
+git = "https://github.com/imxrt-rs/usb-device.git"
+branch = "imxrt-test-class-support"
