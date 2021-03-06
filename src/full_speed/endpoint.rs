@@ -37,7 +37,7 @@ impl Endpoint {
     }
 
     /// Indicates if the transfer descriptor is active
-    pub fn is_primed(&self, usb: &ral::usb::Instance) -> bool {
+    pub fn is_primed(&self, usb: &ral::USB) -> bool {
         (match self.address.direction() {
             UsbDirection::In => ral::read_reg!(ral::usb, usb, ENDPTSTAT, ETBR),
             UsbDirection::Out => ral::read_reg!(ral::usb, usb, ENDPTSTAT, ERBR),
@@ -60,7 +60,7 @@ impl Endpoint {
     }
 
     /// Initialize the endpoint, should be called soon after it's assigned
-    pub fn initialize(&mut self, usb: &ral::usb::Instance) {
+    pub fn initialize(&mut self, usb: &ral::USB) {
         if self.address.index() != 0 {
             let endptctrl = endpoint_control::register(usb, self.address.index());
             match self.address.direction() {
@@ -85,14 +85,14 @@ impl Endpoint {
     }
 
     /// Indicates if this endpoint has received setup data
-    pub fn has_setup(&self, usb: &ral::usb::Instance) -> bool {
+    pub fn has_setup(&self, usb: &ral::USB) -> bool {
         ral::read_reg!(ral::usb, usb, ENDPTSETUPSTAT) & (1 << self.address.index()) != 0
     }
 
     /// Read the setup buffer from this endpoint
     ///
     /// This is only meaningful for a control OUT endpoint.
-    pub fn read_setup(&mut self, usb: &ral::usb::Instance) -> u64 {
+    pub fn read_setup(&mut self, usb: &ral::USB) -> u64 {
         // Reference manual isn't really clear on whe we should clear the ENDPTSETUPSTAT
         // bit...
         //
@@ -138,7 +138,7 @@ impl Endpoint {
     }
 
     /// Clear the complete bit for this endpoint
-    pub fn clear_complete(&mut self, usb: &ral::usb::Instance) {
+    pub fn clear_complete(&mut self, usb: &ral::USB) {
         match self.address.direction() {
             UsbDirection::In => {
                 ral::write_reg!(ral::usb, usb, ENDPTCOMPLETE, ETCE: 1 << self.address.index())
@@ -153,7 +153,7 @@ impl Endpoint {
     ///
     /// Caller should check to see if there is an active transfer, or if the previous
     /// transfer resulted in an error or halt.
-    pub fn schedule_transfer(&mut self, usb: &ral::usb::Instance, size: usize) {
+    pub fn schedule_transfer(&mut self, usb: &ral::USB, size: usize) {
         self.td.set_terminate();
         self.td.set_buffer(self.buffer.as_ptr_mut(), size);
         self.td.set_interrupt_on_complete(true);
@@ -176,7 +176,7 @@ impl Endpoint {
     }
 
     /// Stall or unstall the endpoint
-    pub fn set_stalled(&mut self, usb: &ral::usb::Instance, stall: bool) {
+    pub fn set_stalled(&mut self, usb: &ral::USB, stall: bool) {
         let endptctrl = endpoint_control::register(usb, self.address.index());
 
         match self.address.direction() {
@@ -190,7 +190,7 @@ impl Endpoint {
     }
 
     /// Indicates if the endpoint is stalled
-    pub fn is_stalled(&self, usb: &ral::usb::Instance) -> bool {
+    pub fn is_stalled(&self, usb: &ral::USB) -> bool {
         let endptctrl = endpoint_control::register(usb, self.address.index());
 
         match self.address.direction() {
@@ -202,7 +202,7 @@ impl Endpoint {
     /// Enable the endpoint
     ///
     /// This should be called only after the USB device has been configured.
-    pub fn enable(&mut self, usb: &ral::usb::Instance) {
+    pub fn enable(&mut self, usb: &ral::USB) {
         // EP0 is always enabled
         if self.address.index() != 0 {
             let endptctrl = endpoint_control::register(usb, self.address.index());
@@ -220,7 +220,7 @@ impl Endpoint {
     /// Indicates if this endpoint is enabled
     ///
     /// Endpoint 0, the control endpoint, is always enabled.
-    pub fn is_enabled(&self, usb: &ral::usb::Instance) -> bool {
+    pub fn is_enabled(&self, usb: &ral::USB) -> bool {
         if self.address.index() == 0 {
             return true;
         }
@@ -233,7 +233,7 @@ impl Endpoint {
     }
 
     /// Clear the NACK bit for this endpoint
-    pub fn clear_nack(&mut self, usb: &ral::usb::Instance) {
+    pub fn clear_nack(&mut self, usb: &ral::USB) {
         match self.address.direction() {
             UsbDirection::In => {
                 ral::write_reg!(ral::usb, usb, ENDPTNAK, EPTN: 1 << self.address.index())

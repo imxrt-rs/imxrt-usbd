@@ -1,7 +1,6 @@
 //! USB bus implementation
 
 use super::driver::FullSpeed;
-use crate::ral;
 use core::cell::RefCell;
 use cortex_m::interrupt::{self, Mutex};
 use usb_device::{
@@ -88,12 +87,8 @@ impl BusAdapter {
     /// # Panics
     ///
     /// Panics if the USB instances are mismatched (a USB1 instance with a USBPHY2 instance).
-    pub fn new(
-        usb: ral::usb::Instance,
-        phy: ral::usbphy::Instance,
-        buffer: &'static mut [u8],
-    ) -> Self {
-        let mut usb = FullSpeed::new(usb, phy);
+    pub fn new<P: crate::Peripherals>(peripherals: P, buffer: &'static mut [u8]) -> Self {
+        let mut usb = FullSpeed::new(peripherals);
 
         usb.initialize();
         usb.set_endpoint_memory(buffer);

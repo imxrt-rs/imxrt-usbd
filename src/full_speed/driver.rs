@@ -32,8 +32,8 @@ fn index(ep_addr: EndpointAddress) -> usize {
 /// - supply endpoint memory with [`set_endpoint_memory()`](USB::set_endpoint_memory)
 pub struct FullSpeed {
     endpoints: [Option<Endpoint>; QH_COUNT],
-    usb: ral::usb::Instance,
-    phy: ral::usbphy::Instance,
+    usb: ral::USB,
+    phy: ral::USBPHY,
     qhs: [Option<&'static mut qh::QH>; QH_COUNT],
     tds: [Option<&'static mut td::TD>; QH_COUNT],
     buffer_allocator: buffer::Allocator,
@@ -57,22 +57,19 @@ impl FullSpeed {
     ///
     /// # Panics
     ///
-    /// Panics if the `usb` instance and the `phy` instances are mismatched.
-    pub fn new(usb: ral::usb::Instance, phy: ral::usbphy::Instance) -> Self {
+    /// Panics if the pointers returned by `peripherals` are invalid, or if
+    /// they refer to mismatched register blocks (a USB1 core register block
+    /// and a USBPHY2 core register block).
+    pub fn new<P: crate::Peripherals>(peripherals: P) -> Self {
         // Safety: taking static memory. Assumes that the provided
         // USB instance is a singleton, which is the only safe way for it
         // to exist.
+        let ral::Instances {
+            usb, usbphy: phy, ..
+        } = ral::Instances::new(peripherals);
         unsafe {
-            let (qhs, tds) = match (&*usb as *const _, &*phy as *const _) {
-                (ral::usb::USB1, ral::usbphy::USBPHY1) => {
-                    (state::steal_qhs(&usb), state::steal_tds(&usb))
-                }
-                #[cfg(feature = "double-instance")]
-                (ral::usb::USB2, ral::usbphy::USBPHY2) => {
-                    (state::steal_qhs(&usb), state::steal_tds(&usb))
-                }
-                _ => panic!("Mismatch USB and USBPHY"),
-            };
+            let qhs = state::steal_qhs(&usb);
+            let tds = state::steal_tds(&usb);
             FullSpeed {
                 endpoints: EP_INIT,
                 usb,

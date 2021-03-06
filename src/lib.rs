@@ -39,3 +39,32 @@ pub mod full_speed;
 
 /// Eight endpoints, two directions
 const QH_COUNT: usize = 8 * 2;
+
+/// A type that owns all USB register blocks, including
+///
+/// - USB core registers
+/// - USB non-core registers
+/// - USB PHY registers
+/// - USB analog registers
+///
+/// # Safety
+///
+/// `Peripherals` should only be implemented on a type that
+/// owns the various register blocks required for all USB
+/// operation. The pointer returned by the four methods
+/// is assumed to be valid, and will be cast to a register
+/// definition.
+pub unsafe trait Peripherals {
+    /// Returns the address of the USB core registers
+    /// for this peripheral instance
+    fn core(&self) -> *const ();
+    /// Returns the address of the USB non-core registers
+    /// for this peripheral instance
+    fn non_core(&self) -> *const ();
+    /// Returns the address of the USB PHY registers
+    /// for this peripheral instance
+    fn phy(&self) -> *const ();
+    /// Returns the address of the USB analog registers
+    /// for this peripheral instance
+    fn analog(&self) -> *const ();
+}
