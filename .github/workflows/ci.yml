@@ -29,13 +29,6 @@ jobs:
   
   # For each chip, build and lint the main library
   clippy:
-    strategy:
-      matrix:
-        features:
-        - "imxrt-ral/imxrt1011"
-        - "imxrt-ral/imxrt1015"
-        - "imxrt-ral/imxrt1021"
-        - "imxrt-ral/imxrt1062,__log"
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v2
@@ -49,7 +42,7 @@ jobs:
     - uses: actions-rs/clippy-check@v1
       with:
         token: ${{ secrets.GITHUB_TOKEN }}
-        args: --verbose --features ${{ matrix.features }} --target thumbv7em-none-eabihf -- -D warnings
+        args: --verbose --features __log --target thumbv7em-none-eabihf -- -D warnings
         name: Lint the library
 
   # Run unit and documentation tests for a chip
@@ -61,7 +54,7 @@ jobs:
       uses: actions-rs/cargo@v1
       with:
         command: test
-        args: --verbose --features imxrt-ral/imxrt1062
+        args: --verbose
 
   # Build & lint the teensy4 examples
   teensy4-clippy:
@@ -114,4 +107,3 @@ jobs:
       uses: actions-rs/cargo@v1
       with:
         command: rustdoc
-        args: --features imxrt-ral/imxrt1062
