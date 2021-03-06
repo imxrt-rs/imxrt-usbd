@@ -353,6 +353,89 @@
 <span id="350">350</span>
 <span id="351">351</span>
 <span id="352">352</span>
+<span id="353">353</span>
+<span id="354">354</span>
+<span id="355">355</span>
+<span id="356">356</span>
+<span id="357">357</span>
+<span id="358">358</span>
+<span id="359">359</span>
+<span id="360">360</span>
+<span id="361">361</span>
+<span id="362">362</span>
+<span id="363">363</span>
+<span id="364">364</span>
+<span id="365">365</span>
+<span id="366">366</span>
+<span id="367">367</span>
+<span id="368">368</span>
+<span id="369">369</span>
+<span id="370">370</span>
+<span id="371">371</span>
+<span id="372">372</span>
+<span id="373">373</span>
+<span id="374">374</span>
+<span id="375">375</span>
+<span id="376">376</span>
+<span id="377">377</span>
+<span id="378">378</span>
+<span id="379">379</span>
+<span id="380">380</span>
+<span id="381">381</span>
+<span id="382">382</span>
+<span id="383">383</span>
+<span id="384">384</span>
+<span id="385">385</span>
+<span id="386">386</span>
+<span id="387">387</span>
+<span id="388">388</span>
+<span id="389">389</span>
+<span id="390">390</span>
+<span id="391">391</span>
+<span id="392">392</span>
+<span id="393">393</span>
+<span id="394">394</span>
+<span id="395">395</span>
+<span id="396">396</span>
+<span id="397">397</span>
+<span id="398">398</span>
+<span id="399">399</span>
+<span id="400">400</span>
+<span id="401">401</span>
+<span id="402">402</span>
+<span id="403">403</span>
+<span id="404">404</span>
+<span id="405">405</span>
+<span id="406">406</span>
+<span id="407">407</span>
+<span id="408">408</span>
+<span id="409">409</span>
+<span id="410">410</span>
+<span id="411">411</span>
+<span id="412">412</span>
+<span id="413">413</span>
+<span id="414">414</span>
+<span id="415">415</span>
+<span id="416">416</span>
+<span id="417">417</span>
+<span id="418">418</span>
+<span id="419">419</span>
+<span id="420">420</span>
+<span id="421">421</span>
+<span id="422">422</span>
+<span id="423">423</span>
+<span id="424">424</span>
+<span id="425">425</span>
+<span id="426">426</span>
+<span id="427">427</span>
+<span id="428">428</span>
+<span id="429">429</span>
+<span id="430">430</span>
+<span id="431">431</span>
+<span id="432">432</span>
+<span id="433">433</span>
+<span id="434">434</span>
+<span id="435">435</span>
 </pre><div class="example-wrap"><pre class="rust ">
 <span class="doccomment">//! Internal USB1 driver</span>
 <span class="doccomment">//!</span>
@@ -362,15 +445,12 @@
 <span class="doccomment">//! The full-speed driver forces a full speed data rate. See the</span>
 <span class="doccomment">//! notes in the `initialize()` implementation.</span>
 
-<span class="kw">use</span> <span class="kw">super</span>::{
-    <span class="ident">endpoint</span>::{<span class="ident">Endpoint</span>, <span class="ident">Status</span>},
-    <span class="ident">state</span>,
-};
+<span class="kw">use</span> <span class="kw">super</span>::{<span class="ident">endpoint</span>::<span class="ident">Endpoint</span>, <span class="ident">state</span>};
 <span class="kw">use</span> <span class="kw">crate</span>::{<span class="ident">buffer</span>, <span class="ident">qh</span>, <span class="ident">ral</span>, <span class="ident">td</span>, <span class="ident">QH_COUNT</span>};
 <span class="kw">use</span> <span class="ident">usb_device</span>::{
     <span class="ident">bus</span>::<span class="ident">PollResult</span>,
     <span class="ident">endpoint</span>::{<span class="ident">EndpointAddress</span>, <span class="ident">EndpointType</span>},
-    <span class="ident">UsbDirection</span>,
+    <span class="ident">UsbDirection</span>, <span class="ident">UsbError</span>,
 };
 
 <span class="kw">const</span> <span class="ident">EP_INIT</span>: [<span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">Endpoint</span><span class="op">&gt;</span>; <span class="ident">QH_COUNT</span>] <span class="op">=</span> [
@@ -396,6 +476,16 @@
     <span class="ident">qhs</span>: [<span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="kw-2">&amp;</span><span class="lifetime">&#39;static</span> <span class="kw-2">mut</span> <span class="ident">qh</span>::<span class="ident">QH</span><span class="op">&gt;</span>; <span class="ident">QH_COUNT</span>],
     <span class="ident">tds</span>: [<span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="kw-2">&amp;</span><span class="lifetime">&#39;static</span> <span class="kw-2">mut</span> <span class="ident">td</span>::<span class="ident">TD</span><span class="op">&gt;</span>; <span class="ident">QH_COUNT</span>],
     <span class="ident">buffer_allocator</span>: <span class="ident">buffer</span>::<span class="ident">Allocator</span>,
+    <span class="doccomment">/// Track which read endpoints have completed, so as to not</span>
+    <span class="doccomment">/// confuse the device and appear out of sync with poll() calls.</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// Persisting the ep_out mask across poll() calls lets us make</span>
+    <span class="doccomment">/// sure that results of ep_read calls match what&#39;s signaled from</span>
+    <span class="doccomment">/// poll() calls. During testing, we saw that poll() wouldn&#39;t signal</span>
+    <span class="doccomment">/// ep_out complete. But, the class could still call ep_read(), and</span>
+    <span class="doccomment">/// it would return data. The usb-device test_class treats that as</span>
+    <span class="doccomment">/// a failure, so we should keep behaviors consistent.</span>
+    <span class="ident">ep_out</span>: <span class="ident">u16</span>,
 }
 
 <span class="kw">impl</span> <span class="ident">FullSpeed</span> {
@@ -429,6 +519,7 @@
                 <span class="ident">qhs</span>,
                 <span class="ident">tds</span>,
                 <span class="ident">buffer_allocator</span>: <span class="ident">buffer</span>::<span class="ident">Allocator</span>::<span class="ident">empty</span>(),
+                <span class="ident">ep_out</span>: <span class="number">0</span>,
             }
         }
     }
@@ -467,15 +558,27 @@
         <span class="ident">ral</span>::<span class="macro">modify_reg</span><span class="macro">!</span>(<span class="ident">ral</span>::<span class="ident">usb</span>, <span class="self">self</span>.<span class="ident">usb</span>, <span class="ident">PORTSC1</span>, <span class="ident">PFSC</span>: <span class="number">1</span>);
 
         <span class="ident">ral</span>::<span class="macro">modify_reg</span><span class="macro">!</span>(<span class="ident">ral</span>::<span class="ident">usb</span>, <span class="self">self</span>.<span class="ident">usb</span>, <span class="ident">USBSTS</span>, <span class="op">|</span><span class="ident">usbsts</span><span class="op">|</span> <span class="ident">usbsts</span>);
+        <span class="comment">// Disable interrupts by default</span>
         <span class="ident">ral</span>::<span class="macro">write_reg</span><span class="macro">!</span>(<span class="ident">ral</span>::<span class="ident">usb</span>, <span class="self">self</span>.<span class="ident">usb</span>, <span class="ident">USBINTR</span>, <span class="number">0</span>);
 
         <span class="ident">state</span>::<span class="ident">assign_endptlistaddr</span>(<span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">usb</span>);
+    }
+
+    <span class="doccomment">/// Enable (`true`) or disable (`false`) USB interrupts</span>
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">set_interrupts</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>, <span class="ident">interrupts</span>: <span class="ident">bool</span>) {
+        <span class="kw">if</span> <span class="ident">interrupts</span> {
+            <span class="comment">// Keep this in sync with the poll() behaviors</span>
+            <span class="ident">ral</span>::<span class="macro">write_reg</span><span class="macro">!</span>(<span class="ident">ral</span>::<span class="ident">usb</span>, <span class="self">self</span>.<span class="ident">usb</span>, <span class="ident">USBINTR</span>, <span class="ident">UE</span>: <span class="number">1</span>, <span class="ident">URE</span>: <span class="number">1</span>, <span class="ident">PCE</span>: <span class="number">1</span>);
+        } <span class="kw">else</span> {
+            <span class="ident">ral</span>::<span class="macro">write_reg</span><span class="macro">!</span>(<span class="ident">ral</span>::<span class="ident">usb</span>, <span class="self">self</span>.<span class="ident">usb</span>, <span class="ident">USBINTR</span>, <span class="number">0</span>);
+        }
     }
 
     <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">set_address</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>, <span class="ident">address</span>: <span class="ident">u8</span>) {
         <span class="comment">// See the &quot;quirk&quot; note in the UsbBus impl. We&#39;re using USBADRA to let</span>
         <span class="comment">// the hardware set the address before the status phase.</span>
         <span class="ident">ral</span>::<span class="macro">write_reg</span><span class="macro">!</span>(<span class="ident">ral</span>::<span class="ident">usb</span>, <span class="self">self</span>.<span class="ident">usb</span>, <span class="ident">DEVICEADDR</span>, <span class="ident">USBADR</span>: <span class="ident">address</span> <span class="kw">as</span> <span class="ident">u32</span>, <span class="ident">USBADRA</span>: <span class="number">1</span>);
+        <span class="macro">debug</span><span class="macro">!</span>(<span class="string">&quot;ADDRESS {}&quot;</span>, <span class="ident">address</span>);
     }
 
     <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">attach</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>) {
@@ -500,6 +603,7 @@
             <span class="ident">ral</span>::<span class="macro">read_reg</span><span class="macro">!</span>(<span class="ident">ral</span>::<span class="ident">usb</span>, <span class="self">self</span>.<span class="ident">usb</span>, <span class="ident">PORTSC1</span>, <span class="ident">PR</span> <span class="op">=</span><span class="op">=</span> <span class="number">1</span>),
             <span class="string">&quot;Took too long to handle bus reset&quot;</span>
         );
+        <span class="macro">debug</span><span class="macro">!</span>(<span class="string">&quot;RESET&quot;</span>);
     }
 
     <span class="doccomment">/// Check if the endpoint is valid</span>
@@ -512,30 +616,35 @@
 
     <span class="doccomment">/// Read either a setup, or a data buffer, from EP0 OUT</span>
     <span class="doccomment">///</span>
-    <span class="doccomment">/// Return the status if there&#39;s a pending transaction, or an error.</span>
-    <span class="doccomment">///</span>
     <span class="doccomment">/// # Panics</span>
     <span class="doccomment">///</span>
     <span class="doccomment">/// Panics if EP0 OUT isn&#39;t allocated.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">ctrl0_read</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>, <span class="ident">buffer</span>: <span class="kw-2">&amp;</span><span class="kw-2">mut</span> [<span class="ident">u8</span>]) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">usize</span>, <span class="ident">Status</span><span class="op">&gt;</span> {
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">ctrl0_read</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>, <span class="ident">buffer</span>: <span class="kw-2">&amp;</span><span class="kw-2">mut</span> [<span class="ident">u8</span>]) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">usize</span>, <span class="ident">UsbError</span><span class="op">&gt;</span> {
         <span class="kw">let</span> <span class="ident">ctrl_out</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">endpoints</span>[<span class="number">0</span>].<span class="ident">as_mut</span>().<span class="ident">unwrap</span>();
         <span class="kw">if</span> <span class="ident">ctrl_out</span>.<span class="ident">has_setup</span>(<span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">usb</span>) <span class="op">&amp;&amp;</span> <span class="ident">buffer</span>.<span class="ident">len</span>() <span class="op">&gt;</span><span class="op">=</span> <span class="number">8</span> {
+            <span class="macro">debug</span><span class="macro">!</span>(<span class="string">&quot;EP0 Out SETUP&quot;</span>);
             <span class="kw">let</span> <span class="ident">setup</span> <span class="op">=</span> <span class="ident">ctrl_out</span>.<span class="ident">read_setup</span>(<span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">usb</span>);
             <span class="ident">buffer</span>[..<span class="number">8</span>].<span class="ident">copy_from_slice</span>(<span class="kw-2">&amp;</span><span class="ident">setup</span>.<span class="ident">to_le_bytes</span>());
 
-            <span class="ident">ctrl_out</span>.<span class="ident">flush</span>(<span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">usb</span>);
-            <span class="ident">ctrl_out</span>.<span class="ident">clear_complete</span>(<span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">usb</span>);
-            <span class="kw">let</span> <span class="ident">max_packet_len</span> <span class="op">=</span> <span class="ident">ctrl_out</span>.<span class="ident">max_packet_len</span>();
-            <span class="ident">ctrl_out</span>.<span class="ident">schedule_transfer</span>(<span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">usb</span>, <span class="ident">max_packet_len</span>);
+            <span class="kw">if</span> <span class="op">!</span><span class="ident">ctrl_out</span>.<span class="ident">is_primed</span>(<span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">usb</span>) {
+                <span class="ident">ctrl_out</span>.<span class="ident">clear_nack</span>(<span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">usb</span>);
+                <span class="kw">let</span> <span class="ident">max_packet_len</span> <span class="op">=</span> <span class="ident">ctrl_out</span>.<span class="ident">max_packet_len</span>();
+                <span class="ident">ctrl_out</span>.<span class="ident">schedule_transfer</span>(<span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">usb</span>, <span class="ident">max_packet_len</span>);
+            }
 
             <span class="prelude-val">Ok</span>(<span class="number">8</span>)
         } <span class="kw">else</span> {
-            <span class="ident">ctrl_out</span>.<span class="ident">check_status</span>()<span class="question-mark">?</span>;
+            <span class="ident">ctrl_out</span>.<span class="ident">check_errors</span>()<span class="question-mark">?</span>;
+
+            <span class="kw">if</span> <span class="ident">ctrl_out</span>.<span class="ident">is_primed</span>(<span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">usb</span>) {
+                <span class="kw">return</span> <span class="prelude-val">Err</span>(<span class="ident">UsbError</span>::<span class="ident">WouldBlock</span>);
+            }
 
             <span class="ident">ctrl_out</span>.<span class="ident">clear_complete</span>(<span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">usb</span>);
             <span class="ident">ctrl_out</span>.<span class="ident">clear_nack</span>(<span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">usb</span>);
 
             <span class="kw">let</span> <span class="ident">read</span> <span class="op">=</span> <span class="ident">ctrl_out</span>.<span class="ident">read</span>(<span class="ident">buffer</span>);
+            <span class="macro">debug</span><span class="macro">!</span>(<span class="string">&quot;EP0 Out {}&quot;</span>, <span class="ident">read</span>);
             <span class="kw">let</span> <span class="ident">max_packet_len</span> <span class="op">=</span> <span class="ident">ctrl_out</span>.<span class="ident">max_packet_len</span>();
             <span class="ident">ctrl_out</span>.<span class="ident">schedule_transfer</span>(<span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">usb</span>, <span class="ident">max_packet_len</span>);
 
@@ -550,19 +659,23 @@
     <span class="doccomment">/// # Panics</span>
     <span class="doccomment">///</span>
     <span class="doccomment">/// Panics if EP0 IN isn&#39;t allocated, or if EP0 OUT isn&#39;t allocated.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">ctrl0_write</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>, <span class="ident">buffer</span>: <span class="kw-2">&amp;</span>[<span class="ident">u8</span>]) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">usize</span>, <span class="ident">Status</span><span class="op">&gt;</span> {
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">ctrl0_write</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>, <span class="ident">buffer</span>: <span class="kw-2">&amp;</span>[<span class="ident">u8</span>]) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">usize</span>, <span class="ident">UsbError</span><span class="op">&gt;</span> {
         <span class="kw">let</span> <span class="ident">ctrl_in</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">endpoints</span>[<span class="number">1</span>].<span class="ident">as_mut</span>().<span class="ident">unwrap</span>();
-        <span class="ident">ctrl_in</span>.<span class="ident">check_status</span>()<span class="question-mark">?</span>;
+        <span class="macro">debug</span><span class="macro">!</span>(<span class="string">&quot;EP0 In {}&quot;</span>, <span class="ident">buffer</span>.<span class="ident">len</span>());
+        <span class="ident">ctrl_in</span>.<span class="ident">check_errors</span>()<span class="question-mark">?</span>;
+
+        <span class="kw">if</span> <span class="ident">ctrl_in</span>.<span class="ident">is_primed</span>(<span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">usb</span>) {
+            <span class="kw">return</span> <span class="prelude-val">Err</span>(<span class="ident">UsbError</span>::<span class="ident">WouldBlock</span>);
+        }
 
         <span class="ident">ctrl_in</span>.<span class="ident">clear_nack</span>(<span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">usb</span>);
 
         <span class="kw">let</span> <span class="ident">written</span> <span class="op">=</span> <span class="ident">ctrl_in</span>.<span class="ident">write</span>(<span class="ident">buffer</span>);
         <span class="ident">ctrl_in</span>.<span class="ident">schedule_transfer</span>(<span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">usb</span>, <span class="ident">written</span>);
 
-        <span class="kw">if</span> <span class="op">!</span><span class="ident">buffer</span>.<span class="ident">is_empty</span>() {
-            <span class="comment">// Schedule an OUT transfer for the status phase...</span>
-            <span class="kw">let</span> <span class="ident">ctrl_out</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">endpoints</span>[<span class="number">0</span>].<span class="ident">as_mut</span>().<span class="ident">unwrap</span>();
-            <span class="ident">ctrl_out</span>.<span class="ident">flush</span>(<span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">usb</span>);
+        <span class="comment">// Might need an OUT schedule for a status phase...</span>
+        <span class="kw">let</span> <span class="ident">ctrl_out</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">endpoints</span>[<span class="number">0</span>].<span class="ident">as_mut</span>().<span class="ident">unwrap</span>();
+        <span class="kw">if</span> <span class="op">!</span><span class="ident">ctrl_out</span>.<span class="ident">is_primed</span>(<span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">usb</span>) {
             <span class="ident">ctrl_out</span>.<span class="ident">clear_complete</span>(<span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">usb</span>);
             <span class="ident">ctrl_out</span>.<span class="ident">clear_nack</span>(<span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">usb</span>);
             <span class="ident">ctrl_out</span>.<span class="ident">schedule_transfer</span>(<span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">usb</span>, <span class="number">0</span>);
@@ -576,11 +689,16 @@
     <span class="doccomment">/// # Panics</span>
     <span class="doccomment">///</span>
     <span class="doccomment">/// Panics if the endpoint isn&#39;t allocated.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">ep_read</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>, <span class="ident">buffer</span>: <span class="kw-2">&amp;</span><span class="kw-2">mut</span> [<span class="ident">u8</span>], <span class="ident">addr</span>: <span class="ident">EndpointAddress</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">usize</span>, <span class="ident">Status</span><span class="op">&gt;</span> {
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">ep_read</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>, <span class="ident">buffer</span>: <span class="kw-2">&amp;</span><span class="kw-2">mut</span> [<span class="ident">u8</span>], <span class="ident">addr</span>: <span class="ident">EndpointAddress</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">usize</span>, <span class="ident">UsbError</span><span class="op">&gt;</span> {
         <span class="kw">let</span> <span class="ident">ep</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">endpoints</span>[<span class="ident">index</span>(<span class="ident">addr</span>)].<span class="ident">as_mut</span>().<span class="ident">unwrap</span>();
-        <span class="ident">ep</span>.<span class="ident">check_status</span>()<span class="question-mark">?</span>;
+        <span class="macro">debug</span><span class="macro">!</span>(<span class="string">&quot;EP{} Out&quot;</span>, <span class="ident">ep</span>.<span class="ident">address</span>().<span class="ident">index</span>());
+        <span class="ident">ep</span>.<span class="ident">check_errors</span>()<span class="question-mark">?</span>;
 
-        <span class="ident">ep</span>.<span class="ident">clear_complete</span>(<span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">usb</span>);
+        <span class="kw">if</span> <span class="ident">ep</span>.<span class="ident">is_primed</span>(<span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">usb</span>) <span class="op">|</span><span class="op">|</span> (<span class="self">self</span>.<span class="ident">ep_out</span> <span class="op">&amp;</span> (<span class="number">1</span> <span class="op">&lt;</span><span class="op">&lt;</span> <span class="ident">ep</span>.<span class="ident">address</span>().<span class="ident">index</span>()) <span class="op">=</span><span class="op">=</span> <span class="number">0</span>) {
+            <span class="kw">return</span> <span class="prelude-val">Err</span>(<span class="ident">UsbError</span>::<span class="ident">WouldBlock</span>);
+        }
+
+        <span class="ident">ep</span>.<span class="ident">clear_complete</span>(<span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">usb</span>); <span class="comment">// Clears self.ep_out bit on the next poll() call...</span>
         <span class="ident">ep</span>.<span class="ident">clear_nack</span>(<span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">usb</span>);
 
         <span class="kw">let</span> <span class="ident">read</span> <span class="op">=</span> <span class="ident">ep</span>.<span class="ident">read</span>(<span class="ident">buffer</span>);
@@ -596,9 +714,13 @@
     <span class="doccomment">/// # Panics</span>
     <span class="doccomment">///</span>
     <span class="doccomment">/// Panics if the endpoint isn&#39;t allocated.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">ep_write</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>, <span class="ident">buffer</span>: <span class="kw-2">&amp;</span>[<span class="ident">u8</span>], <span class="ident">addr</span>: <span class="ident">EndpointAddress</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">usize</span>, <span class="ident">Status</span><span class="op">&gt;</span> {
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">ep_write</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>, <span class="ident">buffer</span>: <span class="kw-2">&amp;</span>[<span class="ident">u8</span>], <span class="ident">addr</span>: <span class="ident">EndpointAddress</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">usize</span>, <span class="ident">UsbError</span><span class="op">&gt;</span> {
         <span class="kw">let</span> <span class="ident">ep</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">endpoints</span>[<span class="ident">index</span>(<span class="ident">addr</span>)].<span class="ident">as_mut</span>().<span class="ident">unwrap</span>();
-        <span class="ident">ep</span>.<span class="ident">check_status</span>()<span class="question-mark">?</span>;
+        <span class="ident">ep</span>.<span class="ident">check_errors</span>()<span class="question-mark">?</span>;
+
+        <span class="kw">if</span> <span class="ident">ep</span>.<span class="ident">is_primed</span>(<span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">usb</span>) {
+            <span class="kw">return</span> <span class="prelude-val">Err</span>(<span class="ident">UsbError</span>::<span class="ident">WouldBlock</span>);
+        }
 
         <span class="ident">ep</span>.<span class="ident">clear_nack</span>(<span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">usb</span>);
 
@@ -651,7 +773,8 @@
         <span class="kw">let</span> <span class="ident">qh</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">qhs</span>[<span class="ident">index</span>(<span class="ident">addr</span>)].<span class="ident">take</span>().<span class="ident">unwrap</span>();
         <span class="kw">let</span> <span class="ident">td</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">tds</span>[<span class="ident">index</span>(<span class="ident">addr</span>)].<span class="ident">take</span>().<span class="ident">unwrap</span>();
 
-        <span class="ident">qh</span>.<span class="ident">set_max_packet_len</span>(<span class="ident">buffer</span>.<span class="ident">len</span>());
+        <span class="kw">let</span> <span class="ident">max_packet_size</span> <span class="op">=</span> <span class="ident">buffer</span>.<span class="ident">len</span>();
+        <span class="ident">qh</span>.<span class="ident">set_max_packet_len</span>(<span class="ident">max_packet_size</span>);
         <span class="ident">qh</span>.<span class="ident">set_zero_length_termination</span>(<span class="bool-val">false</span>);
         <span class="ident">qh</span>.<span class="ident">set_interrupt_on_setup</span>(
             <span class="ident">EndpointType</span>::<span class="ident">Control</span> <span class="op">=</span><span class="op">=</span> <span class="ident">kind</span> <span class="op">&amp;&amp;</span> <span class="ident">addr</span>.<span class="ident">direction</span>() <span class="op">=</span><span class="op">=</span> <span class="ident">UsbDirection</span>::<span class="ident">Out</span>,
@@ -660,21 +783,53 @@
         <span class="ident">td</span>.<span class="ident">set_terminate</span>();
         <span class="ident">td</span>.<span class="ident">clear_status</span>();
 
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">ep</span> <span class="op">=</span> <span class="ident">Endpoint</span>::<span class="ident">new</span>(<span class="ident">addr</span>, <span class="ident">qh</span>, <span class="ident">td</span>, <span class="ident">buffer</span>);
-        <span class="ident">ep</span>.<span class="ident">initialize</span>(<span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">usb</span>, <span class="ident">kind</span>);
+        <span class="kw">let</span> <span class="ident">ep</span> <span class="op">=</span> <span class="ident">Endpoint</span>::<span class="ident">new</span>(<span class="ident">addr</span>, <span class="ident">qh</span>, <span class="ident">td</span>, <span class="ident">buffer</span>, <span class="ident">kind</span>);
         <span class="self">self</span>.<span class="ident">endpoints</span>[<span class="ident">index</span>(<span class="ident">addr</span>)] <span class="op">=</span> <span class="prelude-val">Some</span>(<span class="ident">ep</span>);
+
+        <span class="macro">debug</span><span class="macro">!</span>(
+            <span class="string">&quot;ALLOC EP{} {:?} {:?} {}&quot;</span>,
+            <span class="ident">addr</span>.<span class="ident">index</span>(),
+            <span class="ident">addr</span>.<span class="ident">direction</span>(),
+            <span class="ident">kind</span>,
+            <span class="ident">max_packet_size</span>
+        );
     }
 
-    <span class="doccomment">/// Enable all non-zero endpoints, and schedule OUT transfers</span>
+    <span class="doccomment">/// Invoked when the device transitions into the configured state</span>
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">on_configured</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>) {
+        <span class="self">self</span>.<span class="ident">enable_endpoints</span>();
+        <span class="self">self</span>.<span class="ident">prime_endpoints</span>();
+    }
+
+    <span class="doccomment">/// Enable all non-zero endpoints</span>
     <span class="doccomment">///</span>
     <span class="doccomment">/// This should only be called when the device is configured</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">enable_endpoints</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>) {
+    <span class="kw">fn</span> <span class="ident">enable_endpoints</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>) {
         <span class="kw">for</span> <span class="ident">ep</span> <span class="kw">in</span> <span class="self">self</span>.<span class="ident">endpoints</span>.<span class="ident">iter_mut</span>().<span class="ident">flat_map</span>(<span class="ident">core</span>::<span class="ident">convert</span>::<span class="ident">identity</span>) {
             <span class="ident">ep</span>.<span class="ident">enable</span>(<span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">usb</span>);
-            <span class="kw">if</span> <span class="ident">ep</span>.<span class="ident">address</span>().<span class="ident">direction</span>() <span class="op">=</span><span class="op">=</span> <span class="ident">UsbDirection</span>::<span class="ident">Out</span> {
+        }
+    }
+
+    <span class="doccomment">/// Prime all non-zero, enabled OUT endpoints</span>
+    <span class="kw">fn</span> <span class="ident">prime_endpoints</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>) {
+        <span class="kw">for</span> <span class="ident">ep</span> <span class="kw">in</span> <span class="self">self</span>.<span class="ident">endpoints</span>[<span class="number">2</span>..]
+            .<span class="ident">iter_mut</span>()
+            .<span class="ident">flat_map</span>(<span class="ident">core</span>::<span class="ident">convert</span>::<span class="ident">identity</span>)
+            .<span class="ident">filter</span>(<span class="op">|</span><span class="ident">ep</span><span class="op">|</span> <span class="ident">UsbDirection</span>::<span class="ident">Out</span> <span class="op">=</span><span class="op">=</span> <span class="ident">ep</span>.<span class="ident">address</span>().<span class="ident">direction</span>())
+        {
+            <span class="kw">if</span> <span class="ident">ep</span>.<span class="ident">is_enabled</span>(<span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">usb</span>) {
                 <span class="kw">let</span> <span class="ident">max_packet_len</span> <span class="op">=</span> <span class="ident">ep</span>.<span class="ident">max_packet_len</span>();
                 <span class="ident">ep</span>.<span class="ident">schedule_transfer</span>(<span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">usb</span>, <span class="ident">max_packet_len</span>);
             }
+        }
+    }
+
+    <span class="kw">fn</span> <span class="ident">initialize_endpoints</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>) {
+        <span class="kw">for</span> <span class="ident">ep</span> <span class="kw">in</span> <span class="self">self</span>.<span class="ident">endpoints</span>[<span class="number">2</span>..]
+            .<span class="ident">iter_mut</span>()
+            .<span class="ident">flat_map</span>(<span class="ident">core</span>::<span class="ident">convert</span>::<span class="ident">identity</span>)
+        {
+            <span class="ident">ep</span>.<span class="ident">initialize</span>(<span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">usb</span>);
         }
     }
 
@@ -685,11 +840,22 @@
 
         <span class="kw">use</span> <span class="ident">ral</span>::<span class="ident">usb</span>::<span class="ident">USBSTS</span>;
         <span class="kw">if</span> <span class="ident">usbsts</span> <span class="op">&amp;</span> <span class="ident">USBSTS</span>::<span class="ident">URI</span>::<span class="ident">mask</span> <span class="op">!</span><span class="op">=</span> <span class="number">0</span> {
-            <span class="ident">PollResult</span>::<span class="ident">Reset</span>
-        } <span class="kw">else</span> <span class="kw">if</span> <span class="ident">usbsts</span> <span class="op">&amp;</span> <span class="ident">USBSTS</span>::<span class="ident">UI</span>::<span class="ident">mask</span> <span class="op">!</span><span class="op">=</span> <span class="number">0</span> {
+            <span class="kw">return</span> <span class="ident">PollResult</span>::<span class="ident">Reset</span>;
+        }
+
+        <span class="kw">if</span> <span class="ident">usbsts</span> <span class="op">&amp;</span> <span class="ident">USBSTS</span>::<span class="ident">PCI</span>::<span class="ident">mask</span> <span class="op">!</span><span class="op">=</span> <span class="number">0</span> {
+            <span class="self">self</span>.<span class="ident">initialize_endpoints</span>();
+        }
+
+        <span class="kw">if</span> <span class="ident">usbsts</span> <span class="op">&amp;</span> <span class="ident">USBSTS</span>::<span class="ident">UI</span>::<span class="ident">mask</span> <span class="op">!</span><span class="op">=</span> <span class="number">0</span> {
+            <span class="macro">trace</span><span class="macro">!</span>(
+                <span class="string">&quot;{:X} {:X}&quot;</span>,
+                <span class="ident">ral</span>::<span class="macro">read_reg</span><span class="macro">!</span>(<span class="ident">ral</span>::<span class="ident">usb</span>, <span class="self">self</span>.<span class="ident">usb</span>, <span class="ident">ENDPTSETUPSTAT</span>),
+                <span class="ident">ral</span>::<span class="macro">read_reg</span><span class="macro">!</span>(<span class="ident">ral</span>::<span class="ident">usb</span>, <span class="self">self</span>.<span class="ident">usb</span>, <span class="ident">ENDPTCOMPLETE</span>)
+            );
             <span class="comment">// Note: could be complete in one register read, but this is a little</span>
             <span class="comment">// easier to comprehend...</span>
-            <span class="kw">let</span> <span class="ident">ep_out</span> <span class="op">=</span> <span class="ident">ral</span>::<span class="macro">read_reg</span><span class="macro">!</span>(<span class="ident">ral</span>::<span class="ident">usb</span>, <span class="self">self</span>.<span class="ident">usb</span>, <span class="ident">ENDPTCOMPLETE</span>, <span class="ident">ERCE</span>);
+            <span class="self">self</span>.<span class="ident">ep_out</span> <span class="op">=</span> <span class="ident">ral</span>::<span class="macro">read_reg</span><span class="macro">!</span>(<span class="ident">ral</span>::<span class="ident">usb</span>, <span class="self">self</span>.<span class="ident">usb</span>, <span class="ident">ENDPTCOMPLETE</span>, <span class="ident">ERCE</span>) <span class="kw">as</span> <span class="ident">u16</span>;
 
             <span class="kw">let</span> <span class="ident">ep_in_complete</span> <span class="op">=</span> <span class="ident">ral</span>::<span class="macro">read_reg</span><span class="macro">!</span>(<span class="ident">ral</span>::<span class="ident">usb</span>, <span class="self">self</span>.<span class="ident">usb</span>, <span class="ident">ENDPTCOMPLETE</span>, <span class="ident">ETCE</span>);
             <span class="ident">ral</span>::<span class="macro">write_reg</span><span class="macro">!</span>(<span class="ident">ral</span>::<span class="ident">usb</span>, <span class="self">self</span>.<span class="ident">usb</span>, <span class="ident">ENDPTCOMPLETE</span>, <span class="ident">ETCE</span>: <span class="ident">ep_in_complete</span>);
@@ -697,7 +863,7 @@
             <span class="kw">let</span> <span class="ident">ep_setup</span> <span class="op">=</span> <span class="ident">ral</span>::<span class="macro">read_reg</span><span class="macro">!</span>(<span class="ident">ral</span>::<span class="ident">usb</span>, <span class="self">self</span>.<span class="ident">usb</span>, <span class="ident">ENDPTSETUPSTAT</span>) <span class="kw">as</span> <span class="ident">u16</span>;
 
             <span class="ident">PollResult</span>::<span class="ident">Data</span> {
-                <span class="ident">ep_out</span>: <span class="ident">ep_out</span> <span class="kw">as</span> <span class="ident">u16</span>,
+                <span class="ident">ep_out</span>: <span class="self">self</span>.<span class="ident">ep_out</span>,
                 <span class="ident">ep_in_complete</span>: <span class="ident">ep_in_complete</span> <span class="kw">as</span> <span class="ident">u16</span>,
                 <span class="ident">ep_setup</span>,
             }
