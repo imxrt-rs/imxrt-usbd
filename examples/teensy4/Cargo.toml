@@ -14,18 +14,15 @@ features = [
 ]
 
 # Supporting other hardware access, start-up
-[dependencies.imxrt-hal]
-version = "0.4"
-features = ["imxrt1062", "rt"]
+[dependencies.teensy4-bsp]
+version = "0.2"
+default-features = false  # Disable the BSP's USB driver
+features = ["rt"]
 
 # Runtime support
 [dependencies.cortex-m-rt]
 features = ["device"]
 version = "0.6.13"
-
-# Necessary for booting the Teensy 4
-[dependencies.teensy4-fcb]
-version = "0.3.0"
 
 # Simple panic handler
 #
@@ -37,10 +34,6 @@ version = "0.3.0"
 git = "https://github.com/mciantyre/teensy4-rs.git"
 rev = "9e5b3a3"
 default-features = false
-
-# Pin API
-[dependencies.teensy4-pins]
-version = "0.1"
 
 # USB device
 [dependencies.usb-device]

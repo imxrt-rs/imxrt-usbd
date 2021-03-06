@@ -2,11 +2,11 @@
 
 #![no_std]
 
-use teensy4_fcb as _;
+pub use bsp::hal;
+pub use hal::ral;
+pub use teensy4_bsp as bsp;
 
-use hal::ral;
-use imxrt_hal as hal;
-use teensy4_pins::common;
+use bsp::common;
 
 pub type LED = hal::gpio::GPIO<common::P13, hal::gpio::Output>;
 pub fn configure_led(pad: common::P13) -> LED {
@@ -42,13 +42,4 @@ fn panic(info: &core::panic::PanicInfo) -> ! {
         imxrt_uart_log::dma::poll();
     }
     teensy4_panic::sos()
-}
-
-#[cortex_m_rt::pre_init]
-unsafe fn pre_init() {
-    const SCB_VTOR: *mut u32 = 0xE000_ED08 as *mut u32;
-    core::ptr::write_volatile(SCB_VTOR, 0x60001400 /* ORIGIN(FLASH) */);
-
-    const CCM_CLPCR: *mut u32 = 0x400F_C054 as *mut _;
-    CCM_CLPCR.write_volatile(CCM_CLPCR.read_volatile() & !0b11);
 }

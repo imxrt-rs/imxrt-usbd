@@ -13,8 +13,8 @@
 #![no_std]
 #![no_main]
 
-use imxrt_hal as hal;
-use teensy4_pins as pins;
+use support::hal;
+use teensy4_bsp::t40;
 
 use usb_device::prelude::*;
 
@@ -29,7 +29,7 @@ fn main() -> ! {
         uart,
         ..
     } = hal::Peripherals::take().unwrap();
-    let pins = pins::t40::into_pins(iomuxc);
+    let pins = t40::into_pins(iomuxc);
     let mut led = support::configure_led(pins.p13);
 
     // DMA initialization (for logging)

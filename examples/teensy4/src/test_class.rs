@@ -9,8 +9,8 @@
 #![no_std]
 #![no_main]
 
-use imxrt_hal as hal;
-use teensy4_pins as pins;
+use support::hal;
+use teensy4_bsp::t40;
 
 const UART_BAUD: u32 = 115_200;
 const GPT_OCR: hal::gpt::OutputCompareRegister = hal::gpt::OutputCompareRegister::One;
@@ -27,13 +27,13 @@ fn main() -> ! {
         gpt1,
         ..
     } = hal::Peripherals::take().unwrap();
-    let pins = pins::t40::into_pins(iomuxc);
+    let pins = t40::into_pins(iomuxc);
     let mut led = support::configure_led(pins.p13);
 
     // Timer for blinking
-    let (_, ipg_hz) =
-        ccm.pll1
-            .set_arm_clock(imxrt_hal::ccm::PLL1::ARM_HZ, &mut ccm.handle, &mut dcdc);
+    let (_, ipg_hz) = ccm
+        .pll1
+        .set_arm_clock(hal::ccm::PLL1::ARM_HZ, &mut ccm.handle, &mut dcdc);
 
     let mut cfg = ccm.perclk.configure(
         &mut ccm.handle,
@@ -44,7 +44,7 @@ fn main() -> ! {
     let mut gpt1 = gpt1.clock(&mut cfg);
 
     gpt1.set_wait_mode_enable(true);
-    gpt1.set_mode(imxrt_hal::gpt::Mode::Reset);
+    gpt1.set_mode(hal::gpt::Mode::Reset);
 
     // DMA initialization (for logging)
     let mut dma_channels = dma.clock(&mut ccm.handle);
