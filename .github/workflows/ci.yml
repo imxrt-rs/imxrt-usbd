@@ -35,11 +35,7 @@ jobs:
         - "imxrt-ral/imxrt1011"
         - "imxrt-ral/imxrt1015"
         - "imxrt-ral/imxrt1021"
-        - "imxrt-ral/imxrt1051,double-instance"
-        - "imxrt-ral/imxrt1052,double-instance"
-        - "imxrt-ral/imxrt1061,double-instance"
-        - "imxrt-ral/imxrt1062,double-instance"
-        - "imxrt-ral/imxrt1062,double-instance,__log"
+        - "imxrt-ral/imxrt1062,__log"
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v2
@@ -57,8 +53,6 @@ jobs:
         name: Lint the library
 
   # Run unit and documentation tests for a chip
-  #
-  # Documentation tests currently assume a "double-instance" chip
   test:
     runs-on: ubuntu-latest
     steps:
@@ -67,7 +61,7 @@ jobs:
       uses: actions-rs/cargo@v1
       with:
         command: test
-        args: --verbose --features imxrt-ral/imxrt1062 --features double-instance
+        args: --verbose --features imxrt-ral/imxrt1062
 
   # Build & lint the teensy4 examples
   teensy4-clippy:
@@ -120,4 +114,4 @@ jobs:
       uses: actions-rs/cargo@v1
       with:
         command: rustdoc
-        args: --features imxrt-ral/imxrt1062 --features double-instance
+        args: --features imxrt-ral/imxrt1062

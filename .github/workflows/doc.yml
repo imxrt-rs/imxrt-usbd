@@ -19,7 +19,7 @@ jobs:
         toolchain: stable
 
     - name: Generate docs
-      run: cargo rustdoc --features imxrt-ral/imxrt1062 --features double-instance --target thumbv7em-none-eabihf
+      run: cargo rustdoc --features imxrt-ral/imxrt1062 --target thumbv7em-none-eabihf
 
     - name: Write redirect
       run: echo "<meta http-equiv=\"refresh\" content=\"0;url=imxrt_usbd\">" > target/thumbv7em-none-eabihf/doc/index.html
