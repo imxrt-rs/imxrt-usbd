@@ -3365,3 +3365,19 @@ pub struct ResetValues {
     pub ENDPTCTRL6: u32,
     pub ENDPTCTRL7: u32,
 }
+pub struct Instance {
+    pub addr: *const RegisterBlock,
+}
+
+impl ::core::ops::Deref for Instance {
+    type Target = RegisterBlock;
+    #[inline(always)]
+    fn deref(&self) -> &RegisterBlock {
+        unsafe { &*(self.addr as *const _) }
+    }
+}
+
+unsafe impl Send for Instance {}
+
+pub const USB1: *const RegisterBlock = 0x402e0000 as *const _;
+pub const USB2: *const RegisterBlock = 0x402e0200 as *const _;

@@ -64,10 +64,11 @@ const STATE_INIT: State = State {
 static mut USB1_STATE: State = STATE_INIT;
 static mut USB2_STATE: State = STATE_INIT;
 
-unsafe fn state(usb: &ral::USB) -> &'static mut State {
-    match usb.inst() {
-        ral::Inst::One => &mut USB1_STATE,
-        ral::Inst::Two => &mut USB2_STATE,
+unsafe fn state(usb: &ral::usb::Instance) -> &'static mut State {
+    match &**usb as *const _ {
+        ral::usb::USB1 => &mut USB1_STATE,
+        ral::usb::USB2 => &mut USB2_STATE,
+        _ => unreachable!("ral module ensures that the USB instance is one of these two value"),
     }
 }
 
@@ -75,7 +76,7 @@ unsafe fn state(usb: &ral::USB) -> &'static mut State {
 ///
 /// This is only safe to use when assigning the ENDPTLISTADDR to the USB
 /// instance.
-pub fn assign_endptlistaddr(usb: &ral::USB) {
+pub fn assign_endptlistaddr(usb: &ral::usb::Instance) {
     let ptr = unsafe { state(usb).qhs.0.as_ptr() };
     ral::write_reg!(ral::usb, usb, ASYNCLISTADDR, ptr as u32);
 }
@@ -88,7 +89,7 @@ pub fn assign_endptlistaddr(usb: &ral::USB) {
 /// This should only be called once. You must make sure that the static, mutable references
 /// aren't mutably aliased. Consider taking them from this collection, and assigning them
 /// elsewhere.
-pub unsafe fn steal_qhs(usb: &ral::USB) -> [Option<&'static mut qh::QH>; QH_COUNT] {
+pub unsafe fn steal_qhs(usb: &ral::usb::Instance) -> [Option<&'static mut qh::QH>; QH_COUNT] {
     let mut qhs = [
         None, None, None, None, None, None, None, None, None, None, None, None, None, None, None,
         None,
@@ -107,7 +108,7 @@ pub unsafe fn steal_qhs(usb: &ral::USB) -> [Option<&'static mut qh::QH>; QH_COUN
 /// This should only be called once. You must make sure that the static, mutable references
 /// aren't mutably aliased. Consider taking them from this collection, and assigning them
 /// elsewhere.
-pub unsafe fn steal_tds(usb: &ral::USB) -> [Option<&'static mut td::TD>; QH_COUNT] {
+pub unsafe fn steal_tds(usb: &ral::usb::Instance) -> [Option<&'static mut td::TD>; QH_COUNT] {
     let mut tds = [
         None, None, None, None, None, None, None, None, None, None, None, None, None, None, None,
         None,

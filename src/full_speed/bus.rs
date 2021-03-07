@@ -16,7 +16,6 @@ use usb_device::{
 /// # Requirements
 ///
 /// The driver assumes that you've prepared all USB clocks (CCM clock gates, CCM analog PLLs).
-/// You may use the `imxrt-ral` APIs to configure USB clocks.
 ///
 /// Before polling for USB class traffic, you must call [`configure()`](BusAdapter::configure())
 /// *after* your device has been configured. This can be accomplished by polling the USB
@@ -36,14 +35,15 @@ use usb_device::{
 /// use imxrt_usbd::full_speed::BusAdapter;
 ///
 /// # struct Ps;
-/// # unsafe impl imxrt_usbd::Peripherals for Ps { fn core(&self) -> *const () { panic!() } fn non_core(&self) -> *const () { panic!() } fn phy(&self) -> *const () { panic!() }}
+/// # unsafe impl imxrt_usbd::CoreRegisters for Ps { fn as_ptr(&self) -> *const () { panic!() } }
 /// static mut ENDPOINT_MEMORY: [u8; 1024] = [0; 1024];
 ///
-/// // TODO initialize clocks...
+/// // TODO initialize clocks, USB PHY registers...
 ///
-/// # let my_usb_peripherals = Ps;
+/// let my_usb_core_registers = // Your CoreRegisters instance...
+/// #   Ps;
 /// let bus_adapter = BusAdapter::new(
-///     my_usb_peripherals,
+///     my_usb_core_registers,
 ///     unsafe { &mut ENDPOINT_MEMORY }
 /// );
 ///
@@ -88,8 +88,8 @@ impl BusAdapter {
     /// # Panics
     ///
     /// Panics if the USB instances are mismatched (a USB1 instance with a USBPHY2 instance).
-    pub fn new<P: crate::Peripherals>(peripherals: P, buffer: &'static mut [u8]) -> Self {
-        let mut usb = FullSpeed::new(peripherals);
+    pub fn new<C: crate::CoreRegisters>(core_registers: C, buffer: &'static mut [u8]) -> Self {
+        let mut usb = FullSpeed::new(core_registers);
 
         usb.initialize();
         usb.set_endpoint_memory(buffer);
