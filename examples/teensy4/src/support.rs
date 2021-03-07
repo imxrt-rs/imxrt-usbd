@@ -56,20 +56,20 @@ fn panic(info: &core::panic::PanicInfo) -> ! {
 use ral::usb;
 
 struct CoreRegisters {
-    usb: ral::usb::Instance,
+    _usb: ral::usb::Instance,
 }
 
 impl CoreRegisters {
     /// Panics if the instance is already taken
     fn usb1() -> CoreRegisters {
         Self {
-            usb: usb::USB1::take().unwrap(),
+            _usb: usb::USB1::take().unwrap(),
         }
     }
 }
 
 unsafe impl imxrt_usbd::CoreRegisters for CoreRegisters {
-    fn as_ptr(&self) -> *const () {
-        &*self.usb as *const _ as _
+    fn instance(&self) -> imxrt_usbd::Instance {
+        imxrt_usbd::Instance::USB1
     }
 }

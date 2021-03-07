@@ -4,7 +4,7 @@ pub mod usb;
 
 pub use imxrt_ral::{modify_reg, read_reg, write_reg, RORegister, RWRegister};
 
-use crate::CoreRegisters;
+use crate::{CoreRegisters, Instance};
 
 /// The RAL API requires us to treat all endpoint control registers as unique.
 /// We can make it a little easier with this function, the `EndptCtrl` type,
@@ -39,14 +39,12 @@ pub mod endpoint_control {
     }
 }
 
-/// # Panics
-///
-/// Panics if the core registers pointer is invalid.
+/// Converts the core registers into a USB register block instance
 pub fn instance<C: CoreRegisters>(core_registers: C) -> usb::Instance {
-    let ptr = core_registers.as_ptr() as *const _;
-    if ptr == usb::USB1 || ptr == usb::USB2 {
-        usb::Instance { addr: ptr }
-    } else {
-        panic!("Incorrect USB core registers address");
+    usb::Instance {
+        addr: match core_registers.instance() {
+            Instance::USB1 => usb::USB1,
+            Instance::USB2 => usb::USB2,
+        },
     }
 }

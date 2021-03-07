@@ -34,8 +34,8 @@ use usb_device::{
 /// ```no_run
 /// use imxrt_usbd::full_speed::BusAdapter;
 ///
-/// # struct Ps;
-/// # unsafe impl imxrt_usbd::CoreRegisters for Ps { fn as_ptr(&self) -> *const () { panic!() } }
+/// # struct Ps; use imxrt_usbd::Instance as Inst;
+/// # unsafe impl imxrt_usbd::CoreRegisters for Ps { fn instance(&self) -> Inst { panic!() } }
 /// static mut ENDPOINT_MEMORY: [u8; 1024] = [0; 1024];
 ///
 /// // TODO initialize clocks, USB PHY registers...
