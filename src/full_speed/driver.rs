@@ -297,10 +297,14 @@ impl FullSpeed {
     ///
     /// Panics if the endpoint isn't allocated
     pub fn ep_stall(&mut self, stall: bool, addr: EndpointAddress) {
-        self.endpoints[index(addr)]
-            .as_mut()
-            .unwrap()
-            .set_stalled(&self.usb, stall);
+        let ep = self.endpoints[index(addr)].as_mut().unwrap();
+        ep.set_stalled(&self.usb, stall);
+
+        // Re-prime any OUT endpoints if we're unstalling
+        if !stall && addr.direction() == UsbDirection::Out && !ep.is_primed(&self.usb) {
+            let max_packet_len = ep.max_packet_len();
+            ep.schedule_transfer(&self.usb, max_packet_len);
+        }
     }
 
     /// Checks if an endpoint is stalled
