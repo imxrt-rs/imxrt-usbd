@@ -49,7 +49,10 @@ impl Endpoint {
     /// an error
     pub fn check_errors(&self) -> Result<(), UsbError> {
         let status = self.td.status();
-        if status.contains(Status::TRANSACTION_ERROR | Status::DATA_BUS_ERROR | Status::HALTED) {
+        if status.contains(Status::TRANSACTION_ERROR)
+            | status.contains(Status::DATA_BUS_ERROR)
+            | status.contains(Status::HALTED)
+        {
             Err(UsbError::InvalidState)
         } else {
             Ok(())
