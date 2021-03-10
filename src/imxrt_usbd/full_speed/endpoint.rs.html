@@ -244,6 +244,9 @@
 <span id="241">241</span>
 <span id="242">242</span>
 <span id="243">243</span>
+<span id="244">244</span>
+<span id="245">245</span>
+<span id="246">246</span>
 </pre><div class="example-wrap"><pre class="rust ">
 <span class="kw">use</span> <span class="kw">crate</span>::{
     <span class="ident">buffer</span>::<span class="ident">Buffer</span>,
@@ -296,7 +299,10 @@
     <span class="doccomment">/// an error</span>
     <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">check_errors</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span>(), <span class="ident">UsbError</span><span class="op">&gt;</span> {
         <span class="kw">let</span> <span class="ident">status</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">td</span>.<span class="ident">status</span>();
-        <span class="kw">if</span> <span class="ident">status</span>.<span class="ident">contains</span>(<span class="ident">Status</span>::<span class="ident">TRANSACTION_ERROR</span> <span class="op">|</span> <span class="ident">Status</span>::<span class="ident">DATA_BUS_ERROR</span> <span class="op">|</span> <span class="ident">Status</span>::<span class="ident">HALTED</span>) {
+        <span class="kw">if</span> <span class="ident">status</span>.<span class="ident">contains</span>(<span class="ident">Status</span>::<span class="ident">TRANSACTION_ERROR</span>)
+            <span class="op">|</span> <span class="ident">status</span>.<span class="ident">contains</span>(<span class="ident">Status</span>::<span class="ident">DATA_BUS_ERROR</span>)
+            <span class="op">|</span> <span class="ident">status</span>.<span class="ident">contains</span>(<span class="ident">Status</span>::<span class="ident">HALTED</span>)
+        {
             <span class="prelude-val">Err</span>(<span class="ident">UsbError</span>::<span class="ident">InvalidState</span>)
         } <span class="kw">else</span> {
             <span class="prelude-val">Ok</span>(())
