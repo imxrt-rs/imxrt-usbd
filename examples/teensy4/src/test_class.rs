@@ -80,10 +80,7 @@ fn main() -> ! {
         CLASS = Some(test_class);
         let test_class = CLASS.as_ref().unwrap();
 
-        let device = test_class
-            .make_device_builder(bus)
-            .max_packet_size_0(64)
-            .build();
+        let device = test_class.make_device(bus);
 
         DEVICE = Some(device);
 

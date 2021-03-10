@@ -25,32 +25,6 @@
 //! to quickly respond to `poll()` outputs, and schedule the next transfer
 //! in the time required for full-speed devices.
 //!
-//! We do this because that's the behaviors expected by the `usb-device`
-//! implementation. Specifically, `UsbBus::read()` and `write()` are expected
-//! to send *packets*. Furthermore, `UsbBus::poll()` is expected to signal
-//! *packet* completion. Although a TD can describe a transfer of *N* packets,
-//! we cannot know how many packets to associate with each transfer without
-//! implementing our own state machine.
-//!
-//! This detail reveals why we must increase the max packet size for the
-//! control endpoint. Consider a `GET_DESCRIPTOR` device request that expects
-//! 18 bytes, and a control endpoint that supports a max packet size of 8 bytes.
-//! The USB device will call `write()` three times to send 3 packets. To properly
-//! relay the data to the host, we would need to buffer the 18 bytes, then
-//! schedule a single TD to send the 3 packets. However, supporting this would
-//! complicate the driver, and we might be tricking the USB device into thinking
-//! we actually sent the data. Instead, we simplify the driver, and require one packet
-//! per TD. This works until you need to send more than 64 bytes to satsify an EP0
-//! IN data phase, so we're betting that won't happen.
-//!
-//! ## Future work
-//!
-//! This design does not take advangate of the high-speed driver design available
-//! in i.MX RT processors. Although the only difference between high- and full-speed
-//! is the data bandwidth, we've not tested high-speed I/O with this design, and we will
-//! not support it. Therefore, the full-speed driver restricts the potential of the
-//! bus. A future high-speed driver should account for these limitations.
-//!
 //!
 //! [`imxrt-ral`]: https://crates.io/crates/imxrt-ral
 //! [`usb-device`]: https://crates.io/crates/usb-device

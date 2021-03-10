@@ -19,12 +19,7 @@ use usb_device::{
 /// The driver assumes that you've prepared all USB clocks (CCM clock gates, CCM analog PLLs).
 /// You may use the `imxrt-ral` APIs to configure USB clocks.
 ///
-/// When you build your final `usb-device`, you must set the endpoint 0 max packet
-/// size to 64 bytes. See `UsbDeviceBuilder::max_packet_size_0` for more information.
-/// Failure to increase the control endpoint max packet size will result in a USB device
-/// that cannot communicate with the host.
-///
-/// Additionally, before polling for USB class traffic, you must call [`configure()`](BusAdapter::configure())
+/// Before polling for USB class traffic, you must call [`configure()`](BusAdapter::configure())
 /// *after* your device has been configured. This can be accomplished by polling the USB
 /// device and checking its state until it's been configured. Once configured, use `UsbDevice::bus()`
 /// to access the i.MX RT `BusAdapter`, and call `configure()`. You should only do this once.
@@ -57,7 +52,6 @@ use usb_device::{
 /// let bus_allocator = usb_device::bus::UsbBusAllocator::new(bus_adapter);
 /// let mut device = UsbDeviceBuilder::new(&bus_allocator, UsbVidPid(0x5824, 0x27dd))
 ///     .product("imxrt-usbd")
-///     .max_packet_size_0(64) // <---- Set the control OUT/IN max packet size to 64
 ///     // Other builder methods...
 ///     .build();
 ///
