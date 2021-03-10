@@ -275,12 +275,6 @@
 <span id="272">272</span>
 <span id="273">273</span>
 <span id="274">274</span>
-<span id="275">275</span>
-<span id="276">276</span>
-<span id="277">277</span>
-<span id="278">278</span>
-<span id="279">279</span>
-<span id="280">280</span>
 </pre><div class="example-wrap"><pre class="rust ">
 <span class="doccomment">//! USB bus implementation</span>
 
@@ -303,12 +297,7 @@
 <span class="doccomment">/// The driver assumes that you&#39;ve prepared all USB clocks (CCM clock gates, CCM analog PLLs).</span>
 <span class="doccomment">/// You may use the `imxrt-ral` APIs to configure USB clocks.</span>
 <span class="doccomment">///</span>
-<span class="doccomment">/// When you build your final `usb-device`, you must set the endpoint 0 max packet</span>
-<span class="doccomment">/// size to 64 bytes. See `UsbDeviceBuilder::max_packet_size_0` for more information.</span>
-<span class="doccomment">/// Failure to increase the control endpoint max packet size will result in a USB device</span>
-<span class="doccomment">/// that cannot communicate with the host.</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// Additionally, before polling for USB class traffic, you must call [`configure()`](BusAdapter::configure())</span>
+<span class="doccomment">/// Before polling for USB class traffic, you must call [`configure()`](BusAdapter::configure())</span>
 <span class="doccomment">/// *after* your device has been configured. This can be accomplished by polling the USB</span>
 <span class="doccomment">/// device and checking its state until it&#39;s been configured. Once configured, use `UsbDevice::bus()`</span>
 <span class="doccomment">/// to access the i.MX RT `BusAdapter`, and call `configure()`. You should only do this once.</span>
@@ -341,7 +330,6 @@
 <span class="doccomment">/// let bus_allocator = usb_device::bus::UsbBusAllocator::new(bus_adapter);</span>
 <span class="doccomment">/// let mut device = UsbDeviceBuilder::new(&amp;bus_allocator, UsbVidPid(0x5824, 0x27dd))</span>
 <span class="doccomment">///     .product(&quot;imxrt-usbd&quot;)</span>
-<span class="doccomment">///     .max_packet_size_0(64) // &lt;---- Set the control OUT/IN max packet size to 64</span>
 <span class="doccomment">///     // Other builder methods...</span>
 <span class="doccomment">///     .build();</span>
 <span class="doccomment">///</span>
