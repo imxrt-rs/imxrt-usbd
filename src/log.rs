@@ -8,27 +8,27 @@
 macro_rules! trace {
     ($($args:tt)*) => {
         #[cfg(feature = "__log")]
-        ::__log::trace!(target: "", $($args)*)
+        ::log::trace!(target: "", $($args)*)
     };
 }
 
 macro_rules! debug {
     ($($args:tt)*) => {
         #[cfg(feature = "__log")]
-        ::__log::debug!(target: "", $($args)*)
+        ::log::debug!(target: "", $($args)*)
     };
 }
 
 macro_rules! info {
     ($($args:tt)*) => {
         #[cfg(feature = "__log")]
-        ::__log::info!(target: "", $($args)*)
+        ::log::info!(target: "", $($args)*)
     };
 }
 
 macro_rules! warn {
     ($($args:tt)*) => {
         #[cfg(feature = "__log")]
-        ::__log::warn!(target: "", $($args)*)
+        ::log::warn!(target: "", $($args)*)
     };
 }
