@@ -22,16 +22,21 @@ and tips.
 
 To **build** the package, just use `cargo build`. You should be able to just
 `cargo build` in one of the example packages. Note that this library can
-build for your host system, and also for your embedded ARM target.
+build for your host system, and also for your embedded ARM target. To build for
+an embedded target, include a `--target` flag, like
+
+```
+cargo build --target thumbv7em-none-eabihf
+```
 
 To run **unit tests**, change `cargo build` to `cargo test` in the above
-examples. Rustdoc tests are only guaranteed to compile for
-`imxrt-ral/imxrt1062`. Library tests will work for all systems.
+examples. These tests run on your host system.
 
 To **debug** the library, enable the internal `__log` feature. The feature
 enables the library's internal [`log`](https://crates.io/crates/log) hooks.
 Then, initialize your logger of choice in your program. See the Teensy 4
-examples to see how you might use a UART logger to debug your program.
+examples to see how you might use a UART logger to debug your program. You may
+also need to configure the maximum log level as a feature on the `log` crate.
 
 To test on **hardware**, either
 
