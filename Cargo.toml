@@ -23,10 +23,13 @@ cortex-m = "0.7"
 imxrt-ral = "0.4.1"
 usb-device = "0.2"
 
-[dependencies.__log]
-package = "log"
+[dependencies.log]
 optional = true
 version = "0.4"
+
+[features]
+ # Internal debugging feature; do not use
+__log = ["log"]
 
 [package.metadata.docs.rs]
 default-target = "thumbv7em-none-eabihf"
