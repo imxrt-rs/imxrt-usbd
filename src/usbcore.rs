@@ -5,4 +5,7 @@
 //! usb-device release. We've renamed the unrelease crate to
 //! `endpoint-trait` to make the distinction clear.
 
+mod allocator;
 mod endpoint;
+
+use endpoint::Endpoint;
