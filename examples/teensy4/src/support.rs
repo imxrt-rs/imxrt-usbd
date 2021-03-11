@@ -94,6 +94,6 @@ pub mod ccm {
         }
 
         // Enable the clock gates...
-        ral::modify_reg!(ral::ccm, ccm, CCGR6, CG1: 0b11, CG0: 0b11);
+        ral::modify_reg!(ral::ccm, ccm, CCGR6, CG0: 0b11);
     }
 }
