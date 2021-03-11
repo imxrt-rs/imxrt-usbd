@@ -54,10 +54,15 @@ program in each example.
     ```
     git clone https://github.com/mvirkkunen/usb-device.git && cd usb-device
     ```
-3. Run `cargo test` in the `usb-device` directory.
+3. Run `cargo test --features=test-class-high-speed` in the `usb-device` directory.
 
 [test-class]: https://docs.rs/usb-device/0.2.7/usb_device/test_class/index.html
 [usb-device-repo]: https://github.com/mvirkkunen/usb-device
+
+By default, examples build a high-speed USB device. To force a low / full speed
+device, disable the example's default features. If you're testing a low / full
+speed device with the `test_class`, remove the `--features=test-class-high-speed`
+in step 3, above, so that the test evaluates a low / full speed test class.
 
 For **design** information, see the API docs. Most modules include a high-level
 blurb that talks about what's going on. There are also public-facing design

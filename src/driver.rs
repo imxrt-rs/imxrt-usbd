@@ -1,10 +1,8 @@
-//! Internal USB full-speed driver
+//! Internal USB driver
 //!
 //! The goal is to keep this somewhat agnostic from the usb-device
-//! bus behaviors, so that it could be used separately.
-//!
-//! The full-speed driver forces a full speed data rate. See the
-//! notes in the `initialize()` implementation.
+//! bus behaviors, so that it could be used separately. However, it's
+//! not yet exposed in the package's API.
 
 use super::{endpoint::Endpoint, state};
 use crate::{buffer, gpt, qh, ral, td, QH_COUNT};
@@ -30,14 +28,34 @@ const CTRL_EP0_IN: usize = 1;
 /// Slice all non-zero endpoints...
 const NON_ZERO_EPS: core::ops::RangeFrom<usize> = 2..;
 
-/// A full-speed USB driver
+/// USB low / full / high speed setting.
+#[derive(Clone, Copy, PartialEq, Eq, Debug)]
+pub enum Speed {
+    /// Throttle to low / full speeds.
+    ///
+    /// If a host is capable of high-speed, this will prevent
+    /// the device from enumerating as a high-speed device.
+    LowFull,
+    /// High speed.
+    ///
+    /// A high-speed device can still interface a low / full
+    /// speed host, so use this setting for the most flexibility.
+    High,
+}
+
+impl Default for Speed {
+    fn default() -> Self {
+        Speed::High
+    }
+}
+
+/// A USB driver
 ///
-/// `FullSpeed` itself doesn't provide much of an API. After you allocate a `FullSpeed` with [`new()`](FullSpeed::new),
-/// you must
+/// After you allocate a `Driver` with [`new()`](Driver::new), you must
 ///
-/// - call [`initialize()`](FullSpeed::initialize) once
+/// - call [`initialize()`](Driver::initialize) once
 /// - supply endpoint memory with [`set_endpoint_memory()`](USB::set_endpoint_memory)
-pub struct FullSpeed {
+pub struct Driver {
     /// Endpoints, indexed by `index()`
     ///
     /// None: not allocated
@@ -62,8 +80,8 @@ pub struct FullSpeed {
     ep_out: u16,
 }
 
-impl FullSpeed {
-    /// Create a new `FullSpeed` driver
+impl Driver {
+    /// Create a new `Driver`
     ///
     /// Creation does nothing except for assign static memory to the driver.
     /// After creating the driver, call [`initialize()`](USB::initialize).
@@ -75,7 +93,7 @@ impl FullSpeed {
         unsafe {
             let qhs = state::steal_qhs(&usb);
             let tds = state::steal_tds(&usb);
-            FullSpeed {
+            Driver {
                 endpoints: EP_INIT,
                 usb,
                 phy,
@@ -92,7 +110,7 @@ impl FullSpeed {
     /// This memory will be shared across all endpoints. you should size it
     /// to support all the endpoints that might be allocated by your USB classes.
     ///
-    /// After this call, `FullSpeed` assumes that it's the sole owner of `buffer`.
+    /// After this call, `Driver` assumes that it's the sole owner of `buffer`.
     /// You assume the `unsafe`ty to make that true.
     pub fn set_endpoint_memory(&mut self, buffer: &'static mut [u8]) {
         self.buffer_allocator = buffer::Allocator::new(buffer);
@@ -104,7 +122,7 @@ impl FullSpeed {
     ///
     /// You **must** call this once, before creating the complete USB
     /// bus.
-    pub fn initialize(&mut self) {
+    pub fn initialize(&mut self, speed: Speed) {
         ral::write_reg!(ral::usbphy, self.phy, CTRL_SET, SFTRST: 1);
         ral::write_reg!(ral::usbphy, self.phy, CTRL_CLR, SFTRST: 1);
         ral::write_reg!(ral::usbphy, self.phy, CTRL_CLR, CLKGATE: 1);
@@ -117,11 +135,7 @@ impl FullSpeed {
         ral::write_reg!(ral::usb, self.usb, USBCMD, ITC: 0);
 
         ral::write_reg!(ral::usb, self.usb, USBMODE, CM: CM_2, SLOM: 1);
-
-        // This forces the bus to run at full speed, not high speed. Specifically,
-        // it disables the chirp. If you're interested in playing with a high-speed
-        // USB driver, you'll want to remove this line, or clear PFSC.
-        ral::modify_reg!(ral::usb, self.usb, PORTSC1, PFSC: 1);
+        ral::modify_reg!(ral::usb, self.usb, PORTSC1, PFSC: (speed == Speed::LowFull) as u32);
 
         ral::modify_reg!(ral::usb, self.usb, USBSTS, |usbsts| usbsts);
         // Disable interrupts by default

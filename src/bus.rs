@@ -9,7 +9,7 @@
 //!
 //! Most of the interesting behavior happens in the driver.
 
-use super::driver::FullSpeed;
+use super::driver::Driver;
 use crate::gpt;
 use core::cell::RefCell;
 use cortex_m::interrupt::{self, Mutex};
@@ -19,9 +19,11 @@ use usb_device::{
     UsbDirection,
 };
 
-/// A `UsbBus` implementation
+pub use super::driver::Speed;
+
+/// A full- and high-speed `UsbBus` implementation
 ///
-/// The `BusAdapter` adapts the RAL instances, and exposes a `UsbBus` implementation.
+/// The `BusAdapter` adapts the USB peripheral instances, and exposes a `UsbBus` implementation.
 ///
 /// # Requirements
 ///
@@ -42,7 +44,7 @@ use usb_device::{
 /// your USB class' documentation for details. This example also skips the clock initialization.
 ///
 /// ```no_run
-/// use imxrt_usbd::full_speed::BusAdapter;
+/// use imxrt_usbd::BusAdapter;
 ///
 /// # struct Ps; use imxrt_usbd::Instance as Inst;
 /// # unsafe impl imxrt_usbd::Peripherals for Ps { fn instance(&self) -> Inst { panic!() } }
@@ -80,12 +82,39 @@ use usb_device::{
 ///
 /// // Ready for class traffic!
 /// ```
+///
+/// # Design
+///
+/// This section talks about the driver design. It assumes that
+/// you're familiar with the details of the i.MX RT USB peripheral. If you
+/// just want to use the driver, you can skip this section.
+///
+/// ## Packets and transfers
+///
+/// All i.MX RT USB drivers manage queue heads (QH), and transfer
+/// descriptors (TD). For the driver, each (QH) is assigned
+/// only one (TD) to perform I/O. We then assume each TD describes a single
+/// packet. This is simple to implement, but it means that the
+/// driver can only have one packet in flight per endpoint. You're expected
+/// to quickly respond to `poll()` outputs, and schedule the next transfer
+/// in the time required for devices. This becomes more important as you
+/// increase driver speeds.
 pub struct BusAdapter {
-    usb: Mutex<RefCell<FullSpeed>>,
+    usb: Mutex<RefCell<Driver>>,
 }
 
 impl BusAdapter {
-    /// Create a USB bus adapter
+    /// Create a high-speed USB bus adapter
+    ///
+    /// This is equivalent to [`BusAdapter::with_speed`] when supplying [`Speed::High`]. See
+    /// the `with_speed` documentation for more information.
+    pub fn new<P: crate::Peripherals>(peripherals: P, buffer: &'static mut [u8]) -> Self {
+        Self::with_speed(peripherals, buffer, Speed::High)
+    }
+
+    /// Create a USB bus adapter with the given speed
+    ///
+    /// Specify [`Speed::LowFull`] to throttle the USB data rate.
     ///
     /// When this function returns, the `BusAdapter` has initialized the PHY and USB core peripherals.
     /// The adapter expects to own these two peripherals, along with the other peripherals required
@@ -95,10 +124,14 @@ impl BusAdapter {
     /// memory region will be partitioned for the endpoints, based on their requirements.
     ///
     /// You must ensure that no one else is using the endpoint memory!
-    pub fn new<P: crate::Peripherals>(peripherals: P, buffer: &'static mut [u8]) -> Self {
-        let mut usb = FullSpeed::new(peripherals);
+    pub fn with_speed<P: crate::Peripherals>(
+        peripherals: P,
+        buffer: &'static mut [u8],
+        speed: Speed,
+    ) -> Self {
+        let mut usb = Driver::new(peripherals);
 
-        usb.initialize();
+        usb.initialize(speed);
         usb.set_endpoint_memory(buffer);
 
         BusAdapter {
@@ -115,7 +148,7 @@ impl BusAdapter {
     }
 
     /// Interrupt-safe, immutable access to the USB peripheral
-    fn with_usb<R>(&self, func: impl FnOnce(&FullSpeed) -> R) -> R {
+    fn with_usb<R>(&self, func: impl FnOnce(&Driver) -> R) -> R {
         interrupt::free(|cs| {
             let usb = self.usb.borrow(cs);
             let usb = usb.borrow();
@@ -124,7 +157,7 @@ impl BusAdapter {
     }
 
     /// Interrupt-safe, mutable access to the USB peripheral
-    fn with_usb_mut<R>(&self, func: impl FnOnce(&mut FullSpeed) -> R) -> R {
+    fn with_usb_mut<R>(&self, func: impl FnOnce(&mut Driver) -> R) -> R {
         interrupt::free(|cs| {
             let usb = self.usb.borrow(cs);
             let mut usb = usb.borrow_mut();

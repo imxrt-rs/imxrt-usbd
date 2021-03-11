@@ -1,4 +1,4 @@
-//! Static state that's 'owned' by a full-speed driver
+//! Static state that's 'owned' by a driver
 //!
 //! This module allocates the static memory or the USB drivers,
 //! and provides guidance on how to safely access this memory.

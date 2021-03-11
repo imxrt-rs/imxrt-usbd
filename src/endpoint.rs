@@ -1,4 +1,4 @@
-//! Full-speed endpoints
+//! USB endpoints
 //!
 //! Use endpoints to
 //!

@@ -5,6 +5,13 @@ authors = ["Ian McIntyre <ianpmcintyre@gmail.com>"]
 edition = "2018"
 publish = false  # This is an example package
 
+[features]
+default = ["high-speed"]
+# If this is enabled, the usb_device tests need to be compiled with
+# the 'test-class-high-speed' feature. Note that high-speed is
+# enabled by default.
+high-speed = ["usb-device/test-class-high-speed"]
+
 # The library we're demonstrating
 [dependencies.imxrt-usbd]
 path = "../../"

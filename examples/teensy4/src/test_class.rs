@@ -38,7 +38,10 @@ fn main() -> ! {
         CLASS = Some(test_class);
         let test_class = CLASS.as_ref().unwrap();
 
-        let device = test_class.make_device(bus);
+        let device = test_class
+            .make_device_builder(bus)
+            .max_packet_size_0(64)
+            .build();
 
         DEVICE = Some(device);
 
@@ -55,7 +58,7 @@ fn main() -> ! {
     }
 }
 
-type Bus = imxrt_usbd::full_speed::BusAdapter;
+type Bus = imxrt_usbd::BusAdapter;
 type Class = usb_device::test_class::TestClass<'static, Bus>;
 static mut CLASS: Option<Class> = None;
 static mut BUS: Option<usb_device::bus::UsbBusAllocator<Bus>> = None;

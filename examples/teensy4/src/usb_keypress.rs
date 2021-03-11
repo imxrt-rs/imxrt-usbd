@@ -6,7 +6,7 @@
 
 use teensy4_panic as _;
 
-use imxrt_usbd::full_speed::BusAdapter;
+use imxrt_usbd::BusAdapter;
 use teensy4_bsp::LED;
 use usb_device::device::UsbDevice;
 use usb_device::prelude::{UsbDeviceBuilder, UsbVidPid};
@@ -31,6 +31,7 @@ fn main() -> ! {
     let mut hid = usbd_hid::hid_class::HIDClass::new(&bus, KeyboardReport::desc(), 10);
     let mut device = UsbDeviceBuilder::new(&bus, UsbVidPid(0x5824, 0x27dd))
         .product("imxrt-usbd")
+        .max_packet_size_0(64)
         .build();
 
     gpt1.set_enable(true);

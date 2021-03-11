@@ -22,13 +22,17 @@
 mod log;
 
 mod buffer;
+mod bus;
 mod cache;
+mod driver;
+mod endpoint;
 mod qh;
 mod ral;
+mod state;
 mod td;
 mod vcell;
 
-pub mod full_speed;
+pub use bus::{BusAdapter, Speed};
 pub mod gpt;
 
 /// Eight endpoints, two directions
@@ -111,7 +115,7 @@ const QH_COUNT: usize = 8 * 2;
 /// }
 ///
 /// let peripherals = Peripherals::usb1();
-/// let bus = imxrt_usbd::full_speed::BusAdapter::new(
+/// let bus = imxrt_usbd::BusAdapter::new(
 ///     peripherals,
 ///     // Rest of setup...
 ///     # unsafe { static mut M: [u8; 1] = [0; 1]; &mut M }
