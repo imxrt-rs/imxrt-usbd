@@ -27,6 +27,12 @@ impl Endpoint {
         td: &'static mut TD,
         buffer: Buffer,
     ) -> Self {
+        let max_packet_size = buffer.len();
+        qh.set_max_packet_len(max_packet_size);
+        qh.set_zero_length_termination(false);
+
+        td.set_terminate();
+        td.clear_status();
         Endpoint {
             usb,
             address,
@@ -187,12 +193,18 @@ impl UsbEndpoint for Endpoint {
     fn address(&self) -> EndpointAddress {
         self.address
     }
+
     unsafe fn enable(&mut self, config: &EndpointConfig) -> Result<()> {
         if config.max_packet_size() as usize > self.buffer.len() {
             return Err(UsbError::EndpointMemoryOverflow);
         } else if self.is_control() && config.ep_type() != EndpointType::Control {
             return Err(UsbError::InvalidEndpoint);
         }
+
+        self.qh.set_interrupt_on_setup(
+            config.ep_type() == EndpointType::Control
+                && self.address.direction() == UsbDirection::Out,
+        );
 
         if !self.is_control() {
             let endptctrl =
@@ -205,6 +217,11 @@ impl UsbEndpoint for Endpoint {
                     ral::modify_reg!(ral::endpoint_control, &endptctrl, ENDPTCTRL, RXE: 1, RXR: 1, RXT: config.ep_type() as u32)
                 }
             }
+
+            if self.address.direction() == UsbDirection::Out {
+                let max_packet_len = self.max_packet_len();
+                self.schedule_transfer(max_packet_len);
+            }
         }
 
         Ok(())
@@ -215,10 +232,10 @@ impl UsbEndpoint for Endpoint {
                 ral::endpoint_control::register(&self.usb, self.address.number().into());
             match self.address.direction() {
                 UsbDirection::In => {
-                    ral::write_reg!(ral::endpoint_control, &endptctrl, ENDPTCTRL, TXE: 0, TXT: EndpointType::Bulk as u32)
+                    ral::modify_reg!(ral::endpoint_control, &endptctrl, ENDPTCTRL, TXE: 0, TXT: EndpointType::Bulk as u32)
                 }
                 UsbDirection::Out => {
-                    ral::write_reg!(ral::endpoint_control, &endptctrl, ENDPTCTRL, RXE: 0, RXT: EndpointType::Bulk as u32)
+                    ral::modify_reg!(ral::endpoint_control, &endptctrl, ENDPTCTRL, RXE: 0, RXT: EndpointType::Bulk as u32)
                 }
             }
         }

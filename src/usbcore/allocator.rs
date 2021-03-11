@@ -213,10 +213,10 @@ where
         self.alloc((2 * address.number() as usize) + 1, address, config)
     }
     fn begin_interface(&mut self) -> Result<()> {
-        Err(UsbError::Unsupported) // TODO?
+        Ok(()) // TODO anything to do here?
     }
     fn next_alt_setting(&mut self) -> Result<()> {
-        Err(UsbError::Unsupported) // TODO?
+        panic!("next_alt_setting");
     }
 }
 

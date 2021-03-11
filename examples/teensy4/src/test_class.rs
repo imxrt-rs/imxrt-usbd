@@ -68,19 +68,15 @@ fn main() -> ! {
     let (ccm, ccm_analog) = ccm.handle.raw();
     support::ccm::initialize(ccm, ccm_analog);
 
-    let bus_adapter = support::new_bus_adapter();
-    bus_adapter.set_interrupts(true);
-
     unsafe {
-        let bus = usb_device::bus::UsbBusAllocator::new(bus_adapter);
-        BUS = Some(bus);
-        let bus = BUS.as_ref().unwrap();
+        let mut bus = support::new_full_speed();
+        bus.set_interrupts(true);
 
-        let test_class = usb_device::test_class::TestClass::new(bus);
+        let test_class = usb_device::test_class::TestClass::new();
         CLASS = Some(test_class);
-        let test_class = CLASS.as_ref().unwrap();
+        let test_class = CLASS.as_mut().unwrap();
 
-        let device = test_class.make_device(bus);
+        let device = test_class.make_device(bus).unwrap();
 
         DEVICE = Some(device);
 
@@ -106,36 +102,20 @@ fn time_elapse(gpt: &mut hal::gpt::GPT, func: impl FnOnce()) {
     }
 }
 
-type Bus = imxrt_usbd::full_speed::BusAdapter;
-type Class = usb_device::test_class::TestClass<'static, Bus>;
+type Bus = imxrt_usbd::usbcore::FullSpeed;
+type Class = usb_device::test_class::TestClass<Bus>;
 static mut CLASS: Option<Class> = None;
-static mut BUS: Option<usb_device::bus::UsbBusAllocator<Bus>> = None;
-static mut DEVICE: Option<usb_device::device::UsbDevice<'static, Bus>> = None;
+static mut DEVICE: Option<usb_device::device::UsbDevice<Bus>> = None;
 
 use hal::ral::interrupt;
 
 #[cortex_m_rt::interrupt]
 fn USB_OTG1() {
-    // Must track when the device transitions into / out of configuration,
-    // so that we can call configure...
-    static mut IS_CONFIGURED: bool = false;
-
     // Safety: we only unmask the interrupt once all three static mut variables
     // are initialized. We're the only ones to use those variables after they're
     // set.
     let device = unsafe { DEVICE.as_mut().unwrap() };
     let class = unsafe { CLASS.as_mut().unwrap() };
 
-    if device.poll(&mut [class]) {
-        if device.state() == usb_device::device::UsbDeviceState::Configured {
-            if !*IS_CONFIGURED {
-                device.bus().configure();
-            }
-            *IS_CONFIGURED = true;
-
-            class.poll();
-        } else {
-            *IS_CONFIGURED = false;
-        }
-    }
+    device.poll(class).ok();
 }

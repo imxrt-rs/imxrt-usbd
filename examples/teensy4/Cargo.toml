@@ -37,6 +37,8 @@ default-features = false
 # USB device
 [dependencies.usb-device]
 version = "0.2"
+git = "https://github.com/imxrt-rs/usb-device"
+branch = "endpoint-trait"
 
 # USB CDC class
 [dependencies.usbd-serial]
@@ -55,13 +57,14 @@ features = ["release_max_level_info"]
 [dependencies.cortex-m]
 version = "0.7"
 
-[[bin]]
-name = "configured"
-path = "src/configured.rs"
+# TODO bring these back!
+# [[bin]]
+# name = "configured"
+# path = "src/configured.rs"
 
-[[bin]]
-name = "serial"
-path = "src/serial.rs"
+# [[bin]]
+# name = "serial"
+# path = "src/serial.rs"
 
 [lib]
 name = "support"

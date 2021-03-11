@@ -34,45 +34,14 @@ impl FullSpeed {
         let usb = unsafe { core::mem::transmute(&*usb) };
         let phy = unsafe { core::mem::transmute(&*phy) };
 
-        let mut full_speed = FullSpeed {
+        let full_speed = FullSpeed {
             usb,
             phy,
             // Safety: we own `peripherals`, and the user guarantees that there's only
             // one `peripherals` instance per USB peripheral.
             allocator: Some(unsafe { allocator::Allocator::new(usb, buffers) }),
         };
-
-        full_speed.initialize();
         full_speed
-    }
-
-    /// Initialize the USB physical layer, and the USB core registers
-    ///
-    /// Assumes that the CCM clock gates are enabled, and the PLL is on.
-    ///
-    /// You **must** call this once, before creating the complete USB
-    /// bus.
-    fn initialize(&mut self) {
-        ral::write_reg!(ral::usbphy, self.phy, CTRL_SET, SFTRST: 1);
-        ral::write_reg!(ral::usbphy, self.phy, CTRL_CLR, SFTRST: 1);
-        ral::write_reg!(ral::usbphy, self.phy, CTRL_CLR, CLKGATE: 1);
-        ral::write_reg!(ral::usbphy, self.phy, PWD, 0);
-
-        ral::modify_reg!(ral::usb, self.usb, USBCMD, RST: 1);
-        while ral::read_reg!(ral::usb, self.usb, USBCMD, RST == 1) {}
-
-        ral::write_reg!(ral::usb, self.usb, USBMODE, CM: CM_2, SLOM: 1);
-
-        // This forces the bus to run at full speed, not high speed. Specifically,
-        // it disables the chirp. If you're interested in playing with a high-speed
-        // USB driver, you'll want to remove this line, or clear PFSC.
-        ral::modify_reg!(ral::usb, self.usb, PORTSC1, PFSC: 1);
-
-        ral::modify_reg!(ral::usb, self.usb, USBSTS, |usbsts| usbsts);
-        // Disable interrupts by default
-        ral::write_reg!(ral::usb, self.usb, USBINTR, 0);
-
-        allocator::assign_endptlistaddr(&self.usb);
     }
 
     /// Enable (`true`) or disable (`false`) USB interrupts
@@ -99,6 +68,26 @@ impl endpoint_trait::usbcore::UsbCore for FullSpeed {
 
     fn enable(&mut self, allocator: Self::EndpointAllocator) -> Result<()> {
         self.allocator = Some(allocator);
+        ral::write_reg!(ral::usbphy, self.phy, CTRL_SET, SFTRST: 1);
+        ral::write_reg!(ral::usbphy, self.phy, CTRL_CLR, SFTRST: 1);
+        ral::write_reg!(ral::usbphy, self.phy, CTRL_CLR, CLKGATE: 1);
+        ral::write_reg!(ral::usbphy, self.phy, PWD, 0);
+
+        ral::modify_reg!(ral::usb, self.usb, USBCMD, RST: 1);
+        while ral::read_reg!(ral::usb, self.usb, USBCMD, RST == 1) {}
+
+        ral::write_reg!(ral::usb, self.usb, USBMODE, CM: CM_2, SLOM: 1);
+
+        // This forces the bus to run at full speed, not high speed. Specifically,
+        // it disables the chirp. If you're interested in playing with a high-speed
+        // USB driver, you'll want to remove this line, or clear PFSC.
+        ral::modify_reg!(ral::usb, self.usb, PORTSC1, PFSC: 1);
+
+        ral::modify_reg!(ral::usb, self.usb, USBSTS, |usbsts| usbsts);
+        // Disable interrupts by default
+        ral::write_reg!(ral::usb, self.usb, USBINTR, 0);
+
+        allocator::assign_endptlistaddr(&self.usb);
         ral::modify_reg!(ral::usb, self.usb, USBCMD, RS: 1);
         Ok(())
     }

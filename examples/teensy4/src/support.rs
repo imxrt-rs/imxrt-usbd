@@ -9,20 +9,20 @@ pub use teensy4_bsp as bsp;
 pub use bsp::configure_led;
 pub use bsp::LED;
 
-/// Allocates a `BusAdapter`
+/// Allocates a `FullSpeed` USB driver
 ///
 /// # Panics
 ///
 /// Panics if any of the `imxrt-ral` USB instances are already
 /// taken.
-pub fn new_bus_adapter() -> imxrt_usbd::full_speed::BusAdapter {
+pub fn new_full_speed() -> imxrt_usbd::usbcore::FullSpeed {
     // If we're here, we have exclusive access to ENDPOINT_MEMORY
     static mut ENDPOINT_MEMORY: [u8; 4096] = [0; 4096];
 
     unsafe {
         // Safety: With proper scoping and checks for singleton access, we ensure the memory is
         // only available to a single caller.
-        imxrt_usbd::full_speed::BusAdapter::new(Peripherals::usb1(), &mut ENDPOINT_MEMORY)
+        imxrt_usbd::usbcore::FullSpeed::new(Peripherals::usb1(), &mut ENDPOINT_MEMORY)
     }
 }
 
