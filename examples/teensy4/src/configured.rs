@@ -50,8 +50,8 @@ fn main() -> ! {
     let (tx, _) = uart.split();
     imxrt_uart_log::dma::init(tx, channel, Default::default()).unwrap();
 
-    let (ccm, _) = ccm.handle.raw();
-    hal::ral::modify_reg!(hal::ral::ccm, ccm, CCGR6, CG1: 0b11, CG0: 0b11);
+    let (ccm, ccm_analog) = ccm.handle.raw();
+    support::ccm::initialize(ccm, ccm_analog);
 
     let bus_adapter = support::new_bus_adapter();
 
