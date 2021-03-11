@@ -23,7 +23,11 @@ pub mod endpoint_control {
         pub use super::ral::usb::ENDPTCTRL1::*;
     }
 
-    pub fn register(usb: &super::usb::Instance, endpoint: usize) -> EndptCtrl {
+    // TODO(mciantyre) usize -> u8 to match with EndpointAddress::number()
+    pub fn register<I>(usb: &I, endpoint: usize) -> EndptCtrl
+    where
+        I: core::ops::Deref<Target = super::usb::RegisterBlock>,
+    {
         EndptCtrl {
             ENDPTCTRL: match endpoint {
                 0 => &usb.ENDPTCTRL0,

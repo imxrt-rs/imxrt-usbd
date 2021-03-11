@@ -26,6 +26,7 @@ mod cache;
 mod qh;
 mod ral;
 mod td;
+mod usbcore;
 mod vcell;
 
 pub mod full_speed;

@@ -21,7 +21,12 @@ exclude = [
 bitflags = "1.2"
 cortex-m = "0.7"
 imxrt-ral = "0.4.1"
-usb-device = "0.2"
+usb-device = "0.2.7"
+
+[dependencies.endpoint-trait]
+package = "usb-device"
+git = "https://github.com/imxrt-rs/usb-device"
+branch = "endpoint-trait"
 
 [dependencies.log]
 optional = true
