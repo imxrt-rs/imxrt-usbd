@@ -23,6 +23,13 @@ fn index(ep_addr: EndpointAddress) -> usize {
     (ep_addr.index() * 2) + (UsbDirection::In == ep_addr.direction()) as usize
 }
 
+/// Direct index to the OUT control endpoint
+const CTRL_EP0_OUT: usize = 0;
+/// Direct index to the IN control endpoint
+const CTRL_EP0_IN: usize = 1;
+/// Slice all non-zero endpoints...
+const NON_ZERO_EPS: core::ops::RangeFrom<usize> = 2..;
+
 /// A full-speed USB driver
 ///
 /// `FullSpeed` itself doesn't provide much of an API. After you allocate a `FullSpeed` with [`new()`](FullSpeed::new),
@@ -176,7 +183,7 @@ impl FullSpeed {
     ///
     /// Panics if EP0 OUT isn't allocated.
     pub fn ctrl0_read(&mut self, buffer: &mut [u8]) -> Result<usize, UsbError> {
-        let ctrl_out = self.endpoints[0].as_mut().unwrap();
+        let ctrl_out = self.endpoints[CTRL_EP0_OUT].as_mut().unwrap();
         if ctrl_out.has_setup(&self.usb) && buffer.len() >= 8 {
             debug!("EP0 Out SETUP");
             let setup = ctrl_out.read_setup(&self.usb);
@@ -216,7 +223,7 @@ impl FullSpeed {
     ///
     /// Panics if EP0 IN isn't allocated, or if EP0 OUT isn't allocated.
     pub fn ctrl0_write(&mut self, buffer: &[u8]) -> Result<usize, UsbError> {
-        let ctrl_in = self.endpoints[1].as_mut().unwrap();
+        let ctrl_in = self.endpoints[CTRL_EP0_IN].as_mut().unwrap();
         debug!("EP0 In {}", buffer.len());
         ctrl_in.check_errors()?;
 
@@ -230,7 +237,7 @@ impl FullSpeed {
         ctrl_in.schedule_transfer(&self.usb, written);
 
         // Might need an OUT schedule for a status phase...
-        let ctrl_out = self.endpoints[0].as_mut().unwrap();
+        let ctrl_out = self.endpoints[CTRL_EP0_OUT].as_mut().unwrap();
         if !ctrl_out.is_primed(&self.usb) {
             ctrl_out.clear_complete(&self.usb);
             ctrl_out.clear_nack(&self.usb);
@@ -372,7 +379,7 @@ impl FullSpeed {
 
     /// Prime all non-zero, enabled OUT endpoints
     fn prime_endpoints(&mut self) {
-        for ep in self.endpoints[2..]
+        for ep in self.endpoints[NON_ZERO_EPS]
             .iter_mut()
             .flat_map(core::convert::identity)
             .filter(|ep| UsbDirection::Out == ep.address().direction())
@@ -386,7 +393,7 @@ impl FullSpeed {
 
     /// Initialize (or reinitialize) all non-zero endpoints
     fn initialize_endpoints(&mut self) {
-        for ep in self.endpoints[2..]
+        for ep in self.endpoints[NON_ZERO_EPS]
             .iter_mut()
             .flat_map(core::convert::identity)
         {
