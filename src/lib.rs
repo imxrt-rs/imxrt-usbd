@@ -9,10 +9,10 @@
 //!
 //! # General guidance
 //!
-//! The USB driver takes ownership of the USB core registers. The driver does not configure
-//! any of  the CCM (or CCM_ANALOG) registers. You're responsible for
-//! configuring these peripherals for proper USB functionality. See the `imxrt-usbd`
-//! hardware examples to see different ways of configuring these registers.
+//! The driver does not configure any of  the CCM (or CCM_ANALOG) registers. You're
+//! responsible for configuring these peripherals for proper USB functionality. See
+//! the `imxrt-usbd` hardware examples to see different ways of configuring PLLs and
+//! clocks.
 //!
 //! [`usb-device`]: https://crates.io/crates/usb-device
 

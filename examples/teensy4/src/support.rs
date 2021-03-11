@@ -19,9 +19,8 @@ pub fn configure_led(pad: common::P13) -> LED {
 ///
 /// # Panics
 ///
-/// Panics if the USB1 or USBPHY1 imxrt-ral instances are
-/// already taken. The bus adapter owns the USB1 core registers.
-/// This function will release USBPHY1.
+/// Panics if any of the `imxrt-ral` USB instances are already
+/// taken.
 pub fn new_bus_adapter() -> imxrt_usbd::full_speed::BusAdapter {
     // If we're here, we have exclusive access to ENDPOINT_MEMORY
     static mut ENDPOINT_MEMORY: [u8; 4096] = [0; 4096];
