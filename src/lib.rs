@@ -33,7 +33,7 @@ pub mod full_speed;
 /// Eight endpoints, two directions
 const QH_COUNT: usize = 8 * 2;
 
-/// A type that owns all USB registers block
+/// A type that owns all USB register blocks
 ///
 /// An implementation of `Peripherals` is expected to own the USB1
 /// or USB2 registers. This includes
@@ -99,11 +99,22 @@ const QH_COUNT: usize = 8 * 2;
 ///     }
 /// }
 ///
+/// // This implementation is safe, because a `Peripherals` object
+/// // owns the four imxrt-ral instances, which are
+/// // guaranteed to be singletons. Given this approach, no one else
+/// // can safely access the USB registers.
 /// unsafe impl imxrt_usbd::Peripherals for Peripherals {
 ///     fn instance(&self) -> imxrt_usbd::Instance {
 ///         imxrt_usbd::Instance::USB1
 ///     }
 /// }
+///
+/// let peripherals = Peripherals::usb1();
+/// let bus = imxrt_usbd::full_speed::BusAdapter::new(
+///     peripherals,
+///     // Rest of setup...
+///     # unsafe { static mut M: [u8; 1] = [0; 1]; &mut M }
+/// );
 /// ```
 pub unsafe trait Peripherals {
     /// Returns the instance identifier for the core registers
