@@ -1,6 +1,13 @@
 imxrt-usbd
 =========
 
+[![crates.io][]][1] [![docs.rs]][2]
+
+  [crates.io]: https://img.shields.io/crates/v/imxrt-usbd
+  [1]: https://crates.io/crates/imxrt-usbd
+  [docs.rs]: https://docs.rs/imxrt-usbd/badge.svg
+  [2]: https://docs.rs/imxrt-usbd/
+
 **[API Docs (main branch)][main-api-docs]**
 
 A USB driver for i.MX RT processors. `imxrt-usbd` provides a [`usb-device`]
