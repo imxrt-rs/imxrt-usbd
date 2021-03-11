@@ -1,4 +1,7 @@
-//! Static state that's 'owned' by a USB instance
+//! Static state that's 'owned' by a full-speed driver
+//!
+//! This module allocates the static memory or the USB drivers,
+//! and provides guidance on how to safely access this memory.
 
 use crate::QH_COUNT;
 use crate::{qh, ral, td};

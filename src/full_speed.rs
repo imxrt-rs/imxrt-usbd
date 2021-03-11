@@ -1,11 +1,10 @@
-//! A USB1 full-speed i.MX RT driver, supporting the `usb-device` ecosystem
+//! A full-speed i.MX RT USB driver, supporting the `usb-device` ecosystem
 //!
 //! # Usage
 //!
-//! 1. Depend on this crate, the `usb-device` crate, a USB class crate that
-//!    supports `usb-device`, and [`imxrt-ral`].
-//! 2. Create a `BusAdapter` from `imxrt-ral` USB instances.
-//! 4. Use the `BusAdapter` with `usb-device`,
+//! You'll need this crate, the [`usb-device`] crate, and USB device class crates
+//! to realize a complete USB device. Use this crate to create a [`BusAdapter`],
+//! which is then supplied to the `usb-device` device interface.
 //!
 //! See the [`BusAdapter`] documentation for requirements and examples.
 //!

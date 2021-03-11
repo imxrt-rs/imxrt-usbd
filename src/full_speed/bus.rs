@@ -1,4 +1,13 @@
 //! USB bus implementation
+//!
+//! The bus
+//!
+//! - initializes the USB driver
+//! - adapts the USB driver to meet the `usb-device` `Sync` requirements
+//! - dispatches reads and writes to the proper endpoints
+//! - exposes the i.MX RT-specific API to the user (`configure`, `set_interrupts`)
+//!
+//! Most of the interesting behavior happens in the driver.
 
 use super::driver::FullSpeed;
 use core::cell::RefCell;
@@ -96,6 +105,9 @@ impl BusAdapter {
     }
 
     /// Enable (`true`) or disable (`false`) interrupts for this USB peripheral
+    ///
+    /// The interrupt causes are implementation specific. To handle the interrupt,
+    /// call [`poll()`](BusAdapter::poll).
     pub fn set_interrupts(&self, interrupts: bool) {
         self.with_usb_mut(|usb| usb.set_interrupts(interrupts));
     }
@@ -120,7 +132,8 @@ impl BusAdapter {
 
     /// Apply device configurations, and perform other post-configuration actions
     ///
-    /// You must invoke this once, and only after your device has been configured. See
+    /// You must invoke this once, and only after your device has been configured. If
+    /// the device is reset and reconfigured, you must invoke `configure()` again. See
     /// the top-level example for how this could be achieved.
     pub fn configure(&self) {
         self.with_usb_mut(|usb| {

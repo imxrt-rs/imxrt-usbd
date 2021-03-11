@@ -1,3 +1,27 @@
+//! Full-speed endpoints
+//!
+//! Use endpoints to
+//!
+//! - read and write to endpoint memory buffers
+//! - schedule transfers
+//! - check transfer statuses
+//! - signal endpoint state to the host
+//!
+//! The endpoint "owns" the static QH and TD memory. These
+//! are temporarily stored in the driver behind an Option.
+//! Once allocated, the driver will move the reference into
+//! the endpoint, where it resides forever. You can use methods
+//! on the endpoint to safely access QH and TD state.
+//!
+//! The endpoints take immutable borrows of the USB instance.
+//! The contract is that, if the *Endpoint* is mutable, it's
+//! permitted to modify its own USB register (or register
+//! field). This gives us a kind of loose runtime ownership
+//! of endpoint registers, but it only works if all endpoints
+//! are owned by the same object, since we rely on carrying
+//! the mutable borrow to prevent races. That's how today's
+//! driver works.
+
 use crate::{
     buffer::Buffer,
     qh::QH,
@@ -59,7 +83,8 @@ impl Endpoint {
         }
     }
 
-    /// Initialize the endpoint, should be called soon after it's assigned
+    /// Initialize the endpoint, should be called soon after it's assigned,
+    /// or after transitioning out of configuration (reset the endpoint).
     pub fn initialize(&mut self, usb: &ral::usb::Instance) {
         if self.address.index() != 0 {
             let endptctrl = endpoint_control::register(usb, self.address.index());

@@ -9,7 +9,7 @@
 //!
 //! # General guidance
 //!
-//! The driver does not configure any of  the CCM (or CCM_ANALOG) registers. You're
+//! The driver does not configure any of the CCM or CCM_ANALOG registers. You are
 //! responsible for configuring these peripherals for proper USB functionality. See
 //! the `imxrt-usbd` hardware examples to see different ways of configuring PLLs and
 //! clocks.

@@ -1,4 +1,4 @@
-//! Internal USB1 driver
+//! Internal USB full-speed driver
 //!
 //! The goal is to keep this somewhat agnostic from the usb-device
 //! bus behaviors, so that it could be used separately.
@@ -31,10 +31,16 @@ fn index(ep_addr: EndpointAddress) -> usize {
 /// - call [`initialize()`](FullSpeed::initialize) once
 /// - supply endpoint memory with [`set_endpoint_memory()`](USB::set_endpoint_memory)
 pub struct FullSpeed {
+    /// Endpoints, indexed by `index()`
+    ///
+    /// None: not allocated
+    /// Some: allocated
     endpoints: [Option<Endpoint>; QH_COUNT],
     usb: ral::usb::Instance,
     phy: ral::usbphy::Instance,
+    /// References moved into endpoints during endpoint allocation.
     qhs: [Option<&'static mut qh::QH>; QH_COUNT],
+    /// References moved into endpoints during endpoint allocation.
     tds: [Option<&'static mut td::TD>; QH_COUNT],
     buffer_allocator: buffer::Allocator,
     /// Track which read endpoints have completed, so as to not
@@ -378,6 +384,7 @@ impl FullSpeed {
         }
     }
 
+    /// Initialize (or reinitialize) all non-zero endpoints
     fn initialize_endpoints(&mut self) {
         for ep in self.endpoints[2..]
             .iter_mut()
