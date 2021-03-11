@@ -116,6 +116,11 @@ unsafe fn steal_qhs(usb: &ral::usb::RegisterBlock) -> [Option<&'static mut qh::Q
     qhs
 }
 
+pub fn assign_endptlistaddr(usb: &ral::usb::RegisterBlock) {
+    let ptr = unsafe { state(usb).qhs.0.as_ptr() };
+    ral::write_reg!(ral::usb, usb, ASYNCLISTADDR, ptr as u32);
+}
+
 pub struct Allocator<U> {
     buffers: crate::buffer::Allocator,
     usb: &'static ral::usb::RegisterBlock,

@@ -26,10 +26,10 @@ mod cache;
 mod qh;
 mod ral;
 mod td;
-mod usbcore;
 mod vcell;
 
 pub mod full_speed;
+pub mod usbcore;
 
 /// Eight endpoints, two directions
 const QH_COUNT: usize = 8 * 2;
