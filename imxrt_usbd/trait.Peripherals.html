@@ -1,0 +1,76 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="API documentation for the Rust `Peripherals` trait in crate `imxrt_usbd`."><meta name="keywords" content="rust, rustlang, rust-lang, Peripherals"><title>imxrt_usbd::Peripherals - Rust</title><link rel="stylesheet" type="text/css" href="../normalize.css"><link rel="stylesheet" type="text/css" href="../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../light.css"  id="themeStyle"><link rel="stylesheet" type="text/css" href="../dark.css" disabled ><link rel="stylesheet" type="text/css" href="../ayu.css" disabled ><script id="default-settings"></script><script src="../storage.js"></script><noscript><link rel="stylesheet" href="../noscript.css"></noscript><link rel="icon" type="image/svg+xml" href="../favicon.svg">
+<link rel="alternate icon" type="image/png" href="../favicon-16x16.png">
+<link rel="alternate icon" type="image/png" href="../favicon-32x32.png"><style type="text/css">#crate-search{background-image:url("../down-arrow.svg");}</style></head><body class="rustdoc trait"><!--[if lte IE 8]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="sidebar-menu">&#9776;</div><a href='../imxrt_usbd/index.html'><div class='logo-container rust-logo'><img src='../rust-logo.png' alt='logo'></div></a><p class="location">Trait Peripherals</p><div class="sidebar-elems"><div class="block items"><a class="sidebar-title" href="#required-methods">Required Methods</a><div class="sidebar-links"><a href="#tymethod.instance">instance</a></div><a class="sidebar-title" href="#implementors">Implementors</a></div><p class="location"><a href="index.html">imxrt_usbd</a></p><script>window.sidebarCurrent = {name: "Peripherals", ty: "trait", relpath: ""};</script><script defer src="sidebar-items.js"></script></div></nav><div class="theme-picker"><button id="theme-picker" aria-label="Pick another theme!" aria-haspopup="menu"><img src="../brush.svg" width="18" alt="Pick another theme!"></button><div id="theme-choices" role="menu"></div></div><script src="../theme.js"></script><nav class="sub"><form class="search-form"><div class="search-container"><div><select id="crate-search"><option value="All crates">All crates</option></select><input class="search-input" name="search" disabled autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"></div><button type="button" class="help-button">?</button>
+                <a id="settings-menu" href="../settings.html"><img src="../wheel.svg" width="18" alt="Change settings"></a></div></form></nav><section id="main" class="content"><h1 class="fqn"><span class="out-of-band"><span id="render-detail"><a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">[<span class="inner">&#x2212;</span>]</a></span><a class="srclink" href="../src/imxrt_usbd/lib.rs.html#119-126" title="goto source code">[src]</a></span><span class="in-band">Trait <a href="index.html">imxrt_usbd</a>::<wbr><a class="trait" href="">Peripherals</a></span></h1><div class="docblock type-decl hidden-by-usual-hider"><pre class="rust trait">pub unsafe trait Peripherals {
+    fn <a href="#tymethod.instance" class="fnname">instance</a>(&amp;self) -&gt; <a class="enum" href="../imxrt_usbd/enum.Instance.html" title="enum imxrt_usbd::Instance">Instance</a>;
+}</pre></div><div class="docblock"><p>A type that owns all USB register blocks</p>
+<p>An implementation of <code>Peripherals</code> is expected to own the USB1
+or USB2 registers. This includes</p>
+<ul>
+<li>USB core registers</li>
+<li>USB PHY registers</li>
+<li>USB non-core registers</li>
+<li>USB analog registers</li>
+</ul>
+<p>When an instance of <code>Peripherals</code> exists, you must make sure that
+nothing else, other than the owner of the <code>Peripherals</code> object,
+accesses those registers.</p>
+<h1 id="safety" class="section-header"><a href="#safety">Safety</a></h1>
+<p><code>Peripherals</code> should only be implemented on a type that
+owns the various register blocks required for all USB
+operation. Incorrect usage, or failure to ensure exclusive
+ownership, could lead to data races and incorrect USB functionality.</p>
+<p>By implementing this trait, you ensure that the <a href="../imxrt_usbd/enum.Instance.html" title="Instance"><code>Instance</code></a>
+identifier is valid for your chip. Not all i.MX RT peripherals
+have a USB2 peripheral instance, so you must ensure that the
+implementation is correct for your chip.</p>
+<h1 id="example" class="section-header"><a href="#example">Example</a></h1>
+<p>A safe implementation of <code>Peripherals</code> that works with the
+<code>imxrt-ral</code> register access layer. Assume that <code>ral</code> is
+shorthand for <code>imxrt_ral</code>, like</p>
+
+<div class="example-wrap"><pre class="rust rust-example-rendered">
+<span class="kw">use</span> <span class="ident">imxrt_ral</span> <span class="kw">as</span> <span class="ident">ral</span>;</pre></div>
+
+<div class="example-wrap"><pre class="rust rust-example-rendered">
+<span class="kw">use</span> <span class="ident">ral</span>::<span class="ident">usb</span>;
+
+<span class="kw">struct</span> <span class="ident">Peripherals</span> {
+    <span class="ident">_usb</span>: <span class="ident">ral</span>::<span class="ident">usb</span>::<span class="ident">Instance</span>,
+    <span class="ident">_phy</span>: <span class="ident">ral</span>::<span class="ident">usbphy</span>::<span class="ident">Instance</span>,
+    <span class="ident">_nc</span>: <span class="ident">ral</span>::<span class="ident">usbnc</span>::<span class="ident">Instance</span>,
+    <span class="ident">_analog</span>: <span class="ident">ral</span>::<span class="ident">usb_analog</span>::<span class="ident">Instance</span>,
+}
+
+<span class="kw">impl</span> <span class="ident">Peripherals</span> {
+    <span class="doccomment">/// Panics if the instances are already taken</span>
+    <span class="kw">fn</span> <span class="ident">usb1</span>() <span class="op">-</span><span class="op">&gt;</span> <span class="ident">Peripherals</span> {
+        <span class="self">Self</span> {
+            <span class="ident">_usb</span>: <span class="ident">ral</span>::<span class="ident">usb</span>::<span class="ident">USB1</span>::<span class="ident">take</span>().<span class="ident">unwrap</span>(),
+            <span class="ident">_phy</span>: <span class="ident">ral</span>::<span class="ident">usbphy</span>::<span class="ident">USBPHY1</span>::<span class="ident">take</span>().<span class="ident">unwrap</span>(),
+            <span class="ident">_nc</span>: <span class="ident">ral</span>::<span class="ident">usbnc</span>::<span class="ident">USBNC1</span>::<span class="ident">take</span>().<span class="ident">unwrap</span>(),
+            <span class="ident">_analog</span>: <span class="ident">ral</span>::<span class="ident">usb_analog</span>::<span class="ident">USB_ANALOG</span>::<span class="ident">take</span>().<span class="ident">unwrap</span>(),
+        }
+    }
+}
+
+<span class="comment">// This implementation is safe, because a `Peripherals` object</span>
+<span class="comment">// owns the four imxrt-ral instances, which are</span>
+<span class="comment">// guaranteed to be singletons. Given this approach, no one else</span>
+<span class="comment">// can safely access the USB registers.</span>
+<span class="kw">unsafe</span> <span class="kw">impl</span> <span class="ident">imxrt_usbd</span>::<span class="ident">Peripherals</span> <span class="kw">for</span> <span class="ident">Peripherals</span> {
+    <span class="kw">fn</span> <span class="ident">instance</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">imxrt_usbd</span>::<span class="ident">Instance</span> {
+        <span class="ident">imxrt_usbd</span>::<span class="ident">Instance</span>::<span class="ident">USB1</span>
+    }
+}
+
+<span class="kw">let</span> <span class="ident">peripherals</span> <span class="op">=</span> <span class="ident">Peripherals</span>::<span class="ident">usb1</span>();
+<span class="kw">let</span> <span class="ident">bus</span> <span class="op">=</span> <span class="ident">imxrt_usbd</span>::<span class="ident">full_speed</span>::<span class="ident">BusAdapter</span>::<span class="ident">new</span>(
+    <span class="ident">peripherals</span>,
+    <span class="comment">// Rest of setup...</span>
+);</pre></div>
+</div><h2 id="required-methods" class="small-section-header">Required methods<a href="#required-methods" class="anchor"></a></h2><div class="methods"><h3 id="tymethod.instance" class="method"><code>fn <a href="#tymethod.instance" class="fnname">instance</a>(&amp;self) -&gt; <a class="enum" href="../imxrt_usbd/enum.Instance.html" title="enum imxrt_usbd::Instance">Instance</a></code><a class="srclink" href="../src/imxrt_usbd/lib.rs.html#125" title="goto source code">[src]</a></h3><div class="docblock"><p>Returns the instance identifier for the core registers</p>
+<p><strong>Warning</strong>: some i.MX RT peripherals have only one USB peripheral,
+USB1. The behavior is undefined if you return <code>Instance::USB2</code> on
+one of these systems.</p>
+</div></div><span class="loading-content">Loading content...</span><h2 id="implementors" class="small-section-header">Implementors<a href="#implementors" class="anchor"></a></h2><div class="item-list" id="implementors-list"></div><span class="loading-content">Loading content...</span><script type="text/javascript" src="../implementors/imxrt_usbd/trait.Peripherals.js" async></script></section><section id="search" class="content hidden"></section><section class="footer"></section><script>window.rootPath = "../";window.currentCrate = "imxrt_usbd";</script><script src="../main.js"></script><script defer src="../search-index.js"></script></body></html>

@@ -65,36 +65,14 @@
 <span id="62">62</span>
 <span id="63">63</span>
 </pre><div class="example-wrap"><pre class="rust ">
-<span class="doccomment">//! Re-exporting the imxrt-ral APIS</span>
-<span class="doccomment">//!</span>
-<span class="doccomment">//! The imxrt-ral APIs have inconsistencies, depending on the</span>
-<span class="doccomment">//! version we&#39;re using. This module makes the APIs consistent</span>
-<span class="doccomment">//! based on the &quot;double-instance&quot; feature.</span>
-<span class="doccomment">//!</span>
-<span class="doccomment">//! It also adds some enhancements for endpoint control access.</span>
+<span class="doccomment">//! imxrt-ral-like API for USB access</span>
 
-<span class="comment">// imxrt-ral/imxrt105x and 106x support...</span>
-<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;double-instance&quot;</span>)]</span>
-<span class="kw">pub</span> <span class="kw">use</span> <span class="ident">imxrt_ral</span>::<span class="ident">usb</span>;
-<span class="comment">// Otherwise, rename usb1 to usb...</span>
-<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">not</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;double-instance&quot;</span>))]</span>
-<span class="kw">pub</span> <span class="kw">use</span> <span class="ident">imxrt_ral</span>::<span class="ident">usb1</span> <span class="kw">as</span> <span class="ident">usb</span>;
+<span class="kw">pub</span> <span class="kw">mod</span> <span class="ident">usb</span>;
+<span class="kw">pub</span> <span class="kw">mod</span> <span class="ident">usbphy</span>;
 
-<span class="comment">// Contains USBPHY1, USBPY2..</span>
-<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;double-instance&quot;</span>)]</span>
-<span class="kw">pub</span> <span class="kw">use</span> <span class="ident">imxrt_ral</span>::<span class="ident">usbphy</span>;
+<span class="kw">pub</span> <span class="kw">use</span> <span class="ident">imxrt_ral</span>::{<span class="ident">modify_reg</span>, <span class="ident">read_reg</span>, <span class="ident">write_reg</span>, <span class="ident">RORegister</span>, <span class="ident">RWRegister</span>};
 
-<span class="comment">// Otherwise, need to make the names ourself,</span>
-<span class="comment">// because it&#39;s inconsistent with the USB core</span>
-<span class="comment">// registers...</span>
-<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">not</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;double-instance&quot;</span>))]</span>
-<span class="kw">pub</span> <span class="kw">mod</span> <span class="ident">usbphy</span> {
-    <span class="kw">pub</span> <span class="kw">use</span> <span class="ident">imxrt_ral</span>::<span class="ident">usbphy</span>::<span class="ident">USBPHY</span> <span class="kw">as</span> <span class="ident">USBPHY1</span>;
-    <span class="kw">pub</span> <span class="kw">use</span> <span class="ident">imxrt_ral</span>::<span class="ident">usbphy</span>::<span class="kw-2">*</span>;
-}
-
-<span class="kw">pub</span> <span class="kw">use</span> <span class="ident">imxrt_ral</span>::<span class="ident">ccm_analog</span>;
-<span class="kw">pub</span> <span class="kw">use</span> <span class="ident">imxrt_ral</span>::{<span class="ident">modify_reg</span>, <span class="ident">read_reg</span>, <span class="ident">write_reg</span>, <span class="ident">RWRegister</span>};
+<span class="kw">use</span> <span class="kw">crate</span>::{<span class="ident">Instance</span>, <span class="ident">Peripherals</span>};
 
 <span class="doccomment">/// The RAL API requires us to treat all endpoint control registers as unique.</span>
 <span class="doccomment">/// We can make it a little easier with this function, the `EndptCtrl` type,</span>
@@ -112,7 +90,7 @@
         <span class="kw">pub</span> <span class="kw">use</span> <span class="kw">super</span>::<span class="ident">ral</span>::<span class="ident">usb</span>::<span class="ident">ENDPTCTRL1</span>::<span class="kw-2">*</span>;
     }
 
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">register</span>(<span class="ident">usb</span>: <span class="kw-2">&amp;</span><span class="ident">ral</span>::<span class="ident">usb</span>::<span class="ident">Instance</span>, <span class="ident">endpoint</span>: <span class="ident">usize</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">EndptCtrl</span> {
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">register</span>(<span class="ident">usb</span>: <span class="kw-2">&amp;</span><span class="kw">super</span>::<span class="ident">usb</span>::<span class="ident">Instance</span>, <span class="ident">endpoint</span>: <span class="ident">usize</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">EndptCtrl</span> {
         <span class="ident">EndptCtrl</span> {
             <span class="ident">ENDPTCTRL</span>: <span class="kw">match</span> <span class="ident">endpoint</span> {
                 <span class="number">0</span> <span class="op">=</span><span class="op">&gt;</span> <span class="kw-2">&amp;</span><span class="ident">usb</span>.<span class="ident">ENDPTCTRL0</span>,
@@ -127,6 +105,28 @@
             },
         }
     }
+}
+
+<span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">Instances</span> {
+    <span class="kw">pub</span> <span class="ident">usb</span>: <span class="ident">usb</span>::<span class="ident">Instance</span>,
+    <span class="kw">pub</span> <span class="ident">usbphy</span>: <span class="ident">usbphy</span>::<span class="ident">Instance</span>,
+}
+
+<span class="doccomment">/// Converts the core registers into a USB register block instance</span>
+<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">instances</span><span class="op">&lt;</span><span class="ident">P</span>: <span class="ident">Peripherals</span><span class="op">&gt;</span>(<span class="ident">peripherals</span>: <span class="ident">P</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">Instances</span> {
+    <span class="kw">let</span> <span class="ident">usb</span> <span class="op">=</span> <span class="ident">usb</span>::<span class="ident">Instance</span> {
+        <span class="ident">addr</span>: <span class="kw">match</span> <span class="ident">peripherals</span>.<span class="ident">instance</span>() {
+            <span class="ident">Instance</span>::<span class="ident">USB1</span> <span class="op">=</span><span class="op">&gt;</span> <span class="ident">usb</span>::<span class="ident">USB1</span>,
+            <span class="ident">Instance</span>::<span class="ident">USB2</span> <span class="op">=</span><span class="op">&gt;</span> <span class="ident">usb</span>::<span class="ident">USB2</span>,
+        },
+    };
+    <span class="kw">let</span> <span class="ident">usbphy</span> <span class="op">=</span> <span class="ident">usbphy</span>::<span class="ident">Instance</span> {
+        <span class="ident">addr</span>: <span class="kw">match</span> <span class="ident">peripherals</span>.<span class="ident">instance</span>() {
+            <span class="ident">Instance</span>::<span class="ident">USB1</span> <span class="op">=</span><span class="op">&gt;</span> <span class="ident">usbphy</span>::<span class="ident">USBPHY1</span>,
+            <span class="ident">Instance</span>::<span class="ident">USB2</span> <span class="op">=</span><span class="op">&gt;</span> <span class="ident">usbphy</span>::<span class="ident">USBPHY2</span>,
+        },
+    };
+    <span class="ident">Instances</span> { <span class="ident">usb</span>, <span class="ident">usbphy</span> }
 }
 </pre></div>
 </section><section id="search" class="content hidden"></section><section class="footer"></section><script>window.rootPath = "../../";window.currentCrate = "imxrt_usbd";</script><script src="../../main.js"></script><script src="../../source-script.js"></script><script src="../../source-files.js"></script><script defer src="../../search-index.js"></script></body></html>

@@ -275,11 +275,24 @@
 <span id="272">272</span>
 <span id="273">273</span>
 <span id="274">274</span>
+<span id="275">275</span>
+<span id="276">276</span>
+<span id="277">277</span>
+<span id="278">278</span>
+<span id="279">279</span>
 </pre><div class="example-wrap"><pre class="rust ">
 <span class="doccomment">//! USB bus implementation</span>
+<span class="doccomment">//!</span>
+<span class="doccomment">//! The bus</span>
+<span class="doccomment">//!</span>
+<span class="doccomment">//! - initializes the USB driver</span>
+<span class="doccomment">//! - adapts the USB driver to meet the `usb-device` `Sync` requirements</span>
+<span class="doccomment">//! - dispatches reads and writes to the proper endpoints</span>
+<span class="doccomment">//! - exposes the i.MX RT-specific API to the user (`configure`, `set_interrupts`)</span>
+<span class="doccomment">//!</span>
+<span class="doccomment">//! Most of the interesting behavior happens in the driver.</span>
 
 <span class="kw">use</span> <span class="kw">super</span>::<span class="ident">driver</span>::<span class="ident">FullSpeed</span>;
-<span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">ral</span>;
 <span class="kw">use</span> <span class="ident">core</span>::<span class="ident">cell</span>::<span class="ident">RefCell</span>;
 <span class="kw">use</span> <span class="ident">cortex_m</span>::<span class="ident">interrupt</span>::{<span class="self">self</span>, <span class="ident">Mutex</span>};
 <span class="kw">use</span> <span class="ident">usb_device</span>::{
@@ -295,7 +308,6 @@
 <span class="doccomment">/// # Requirements</span>
 <span class="doccomment">///</span>
 <span class="doccomment">/// The driver assumes that you&#39;ve prepared all USB clocks (CCM clock gates, CCM analog PLLs).</span>
-<span class="doccomment">/// You may use the `imxrt-ral` APIs to configure USB clocks.</span>
 <span class="doccomment">///</span>
 <span class="doccomment">/// Before polling for USB class traffic, you must call [`configure()`](BusAdapter::configure())</span>
 <span class="doccomment">/// *after* your device has been configured. This can be accomplished by polling the USB</span>
@@ -313,15 +325,17 @@
 <span class="doccomment">///</span>
 <span class="doccomment">/// ```no_run</span>
 <span class="doccomment">/// use imxrt_usbd::full_speed::BusAdapter;</span>
-<span class="doccomment">/// use imxrt_ral::{usb, usbphy};</span>
 <span class="doccomment">///</span>
+<span class="doccomment">/// # struct Ps; use imxrt_usbd::Instance as Inst;</span>
+<span class="doccomment">/// # unsafe impl imxrt_usbd::Peripherals for Ps { fn instance(&amp;self) -&gt; Inst { panic!() } }</span>
 <span class="doccomment">/// static mut ENDPOINT_MEMORY: [u8; 1024] = [0; 1024];</span>
 <span class="doccomment">///</span>
 <span class="doccomment">/// // TODO initialize clocks...</span>
 <span class="doccomment">///</span>
+<span class="doccomment">/// let my_usb_peripherals = // Your Peripherals instance...</span>
+<span class="doccomment">/// #   Ps;</span>
 <span class="doccomment">/// let bus_adapter = BusAdapter::new(</span>
-<span class="doccomment">///     usb::USB1::take().unwrap(),</span>
-<span class="doccomment">///     usbphy::USBPHY1::take().unwrap(),</span>
+<span class="doccomment">///     my_usb_peripherals,</span>
 <span class="doccomment">///     unsafe { &amp;mut ENDPOINT_MEMORY }</span>
 <span class="doccomment">/// );</span>
 <span class="doccomment">///</span>
@@ -362,16 +376,8 @@
     <span class="doccomment">/// memory region will be partitioned for the endpoints, based on their requirements.</span>
     <span class="doccomment">///</span>
     <span class="doccomment">/// You must ensure that no one else is using the endpoint memory!</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// # Panics</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// Panics if the USB instances are mismatched (a USB1 instance with a USBPHY2 instance).</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">new</span>(
-        <span class="ident">usb</span>: <span class="ident">ral</span>::<span class="ident">usb</span>::<span class="ident">Instance</span>,
-        <span class="ident">phy</span>: <span class="ident">ral</span>::<span class="ident">usbphy</span>::<span class="ident">Instance</span>,
-        <span class="ident">buffer</span>: <span class="kw-2">&amp;</span><span class="lifetime">&#39;static</span> <span class="kw-2">mut</span> [<span class="ident">u8</span>],
-    ) <span class="op">-</span><span class="op">&gt;</span> <span class="self">Self</span> {
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">usb</span> <span class="op">=</span> <span class="ident">FullSpeed</span>::<span class="ident">new</span>(<span class="ident">usb</span>, <span class="ident">phy</span>);
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">new</span><span class="op">&lt;</span><span class="ident">P</span>: <span class="kw">crate</span>::<span class="ident">Peripherals</span><span class="op">&gt;</span>(<span class="ident">peripherals</span>: <span class="ident">P</span>, <span class="ident">buffer</span>: <span class="kw-2">&amp;</span><span class="lifetime">&#39;static</span> <span class="kw-2">mut</span> [<span class="ident">u8</span>]) <span class="op">-</span><span class="op">&gt;</span> <span class="self">Self</span> {
+        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">usb</span> <span class="op">=</span> <span class="ident">FullSpeed</span>::<span class="ident">new</span>(<span class="ident">peripherals</span>);
 
         <span class="ident">usb</span>.<span class="ident">initialize</span>();
         <span class="ident">usb</span>.<span class="ident">set_endpoint_memory</span>(<span class="ident">buffer</span>);
@@ -382,6 +388,9 @@
     }
 
     <span class="doccomment">/// Enable (`true`) or disable (`false`) interrupts for this USB peripheral</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// The interrupt causes are implementation specific. To handle the interrupt,</span>
+    <span class="doccomment">/// call [`poll()`](BusAdapter::poll).</span>
     <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">set_interrupts</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">interrupts</span>: <span class="ident">bool</span>) {
         <span class="self">self</span>.<span class="ident">with_usb_mut</span>(<span class="op">|</span><span class="ident">usb</span><span class="op">|</span> <span class="ident">usb</span>.<span class="ident">set_interrupts</span>(<span class="ident">interrupts</span>));
     }
@@ -406,7 +415,8 @@
 
     <span class="doccomment">/// Apply device configurations, and perform other post-configuration actions</span>
     <span class="doccomment">///</span>
-    <span class="doccomment">/// You must invoke this once, and only after your device has been configured. See</span>
+    <span class="doccomment">/// You must invoke this once, and only after your device has been configured. If</span>
+    <span class="doccomment">/// the device is reset and reconfigured, you must invoke `configure()` again. See</span>
     <span class="doccomment">/// the top-level example for how this could be achieved.</span>
     <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">configure</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) {
         <span class="self">self</span>.<span class="ident">with_usb_mut</span>(<span class="op">|</span><span class="ident">usb</span><span class="op">|</span> {
