@@ -6,14 +6,8 @@ pub use bsp::hal;
 pub use hal::ral;
 pub use teensy4_bsp as bsp;
 
-use bsp::common;
-
-pub type LED = hal::gpio::GPIO<common::P13, hal::gpio::Output>;
-pub fn configure_led(pad: common::P13) -> LED {
-    let mut led = hal::gpio::GPIO::new(pad);
-    led.set_fast(true);
-    led.output()
-}
+pub use bsp::LED;
+pub use bsp::configure_led;
 
 /// Allocates a `BusAdapter`
 ///
