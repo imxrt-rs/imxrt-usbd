@@ -6,8 +6,8 @@ pub use bsp::hal;
 pub use hal::ral;
 pub use teensy4_bsp as bsp;
 
-pub use bsp::LED;
 pub use bsp::configure_led;
+pub use bsp::LED;
 
 /// Allocates a `BusAdapter`
 ///
