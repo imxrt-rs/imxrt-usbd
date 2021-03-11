@@ -84,10 +84,6 @@ impl BusAdapter {
     /// memory region will be partitioned for the endpoints, based on their requirements.
     ///
     /// You must ensure that no one else is using the endpoint memory!
-    ///
-    /// # Panics
-    ///
-    /// Panics if the USB instances are mismatched (a USB1 instance with a USBPHY2 instance).
     pub fn new<C: crate::CoreRegisters>(core_registers: C, buffer: &'static mut [u8]) -> Self {
         let mut usb = FullSpeed::new(core_registers);
 

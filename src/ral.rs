@@ -1,6 +1,7 @@
 //! imxrt-ral-like API for USB access
 
 pub mod usb;
+pub mod usbphy;
 
 pub use imxrt_ral::{modify_reg, read_reg, write_reg, RORegister, RWRegister};
 
@@ -39,12 +40,24 @@ pub mod endpoint_control {
     }
 }
 
+pub struct Instances {
+    pub usb: usb::Instance,
+    pub usbphy: usbphy::Instance,
+}
+
 /// Converts the core registers into a USB register block instance
-pub fn instance<C: CoreRegisters>(core_registers: C) -> usb::Instance {
-    usb::Instance {
+pub fn instances<C: CoreRegisters>(core_registers: C) -> Instances {
+    let usb = usb::Instance {
         addr: match core_registers.instance() {
             Instance::USB1 => usb::USB1,
             Instance::USB2 => usb::USB2,
         },
-    }
+    };
+    let usbphy = usbphy::Instance {
+        addr: match core_registers.instance() {
+            Instance::USB1 => usbphy::USBPHY1,
+            Instance::USB2 => usbphy::USBPHY2,
+        },
+    };
+    Instances { usb, usbphy }
 }

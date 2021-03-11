@@ -10,13 +10,7 @@
 //! # General guidance
 //!
 //! The USB driver takes ownership of the USB core registers. The driver does not configure
-//! any of
-//!
-//! - USBPHY, the integrated PHY registers
-//! - USBNC, the non-core registers
-//! - USB_ANALOG, the USB analog registers
-//!
-//! nor does it affect any of the CCM (or CCM_ANALOG) registers. You're responsible for
+//! any of  the CCM (or CCM_ANALOG) registers. You're responsible for
 //! configuring these peripherals for proper USB functionality. See the `imxrt-usbd`
 //! hardware examples to see different ways of configuring these registers.
 //!
@@ -39,19 +33,26 @@ pub mod full_speed;
 /// Eight endpoints, two directions
 const QH_COUNT: usize = 8 * 2;
 
-/// A type that owns the USB core registers block
+/// A type that owns all USB registers block
 ///
 /// An implementation of `CoreRegisters` is expected to own the USB1
-/// or USB2 core registers block. Given this object's ownership of
-/// the static memory, it should be unavailable to anyone else in
-/// the program.
+/// or USB2 registers. This includes
+///
+/// - USB core registers
+/// - USB PHY registers
+/// - USB non-core registers
+/// - USB analog registers
+///
+/// When an instance of `CoreRegisters` exists, you must make sure that
+/// nothing else, other than the owner of the `CoreRegisters` object,
+/// accesses those registers.
 ///
 /// # Safety
 ///
 /// `CoreRegisters` should only be implemented on a type that
 /// owns the various register blocks required for all USB
-/// operation. The returned pointer will be checked for validity
-/// before usage.
+/// operation. Incorrect usage, or failure to ensure exclusive
+/// ownership, could lead to data races and incorrect USB functionality.
 ///
 /// By implementing this trait, you ensure that the [`Instance`]
 /// identifier is valid for your chip. Not all i.MX RT peripherals
@@ -73,38 +74,36 @@ const QH_COUNT: usize = 8 * 2;
 /// #   use core::ops::Deref; pub struct Instance; impl Deref for Instance { type Target = u32; fn deref(&self) -> &u32 { unsafe { &*(0x402e0200 as *const u32)} } }
 /// #   pub fn take() -> Result<Instance, ()> { Ok(Instance) }
 /// #   pub mod usb { pub use super::Instance; pub mod USB1 { pub use super::super::take; } }
+/// #   pub mod usbphy { pub use super::Instance; pub mod USBPHY1 { pub use super::super::take; } }
+/// #   pub mod usbnc { pub use super::Instance; pub mod USBNC1 { pub use super::super::take; } }
+/// #   pub mod usb_analog { pub use super::Instance; pub mod USB_ANALOG { pub use super::super::take; } }
 /// # }
 /// use ral::usb;
-/// use imxrt_usbd::CoreRegisters;
 ///
-/// struct Instances {
-///     usb: usb::Instance,
+/// struct CoreRegisters {
+///     _usb: ral::usb::Instance,
+///     _phy: ral::usbphy::Instance,
+///     _nc: ral::usbnc::Instance,
+///     _analog: ral::usb_analog::Instance,
 /// }
 ///
-/// impl Instances {
-///     /// Panics if the instance is already taken
-///     pub fn usb1() -> Instances {
+/// impl CoreRegisters {
+///     /// Panics if the instances are already taken
+///     fn usb1() -> CoreRegisters {
 ///         Self {
-///             usb: usb::USB1::take().unwrap(),
+///             _usb: ral::usb::USB1::take().unwrap(),
+///             _phy: ral::usbphy::USBPHY1::take().unwrap(),
+///             _nc: ral::usbnc::USBNC1::take().unwrap(),
+///             _analog: ral::usb_analog::USB_ANALOG::take().unwrap(),
 ///         }
 ///     }
 /// }
 ///
-/// // Safety: the safe imxrt-ral API ensures that there is only one instance
-/// // in any given Rust program. Since we own it, it's safe to implement
-/// // CoreRegisters.
-/// unsafe impl CoreRegisters for Instances {
+/// unsafe impl imxrt_usbd::CoreRegisters for CoreRegisters {
 ///     fn instance(&self) -> imxrt_usbd::Instance {
 ///         imxrt_usbd::Instance::USB1
 ///     }
 /// }
-///
-/// let instances = Instances::usb1();
-/// let bus_adapter = imxrt_usbd::full_speed::BusAdapter::new(
-///     instances,
-///     // Rest of the setup...
-/// #   unsafe { static mut MEM: [u8; 1] = [0; 1]; &mut MEM }
-/// );
 /// ```
 pub unsafe trait CoreRegisters {
     /// Returns the instance identifier for the core registers

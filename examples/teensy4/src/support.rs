@@ -23,13 +23,6 @@ pub fn configure_led(pad: common::P13) -> LED {
 /// already taken. The bus adapter owns the USB1 core registers.
 /// This function will release USBPHY1.
 pub fn new_bus_adapter() -> imxrt_usbd::full_speed::BusAdapter {
-    let phy = ral::usbphy::USBPHY1::take().unwrap();
-    ral::write_reg!(ral::usbphy, phy, CTRL_SET, SFTRST: 1);
-    ral::write_reg!(ral::usbphy, phy, CTRL_CLR, SFTRST: 1);
-    ral::write_reg!(ral::usbphy, phy, CTRL_CLR, CLKGATE: 1);
-    ral::write_reg!(ral::usbphy, phy, PWD, 0);
-    ral::usbphy::USBPHY1::release(phy);
-
     // If we're here, we have exclusive access to ENDPOINT_MEMORY
     static mut ENDPOINT_MEMORY: [u8; 4096] = [0; 4096];
 
@@ -53,17 +46,21 @@ fn panic(info: &core::panic::PanicInfo) -> ! {
 // Keep in sync with the imxrt_usbd::Peripherals example!
 //
 
-use ral::usb;
-
 struct CoreRegisters {
     _usb: ral::usb::Instance,
+    _phy: ral::usbphy::Instance,
+    _nc: ral::usbnc::Instance,
+    _analog: ral::usb_analog::Instance,
 }
 
 impl CoreRegisters {
-    /// Panics if the instance is already taken
+    /// Panics if the instances are already taken
     fn usb1() -> CoreRegisters {
         Self {
-            _usb: usb::USB1::take().unwrap(),
+            _usb: ral::usb::USB1::take().unwrap(),
+            _phy: ral::usbphy::USBPHY1::take().unwrap(),
+            _nc: ral::usbnc::USBNC1::take().unwrap(),
+            _analog: ral::usb_analog::USB_ANALOG::take().unwrap(),
         }
     }
 }

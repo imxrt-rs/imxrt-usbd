@@ -33,6 +33,7 @@ fn index(ep_addr: EndpointAddress) -> usize {
 pub struct FullSpeed {
     endpoints: [Option<Endpoint>; QH_COUNT],
     usb: ral::usb::Instance,
+    phy: ral::usbphy::Instance,
     qhs: [Option<&'static mut qh::QH>; QH_COUNT],
     tds: [Option<&'static mut td::TD>; QH_COUNT],
     buffer_allocator: buffer::Allocator,
@@ -53,23 +54,18 @@ impl FullSpeed {
     ///
     /// Creation does nothing except for assign static memory to the driver.
     /// After creating the driver, call [`initialize()`](USB::initialize).
-    ///
-    /// # Panics
-    ///
-    /// Panics if the pointers returned by `core_registers` are invalid, or if
-    /// they refer to mismatched register blocks (a USB1 core register block
-    /// and a USBPHY2 core register block).
     pub fn new<C: crate::CoreRegisters>(core_registers: C) -> Self {
         // Safety: taking static memory. Assumes that the provided
         // USB instance is a singleton, which is the only safe way for it
         // to exist.
-        let usb = ral::instance(core_registers);
+        let ral::Instances { usb, usbphy: phy } = ral::instances(core_registers);
         unsafe {
             let qhs = state::steal_qhs(&usb);
             let tds = state::steal_tds(&usb);
             FullSpeed {
                 endpoints: EP_INIT,
                 usb,
+                phy,
                 qhs,
                 tds,
                 buffer_allocator: buffer::Allocator::empty(),
@@ -96,6 +92,11 @@ impl FullSpeed {
     /// You **must** call this once, before creating the complete USB
     /// bus.
     pub fn initialize(&mut self) {
+        ral::write_reg!(ral::usbphy, self.phy, CTRL_SET, SFTRST: 1);
+        ral::write_reg!(ral::usbphy, self.phy, CTRL_CLR, SFTRST: 1);
+        ral::write_reg!(ral::usbphy, self.phy, CTRL_CLR, CLKGATE: 1);
+        ral::write_reg!(ral::usbphy, self.phy, PWD, 0);
+
         ral::modify_reg!(ral::usb, self.usb, USBCMD, RST: 1);
         while ral::read_reg!(ral::usb, self.usb, USBCMD, RST == 1) {}
 
