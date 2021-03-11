@@ -29,7 +29,7 @@ pub fn new_bus_adapter() -> imxrt_usbd::full_speed::BusAdapter {
     unsafe {
         // Safety: With proper scoping and checks for singleton access, we ensure the memory is
         // only available to a single caller.
-        imxrt_usbd::full_speed::BusAdapter::new(CoreRegisters::usb1(), &mut ENDPOINT_MEMORY)
+        imxrt_usbd::full_speed::BusAdapter::new(Peripherals::usb1(), &mut ENDPOINT_MEMORY)
     }
 }
 
@@ -46,16 +46,16 @@ fn panic(info: &core::panic::PanicInfo) -> ! {
 // Keep in sync with the imxrt_usbd::Peripherals example!
 //
 
-struct CoreRegisters {
+struct Peripherals {
     _usb: ral::usb::Instance,
     _phy: ral::usbphy::Instance,
     _nc: ral::usbnc::Instance,
     _analog: ral::usb_analog::Instance,
 }
 
-impl CoreRegisters {
+impl Peripherals {
     /// Panics if the instances are already taken
-    fn usb1() -> CoreRegisters {
+    fn usb1() -> Peripherals {
         Self {
             _usb: ral::usb::USB1::take().unwrap(),
             _phy: ral::usbphy::USBPHY1::take().unwrap(),
@@ -65,7 +65,7 @@ impl CoreRegisters {
     }
 }
 
-unsafe impl imxrt_usbd::CoreRegisters for CoreRegisters {
+unsafe impl imxrt_usbd::Peripherals for Peripherals {
     fn instance(&self) -> imxrt_usbd::Instance {
         imxrt_usbd::Instance::USB1
     }

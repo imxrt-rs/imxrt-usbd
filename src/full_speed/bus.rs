@@ -35,15 +35,15 @@ use usb_device::{
 /// use imxrt_usbd::full_speed::BusAdapter;
 ///
 /// # struct Ps; use imxrt_usbd::Instance as Inst;
-/// # unsafe impl imxrt_usbd::CoreRegisters for Ps { fn instance(&self) -> Inst { panic!() } }
+/// # unsafe impl imxrt_usbd::Peripherals for Ps { fn instance(&self) -> Inst { panic!() } }
 /// static mut ENDPOINT_MEMORY: [u8; 1024] = [0; 1024];
 ///
 /// // TODO initialize clocks, USB PHY registers...
 ///
-/// let my_usb_core_registers = // Your CoreRegisters instance...
+/// let my_usb_peripherals = // Your Peripherals instance...
 /// #   Ps;
 /// let bus_adapter = BusAdapter::new(
-///     my_usb_core_registers,
+///     my_usb_peripherals,
 ///     unsafe { &mut ENDPOINT_MEMORY }
 /// );
 ///
@@ -84,8 +84,8 @@ impl BusAdapter {
     /// memory region will be partitioned for the endpoints, based on their requirements.
     ///
     /// You must ensure that no one else is using the endpoint memory!
-    pub fn new<C: crate::CoreRegisters>(core_registers: C, buffer: &'static mut [u8]) -> Self {
-        let mut usb = FullSpeed::new(core_registers);
+    pub fn new<P: crate::Peripherals>(peripherals: P, buffer: &'static mut [u8]) -> Self {
+        let mut usb = FullSpeed::new(peripherals);
 
         usb.initialize();
         usb.set_endpoint_memory(buffer);

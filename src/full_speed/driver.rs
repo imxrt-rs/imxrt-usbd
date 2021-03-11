@@ -54,11 +54,11 @@ impl FullSpeed {
     ///
     /// Creation does nothing except for assign static memory to the driver.
     /// After creating the driver, call [`initialize()`](USB::initialize).
-    pub fn new<C: crate::CoreRegisters>(core_registers: C) -> Self {
+    pub fn new<P: crate::Peripherals>(peripherals: P) -> Self {
         // Safety: taking static memory. Assumes that the provided
         // USB instance is a singleton, which is the only safe way for it
         // to exist.
-        let ral::Instances { usb, usbphy: phy } = ral::instances(core_registers);
+        let ral::Instances { usb, usbphy: phy } = ral::instances(peripherals);
         unsafe {
             let qhs = state::steal_qhs(&usb);
             let tds = state::steal_tds(&usb);

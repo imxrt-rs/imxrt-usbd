@@ -4,7 +4,7 @@
 //! to add USB device features to your embedded Rust program. See each module
 //! for usage and examples.
 //!
-//! To interface the library, you must define a safe implementation of [`CoreRegisters`].
+//! To interface the library, you must define a safe implementation of [`Peripherals`].
 //! See the trait documentation for more information.
 //!
 //! # General guidance
@@ -35,7 +35,7 @@ const QH_COUNT: usize = 8 * 2;
 
 /// A type that owns all USB registers block
 ///
-/// An implementation of `CoreRegisters` is expected to own the USB1
+/// An implementation of `Peripherals` is expected to own the USB1
 /// or USB2 registers. This includes
 ///
 /// - USB core registers
@@ -43,13 +43,13 @@ const QH_COUNT: usize = 8 * 2;
 /// - USB non-core registers
 /// - USB analog registers
 ///
-/// When an instance of `CoreRegisters` exists, you must make sure that
-/// nothing else, other than the owner of the `CoreRegisters` object,
+/// When an instance of `Peripherals` exists, you must make sure that
+/// nothing else, other than the owner of the `Peripherals` object,
 /// accesses those registers.
 ///
 /// # Safety
 ///
-/// `CoreRegisters` should only be implemented on a type that
+/// `Peripherals` should only be implemented on a type that
 /// owns the various register blocks required for all USB
 /// operation. Incorrect usage, or failure to ensure exclusive
 /// ownership, could lead to data races and incorrect USB functionality.
@@ -61,7 +61,7 @@ const QH_COUNT: usize = 8 * 2;
 ///
 /// # Example
 ///
-/// A safe implementation of `CoreRegisters` that works with the
+/// A safe implementation of `Peripherals` that works with the
 /// `imxrt-ral` register access layer. Assume that `ral` is
 /// shorthand for `imxrt_ral`, like
 ///
@@ -80,16 +80,16 @@ const QH_COUNT: usize = 8 * 2;
 /// # }
 /// use ral::usb;
 ///
-/// struct CoreRegisters {
+/// struct Peripherals {
 ///     _usb: ral::usb::Instance,
 ///     _phy: ral::usbphy::Instance,
 ///     _nc: ral::usbnc::Instance,
 ///     _analog: ral::usb_analog::Instance,
 /// }
 ///
-/// impl CoreRegisters {
+/// impl Peripherals {
 ///     /// Panics if the instances are already taken
-///     fn usb1() -> CoreRegisters {
+///     fn usb1() -> Peripherals {
 ///         Self {
 ///             _usb: ral::usb::USB1::take().unwrap(),
 ///             _phy: ral::usbphy::USBPHY1::take().unwrap(),
@@ -99,13 +99,13 @@ const QH_COUNT: usize = 8 * 2;
 ///     }
 /// }
 ///
-/// unsafe impl imxrt_usbd::CoreRegisters for CoreRegisters {
+/// unsafe impl imxrt_usbd::Peripherals for Peripherals {
 ///     fn instance(&self) -> imxrt_usbd::Instance {
 ///         imxrt_usbd::Instance::USB1
 ///     }
 /// }
 /// ```
-pub unsafe trait CoreRegisters {
+pub unsafe trait Peripherals {
     /// Returns the instance identifier for the core registers
     ///
     /// **Warning**: some i.MX RT peripherals have only one USB peripheral,
