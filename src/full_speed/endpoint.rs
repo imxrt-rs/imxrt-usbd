@@ -90,10 +90,10 @@ impl Endpoint {
             let endptctrl = endpoint_control::register(usb, self.address.index());
             match self.address.direction() {
                 UsbDirection::In => {
-                    ral::write_reg!(endpoint_control, &endptctrl, ENDPTCTRL, TXE: 0, TXT: EndpointType::Bulk as u32)
+                    ral::modify_reg!(endpoint_control, &endptctrl, ENDPTCTRL, TXE: 0, TXT: EndpointType::Bulk as u32)
                 }
                 UsbDirection::Out => {
-                    ral::write_reg!(endpoint_control, &endptctrl, ENDPTCTRL, RXE: 0, RXT: EndpointType::Bulk as u32)
+                    ral::modify_reg!(endpoint_control, &endptctrl, ENDPTCTRL, RXE: 0, RXT: EndpointType::Bulk as u32)
                 }
             }
         }
