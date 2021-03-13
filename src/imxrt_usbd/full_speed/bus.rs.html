@@ -280,6 +280,7 @@
 <span id="277">277</span>
 <span id="278">278</span>
 <span id="279">279</span>
+<span id="280">280</span>
 </pre><div class="example-wrap"><pre class="rust ">
 <span class="doccomment">//! USB bus implementation</span>
 <span class="doccomment">//!</span>
@@ -369,8 +370,9 @@
 <span class="kw">impl</span> <span class="ident">BusAdapter</span> {
     <span class="doccomment">/// Create a USB bus adapter</span>
     <span class="doccomment">///</span>
-    <span class="doccomment">/// The two USB instances come from the `imxrt-ral` register access layer. When this</span>
-    <span class="doccomment">/// function returns, the `BusAdapter` has initialized the PHY and USB core registers.</span>
+    <span class="doccomment">/// When this function returns, the `BusAdapter` has initialized the PHY and USB core peripherals.</span>
+    <span class="doccomment">/// The adapter expects to own these two peripherals, along with the other peripherals required</span>
+    <span class="doccomment">/// by the [`Peripherals`](crate::Peripherals) safety contract.</span>
     <span class="doccomment">///</span>
     <span class="doccomment">/// You must also provide a region of memory that will used for endpoint I/O. The</span>
     <span class="doccomment">/// memory region will be partitioned for the endpoints, based on their requirements.</span>

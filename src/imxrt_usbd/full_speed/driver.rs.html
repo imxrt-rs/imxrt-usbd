@@ -591,7 +591,7 @@
     }
 
     <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">attach</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>) {
-        <span class="comment">// TODO should probably be a modify...</span>
+        <span class="comment">// Using a write to set RST high, and to clear ITC field</span>
         <span class="ident">ral</span>::<span class="macro">write_reg</span><span class="macro">!</span>(<span class="ident">ral</span>::<span class="ident">usb</span>, <span class="self">self</span>.<span class="ident">usb</span>, <span class="ident">USBCMD</span>, <span class="ident">RS</span>: <span class="number">1</span>);
     }
 
