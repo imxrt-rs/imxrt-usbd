@@ -145,7 +145,7 @@ impl FullSpeed {
     }
 
     pub fn attach(&mut self) {
-        // TODO should probably be a modify...
+        // Using a write to set RST high, and to clear ITC field
         ral::write_reg!(ral::usb, self.usb, USBCMD, RS: 1);
     }
 
