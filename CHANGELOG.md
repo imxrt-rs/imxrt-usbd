@@ -4,7 +4,7 @@ Changelog
 [Unreleased]
 ------------
 
-
+- Fix documentation of `full_speed::BusAdapter::new`
 
 [0.1.0] 2021-03-11
 ------------------

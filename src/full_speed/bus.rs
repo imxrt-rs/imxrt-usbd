@@ -86,8 +86,9 @@ pub struct BusAdapter {
 impl BusAdapter {
     /// Create a USB bus adapter
     ///
-    /// The two USB instances come from the `imxrt-ral` register access layer. When this
-    /// function returns, the `BusAdapter` has initialized the PHY and USB core registers.
+    /// When this function returns, the `BusAdapter` has initialized the PHY and USB core peripherals.
+    /// The adapter expects to own these two peripherals, along with the other peripherals required
+    /// by the [`Peripherals`](crate::Peripherals) safety contract.
     ///
     /// You must also provide a region of memory that will used for endpoint I/O. The
     /// memory region will be partitioned for the endpoints, based on their requirements.
