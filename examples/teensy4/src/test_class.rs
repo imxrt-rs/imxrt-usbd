@@ -90,7 +90,6 @@ fn main() -> ! {
     loop {
         imxrt_uart_log::dma::poll();
         time_elapse(&mut gpt1, || led.toggle());
-        cortex_m::asm::wfi();
     }
 }
 
@@ -111,7 +110,7 @@ use hal::ral::interrupt;
 
 #[cortex_m_rt::interrupt]
 fn USB_OTG1() {
-    // Safety: we only unmask the interrupt once all three static mut variables
+    // Safety: we only unmask the interrupt once all static mut variables
     // are initialized. We're the only ones to use those variables after they're
     // set.
     let device = unsafe { DEVICE.as_mut().unwrap() };

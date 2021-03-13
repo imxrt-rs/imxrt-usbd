@@ -195,6 +195,12 @@ impl UsbEndpoint for Endpoint {
     }
 
     unsafe fn enable(&mut self, config: &EndpointConfig) -> Result<()> {
+        debug!(
+            "ENABLE EP{} {:?} {:?}",
+            self.address.number(),
+            self.address.direction(),
+            config.ep_type()
+        );
         if config.max_packet_size() as usize > self.buffer.len() {
             return Err(UsbError::EndpointMemoryOverflow);
         } else if self.is_control() && config.ep_type() != EndpointType::Control {
@@ -209,6 +215,7 @@ impl UsbEndpoint for Endpoint {
         if !self.is_control() {
             let endptctrl =
                 ral::endpoint_control::register(&self.usb, self.address.number().into());
+
             match self.address.direction() {
                 UsbDirection::In => {
                     ral::modify_reg!(ral::endpoint_control, &endptctrl, ENDPTCTRL, TXE: 1, TXR: 1, TXT: config.ep_type() as u32)
@@ -227,6 +234,11 @@ impl UsbEndpoint for Endpoint {
         Ok(())
     }
     fn disable(&mut self) -> Result<()> {
+        debug!(
+            "DISABLE EP{} {:?}",
+            self.address.number(),
+            self.address.direction()
+        );
         if !self.is_control() {
             let endptctrl =
                 ral::endpoint_control::register(&self.usb, self.address.number().into());
@@ -281,6 +293,7 @@ impl UsbEndpoint for Endpoint {
 
 impl UsbEndpointIn for Endpoint {
     fn write_packet(&mut self, data: &[u8]) -> Result<()> {
+        trace!("WRITE EP{}", self.address.number());
         self.check_errors()?;
         if self.is_primed() {
             return Err(UsbError::WouldBlock);
@@ -302,6 +315,7 @@ impl UsbEndpointIn for Endpoint {
 impl UsbEndpointOut for Endpoint {
     fn read_packet(&mut self, data: &mut [u8]) -> Result<(usize, OutPacketType)> {
         if self.is_control() && self.has_setup() {
+            trace!("SETUP EP{}", self.address.number());
             if data.len() < 8 {
                 return Err(UsbError::BufferOverflow);
             }
@@ -314,6 +328,7 @@ impl UsbEndpointOut for Endpoint {
             }
             Ok((8, OutPacketType::Setup))
         } else {
+            trace!("READ EP{}", self.address.number());
             // Caller should only be calling us when we've signaled
             // data via poll()
             self.check_errors()?;

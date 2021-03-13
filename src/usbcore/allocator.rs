@@ -193,7 +193,7 @@ where
             .buffers
             .allocate(config.max_packet_size().into())
             .ok_or(UsbError::EndpointMemoryOverflow)?;
-
+        debug!("ALLOC EP{} {:?}", address.number(), address.direction());
         Ok(crate::usbcore::Endpoint::new(
             self.usb, address, qh, td, buffer,
         ))
@@ -209,14 +209,15 @@ where
         self.alloc(2 * address.number() as usize, address, config)
     }
     fn alloc_in(&mut self, config: &EndpointConfig) -> Result<U::EndpointIn> {
-        let address = self.alloc_addr(UsbDirection::Out, config)?;
+        let address = self.alloc_addr(UsbDirection::In, config)?;
         self.alloc((2 * address.number() as usize) + 1, address, config)
     }
     fn begin_interface(&mut self) -> Result<()> {
-        Ok(()) // TODO anything to do here?
+        debug!("BEGIN INTERFACE");
+        Ok(())
     }
     fn next_alt_setting(&mut self) -> Result<()> {
-        panic!("next_alt_setting");
+        unimplemented!("next_alt_setting");
     }
 }
 

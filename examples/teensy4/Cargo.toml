@@ -52,7 +52,7 @@ version = "0.2"
 # examples
 [dependencies.log]
 version = "0.4"
-features = ["release_max_level_info"]
+features = ["release_max_level_debug"]
 
 [dependencies.cortex-m]
 version = "0.7"

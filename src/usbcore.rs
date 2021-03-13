@@ -19,7 +19,9 @@ pub struct FullSpeed {
     usb: &'static ral::usb::RegisterBlock,
     phy: &'static ral::usbphy::RegisterBlock,
     allocator: Option<allocator::Allocator<Self>>,
-    // TODO(mciantyre) track and share ep_out?
+    /// Need to track interrupt configuation, since it will
+    /// be reset when the device calls enable()
+    enable_interrupts: bool,
 }
 
 impl FullSpeed {
@@ -30,9 +32,12 @@ impl FullSpeed {
         let ral::Instances { usb, usbphy: phy } = ral::instances(peripherals);
         let buffers = crate::buffer::Allocator::new(buffer);
 
+        let usb: &ral::usb::RegisterBlock = &*usb;
+        let phy: &ral::usbphy::RegisterBlock = &*phy;
+
         // Safety: lifetime transmute, references are static.
-        let usb = unsafe { core::mem::transmute(&*usb) };
-        let phy = unsafe { core::mem::transmute(&*phy) };
+        let usb = unsafe { core::mem::transmute(usb) };
+        let phy = unsafe { core::mem::transmute(phy) };
 
         let full_speed = FullSpeed {
             usb,
@@ -40,12 +45,14 @@ impl FullSpeed {
             // Safety: we own `peripherals`, and the user guarantees that there's only
             // one `peripherals` instance per USB peripheral.
             allocator: Some(unsafe { allocator::Allocator::new(usb, buffers) }),
+            enable_interrupts: false,
         };
         full_speed
     }
 
     /// Enable (`true`) or disable (`false`) USB interrupts
     pub fn set_interrupts(&mut self, interrupts: bool) {
+        self.enable_interrupts = interrupts;
         if interrupts {
             // Keep this in sync with the poll() behaviors
             ral::write_reg!(ral::usb, self.usb, USBINTR, UE: 1, URE: 1);
@@ -84,11 +91,11 @@ impl endpoint_trait::usbcore::UsbCore for FullSpeed {
         ral::modify_reg!(ral::usb, self.usb, PORTSC1, PFSC: 1);
 
         ral::modify_reg!(ral::usb, self.usb, USBSTS, |usbsts| usbsts);
-        // Disable interrupts by default
-        ral::write_reg!(ral::usb, self.usb, USBINTR, 0);
+        self.set_interrupts(self.enable_interrupts);
 
-        allocator::assign_endptlistaddr(&self.usb);
-        ral::modify_reg!(ral::usb, self.usb, USBCMD, RS: 1);
+        allocator::assign_endptlistaddr(self.usb);
+        ral::write_reg!(ral::usb, self.usb, USBCMD, RS: 1);
+        debug!("ENABLED");
         Ok(())
     }
 
@@ -109,6 +116,7 @@ impl endpoint_trait::usbcore::UsbCore for FullSpeed {
             ral::read_reg!(ral::usb, self.usb, PORTSC1, PR == 1),
             "Took too long to handle bus reset"
         );
+        debug!("RESET");
         Ok(())
     }
 
