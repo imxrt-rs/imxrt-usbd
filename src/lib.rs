@@ -133,6 +133,7 @@ pub unsafe trait Peripherals {
 /// Note that some i.MX RT processors only have one USB instance (USB1).
 /// On those systems, it is invalid to ever indicate the USB2 instance.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[allow(clippy::upper_case_acronyms)] // USB naming makes sense here
 pub enum Instance {
     /// The first USB register instance
     USB1,
