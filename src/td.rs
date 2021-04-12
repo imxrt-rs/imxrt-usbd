@@ -8,7 +8,7 @@
 use crate::{ral, vcell::VCell};
 
 #[repr(C)]
-pub struct TD {
+pub struct Td {
     NEXT: VCell<u32>,
     TOKEN: VCell<u32>,
     BUFFER_POINTERS: [VCell<u32>; 5],
@@ -16,9 +16,9 @@ pub struct TD {
     last_transfer_size: usize,
 }
 
-impl TD {
+impl Td {
     pub const fn new() -> Self {
-        TD {
+        Td {
             NEXT: VCell::new(0),
             TOKEN: VCell::new(0),
             BUFFER_POINTERS: [
@@ -83,7 +83,7 @@ impl TD {
     }
 
     /// Set the next TD pointed at by this TD
-    pub fn set_next(&mut self, next: *const TD) {
+    pub fn set_next(&mut self, next: *const Td) {
         ral::write_reg!(crate::td, self, NEXT, next as u32);
     }
 
@@ -147,19 +147,19 @@ mod TOKEN {
 
 #[cfg(test)]
 mod test {
-    use super::TD;
+    use super::Td;
     use crate::ral;
 
     #[test]
     fn terminate() {
-        let mut td = TD::new();
+        let mut td = Td::new();
         td.set_terminate();
         assert_eq!(td.NEXT.read(), 1);
     }
 
     #[test]
     fn next() {
-        let mut td = TD::new();
+        let mut td = Td::new();
         td.set_terminate();
 
         let other = u32::max_value() & !(31);
@@ -169,28 +169,28 @@ mod test {
 
     #[test]
     fn status() {
-        let mut td = TD::new();
+        let mut td = Td::new();
         ral::write_reg!(super, &mut td, TOKEN, STATUS: u32::max_value());
         assert_eq!(td.TOKEN.read(), 0b11111111);
     }
 
     #[test]
     fn ioc() {
-        let mut td = TD::new();
+        let mut td = Td::new();
         ral::write_reg!(super, &mut td, TOKEN, IOC: u32::max_value());
         assert_eq!(td.TOKEN.read(), 1 << 15);
     }
 
     #[test]
     fn total_bytes() {
-        let mut td = TD::new();
+        let mut td = Td::new();
         ral::write_reg!(super, &mut td, TOKEN, TOTAL_BYTES: u32::max_value());
         assert_eq!(td.TOKEN.read(), 0x7FFF << 16);
     }
 
     #[test]
     fn set_buffer() {
-        let mut td = TD::new();
+        let mut td = Td::new();
         let mut buffer = [0; 32];
         td.set_buffer(buffer.as_mut_ptr(), buffer.len());
         assert_eq!(td.NEXT.read(), 0);
@@ -203,4 +203,4 @@ mod test {
 }
 
 #[cfg(target_arch = "arm")]
-const _: [(); 1] = [(); (core::mem::size_of::<TD>() == 32) as usize];
+const _: [(); 1] = [(); (core::mem::size_of::<Td>() == 32) as usize];

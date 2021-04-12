@@ -24,10 +24,10 @@
 
 use crate::{
     buffer::Buffer,
-    qh::QH,
+    qh::Qh,
     ral,
     ral::endpoint_control,
-    td::{Status, TD},
+    td::{Status, Td},
 };
 use usb_device::{
     endpoint::{EndpointAddress, EndpointType},
@@ -37,8 +37,8 @@ use usb_device::{
 /// A USB endpoint
 pub struct Endpoint {
     address: EndpointAddress,
-    qh: &'static mut QH,
-    td: &'static mut TD,
+    qh: &'static mut Qh,
+    td: &'static mut Td,
     buffer: Buffer,
     kind: EndpointType,
 }
@@ -46,8 +46,8 @@ pub struct Endpoint {
 impl Endpoint {
     pub fn new(
         address: EndpointAddress,
-        qh: &'static mut QH,
-        td: &'static mut TD,
+        qh: &'static mut Qh,
+        td: &'static mut Td,
         buffer: Buffer,
         kind: EndpointType,
     ) -> Self {

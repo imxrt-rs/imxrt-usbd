@@ -10,53 +10,53 @@ use crate::{qh, ral, td};
 ///
 /// Supports 1 TD per QH (per endpoint direction)
 #[repr(align(32))]
-struct TDList([td::TD; QH_COUNT]);
-const TD_LIST_INIT: TDList = TDList([
-    td::TD::new(),
-    td::TD::new(),
-    td::TD::new(),
-    td::TD::new(),
-    td::TD::new(),
-    td::TD::new(),
-    td::TD::new(),
-    td::TD::new(),
-    td::TD::new(),
-    td::TD::new(),
-    td::TD::new(),
-    td::TD::new(),
-    td::TD::new(),
-    td::TD::new(),
-    td::TD::new(),
-    td::TD::new(),
+struct TdList([td::Td; QH_COUNT]);
+const TD_LIST_INIT: TdList = TdList([
+    td::Td::new(),
+    td::Td::new(),
+    td::Td::new(),
+    td::Td::new(),
+    td::Td::new(),
+    td::Td::new(),
+    td::Td::new(),
+    td::Td::new(),
+    td::Td::new(),
+    td::Td::new(),
+    td::Td::new(),
+    td::Td::new(),
+    td::Td::new(),
+    td::Td::new(),
+    td::Td::new(),
+    td::Td::new(),
 ]);
 
 /// A list of queue heads
 ///
 /// One queue head per endpoint, per direction (default).
 #[repr(align(4096))]
-struct QHList([qh::QH; QH_COUNT]);
-const QH_LIST_INIT: QHList = QHList([
-    qh::QH::new(),
-    qh::QH::new(),
-    qh::QH::new(),
-    qh::QH::new(),
-    qh::QH::new(),
-    qh::QH::new(),
-    qh::QH::new(),
-    qh::QH::new(),
-    qh::QH::new(),
-    qh::QH::new(),
-    qh::QH::new(),
-    qh::QH::new(),
-    qh::QH::new(),
-    qh::QH::new(),
-    qh::QH::new(),
-    qh::QH::new(),
+struct QhList([qh::Qh; QH_COUNT]);
+const QH_LIST_INIT: QhList = QhList([
+    qh::Qh::new(),
+    qh::Qh::new(),
+    qh::Qh::new(),
+    qh::Qh::new(),
+    qh::Qh::new(),
+    qh::Qh::new(),
+    qh::Qh::new(),
+    qh::Qh::new(),
+    qh::Qh::new(),
+    qh::Qh::new(),
+    qh::Qh::new(),
+    qh::Qh::new(),
+    qh::Qh::new(),
+    qh::Qh::new(),
+    qh::Qh::new(),
+    qh::Qh::new(),
 ]);
 
 struct State {
-    qhs: QHList,
-    tds: TDList,
+    qhs: QhList,
+    tds: TdList,
 }
 
 const STATE_INIT: State = State {
@@ -92,7 +92,7 @@ pub fn assign_endptlistaddr(usb: &ral::usb::Instance) {
 /// This should only be called once. You must make sure that the static, mutable references
 /// aren't mutably aliased. Consider taking them from this collection, and assigning them
 /// elsewhere.
-pub unsafe fn steal_qhs(usb: &ral::usb::Instance) -> [Option<&'static mut qh::QH>; QH_COUNT] {
+pub unsafe fn steal_qhs(usb: &ral::usb::Instance) -> [Option<&'static mut qh::Qh>; QH_COUNT] {
     let mut qhs = [
         None, None, None, None, None, None, None, None, None, None, None, None, None, None, None,
         None,
@@ -111,7 +111,7 @@ pub unsafe fn steal_qhs(usb: &ral::usb::Instance) -> [Option<&'static mut qh::QH
 /// This should only be called once. You must make sure that the static, mutable references
 /// aren't mutably aliased. Consider taking them from this collection, and assigning them
 /// elsewhere.
-pub unsafe fn steal_tds(usb: &ral::usb::Instance) -> [Option<&'static mut td::TD>; QH_COUNT] {
+pub unsafe fn steal_tds(usb: &ral::usb::Instance) -> [Option<&'static mut td::Td>; QH_COUNT] {
     let mut tds = [
         None, None, None, None, None, None, None, None, None, None, None, None, None, None, None,
         None,

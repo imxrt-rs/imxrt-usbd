@@ -46,9 +46,9 @@ pub struct FullSpeed {
     usb: ral::usb::Instance,
     phy: ral::usbphy::Instance,
     /// References moved into endpoints during endpoint allocation.
-    qhs: [Option<&'static mut qh::QH>; QH_COUNT],
+    qhs: [Option<&'static mut qh::Qh>; QH_COUNT],
     /// References moved into endpoints during endpoint allocation.
-    tds: [Option<&'static mut td::TD>; QH_COUNT],
+    tds: [Option<&'static mut td::Td>; QH_COUNT],
     buffer_allocator: buffer::Allocator,
     /// Track which read endpoints have completed, so as to not
     /// confuse the device and appear out of sync with poll() calls.

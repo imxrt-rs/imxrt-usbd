@@ -3,24 +3,24 @@
 #![allow(non_snake_case, non_upper_case_globals)]
 
 use crate::ral;
-use crate::{td::TD, vcell::VCell};
+use crate::{td::Td, vcell::VCell};
 
 #[repr(C, align(64))]
-pub struct QH {
+pub struct Qh {
     CAPABILITIES: VCell<u32>,
     // No need to see this...
     _current_td_pointer: u32,
-    overlay: TD,
+    overlay: Td,
     setup: VCell<u64>,
 }
 
-impl QH {
+impl Qh {
     /// Create a new QH, setting all bits to zero
     pub const fn new() -> Self {
-        QH {
+        Qh {
             CAPABILITIES: VCell::new(0),
             _current_td_pointer: 0,
-            overlay: TD::new(),
+            overlay: Td::new(),
             setup: VCell::new(0),
         }
     }
@@ -35,7 +35,7 @@ impl QH {
     }
 
     /// Returns the next TD overlay
-    pub fn overlay_mut(&mut self) -> &mut TD {
+    pub fn overlay_mut(&mut self) -> &mut Td {
         &mut self.overlay
     }
 
@@ -98,11 +98,11 @@ mod CAPABILITIES {
 
 #[cfg(test)]
 mod test {
-    use super::QH;
+    use super::Qh;
 
     #[test]
     fn max_packet_len() {
-        let mut qh = QH::new();
+        let mut qh = Qh::new();
         qh.set_max_packet_len(0x333);
         assert_eq!(qh.max_packet_len(), 0x333);
         assert_eq!(qh.CAPABILITIES.read(), 0x333 << 16);
@@ -110,17 +110,17 @@ mod test {
 
     #[test]
     fn ios() {
-        let mut qh = QH::new();
+        let mut qh = Qh::new();
         qh.set_interrupt_on_setup(true);
         assert_eq!(qh.CAPABILITIES.read(), 1 << 15);
     }
 
     #[test]
     fn zlt() {
-        let mut qh = QH::new();
+        let mut qh = Qh::new();
         qh.set_zero_length_termination(false);
         assert_eq!(qh.CAPABILITIES.read(), 1 << 29);
     }
 }
 
-const _: [(); 1] = [(); (core::mem::size_of::<QH>() <= 64) as usize];
+const _: [(); 1] = [(); (core::mem::size_of::<Qh>() <= 64) as usize];
