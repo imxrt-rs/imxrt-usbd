@@ -137,53 +137,53 @@
 <span class="doccomment">///</span>
 <span class="doccomment">/// Supports 1 TD per QH (per endpoint direction)</span>
 <span class="attribute">#[<span class="ident">repr</span>(<span class="ident">align</span>(<span class="number">32</span>))]</span>
-<span class="kw">struct</span> <span class="ident">TDList</span>([<span class="ident">td</span>::<span class="ident">TD</span>; <span class="ident">QH_COUNT</span>]);
-<span class="kw">const</span> <span class="ident">TD_LIST_INIT</span>: <span class="ident">TDList</span> <span class="op">=</span> <span class="ident">TDList</span>([
-    <span class="ident">td</span>::<span class="ident">TD</span>::<span class="ident">new</span>(),
-    <span class="ident">td</span>::<span class="ident">TD</span>::<span class="ident">new</span>(),
-    <span class="ident">td</span>::<span class="ident">TD</span>::<span class="ident">new</span>(),
-    <span class="ident">td</span>::<span class="ident">TD</span>::<span class="ident">new</span>(),
-    <span class="ident">td</span>::<span class="ident">TD</span>::<span class="ident">new</span>(),
-    <span class="ident">td</span>::<span class="ident">TD</span>::<span class="ident">new</span>(),
-    <span class="ident">td</span>::<span class="ident">TD</span>::<span class="ident">new</span>(),
-    <span class="ident">td</span>::<span class="ident">TD</span>::<span class="ident">new</span>(),
-    <span class="ident">td</span>::<span class="ident">TD</span>::<span class="ident">new</span>(),
-    <span class="ident">td</span>::<span class="ident">TD</span>::<span class="ident">new</span>(),
-    <span class="ident">td</span>::<span class="ident">TD</span>::<span class="ident">new</span>(),
-    <span class="ident">td</span>::<span class="ident">TD</span>::<span class="ident">new</span>(),
-    <span class="ident">td</span>::<span class="ident">TD</span>::<span class="ident">new</span>(),
-    <span class="ident">td</span>::<span class="ident">TD</span>::<span class="ident">new</span>(),
-    <span class="ident">td</span>::<span class="ident">TD</span>::<span class="ident">new</span>(),
-    <span class="ident">td</span>::<span class="ident">TD</span>::<span class="ident">new</span>(),
+<span class="kw">struct</span> <span class="ident">TdList</span>([<span class="ident">td</span>::<span class="ident">Td</span>; <span class="ident">QH_COUNT</span>]);
+<span class="kw">const</span> <span class="ident">TD_LIST_INIT</span>: <span class="ident">TdList</span> <span class="op">=</span> <span class="ident">TdList</span>([
+    <span class="ident">td</span>::<span class="ident">Td</span>::<span class="ident">new</span>(),
+    <span class="ident">td</span>::<span class="ident">Td</span>::<span class="ident">new</span>(),
+    <span class="ident">td</span>::<span class="ident">Td</span>::<span class="ident">new</span>(),
+    <span class="ident">td</span>::<span class="ident">Td</span>::<span class="ident">new</span>(),
+    <span class="ident">td</span>::<span class="ident">Td</span>::<span class="ident">new</span>(),
+    <span class="ident">td</span>::<span class="ident">Td</span>::<span class="ident">new</span>(),
+    <span class="ident">td</span>::<span class="ident">Td</span>::<span class="ident">new</span>(),
+    <span class="ident">td</span>::<span class="ident">Td</span>::<span class="ident">new</span>(),
+    <span class="ident">td</span>::<span class="ident">Td</span>::<span class="ident">new</span>(),
+    <span class="ident">td</span>::<span class="ident">Td</span>::<span class="ident">new</span>(),
+    <span class="ident">td</span>::<span class="ident">Td</span>::<span class="ident">new</span>(),
+    <span class="ident">td</span>::<span class="ident">Td</span>::<span class="ident">new</span>(),
+    <span class="ident">td</span>::<span class="ident">Td</span>::<span class="ident">new</span>(),
+    <span class="ident">td</span>::<span class="ident">Td</span>::<span class="ident">new</span>(),
+    <span class="ident">td</span>::<span class="ident">Td</span>::<span class="ident">new</span>(),
+    <span class="ident">td</span>::<span class="ident">Td</span>::<span class="ident">new</span>(),
 ]);
 
 <span class="doccomment">/// A list of queue heads</span>
 <span class="doccomment">///</span>
 <span class="doccomment">/// One queue head per endpoint, per direction (default).</span>
 <span class="attribute">#[<span class="ident">repr</span>(<span class="ident">align</span>(<span class="number">4096</span>))]</span>
-<span class="kw">struct</span> <span class="ident">QHList</span>([<span class="ident">qh</span>::<span class="ident">QH</span>; <span class="ident">QH_COUNT</span>]);
-<span class="kw">const</span> <span class="ident">QH_LIST_INIT</span>: <span class="ident">QHList</span> <span class="op">=</span> <span class="ident">QHList</span>([
-    <span class="ident">qh</span>::<span class="ident">QH</span>::<span class="ident">new</span>(),
-    <span class="ident">qh</span>::<span class="ident">QH</span>::<span class="ident">new</span>(),
-    <span class="ident">qh</span>::<span class="ident">QH</span>::<span class="ident">new</span>(),
-    <span class="ident">qh</span>::<span class="ident">QH</span>::<span class="ident">new</span>(),
-    <span class="ident">qh</span>::<span class="ident">QH</span>::<span class="ident">new</span>(),
-    <span class="ident">qh</span>::<span class="ident">QH</span>::<span class="ident">new</span>(),
-    <span class="ident">qh</span>::<span class="ident">QH</span>::<span class="ident">new</span>(),
-    <span class="ident">qh</span>::<span class="ident">QH</span>::<span class="ident">new</span>(),
-    <span class="ident">qh</span>::<span class="ident">QH</span>::<span class="ident">new</span>(),
-    <span class="ident">qh</span>::<span class="ident">QH</span>::<span class="ident">new</span>(),
-    <span class="ident">qh</span>::<span class="ident">QH</span>::<span class="ident">new</span>(),
-    <span class="ident">qh</span>::<span class="ident">QH</span>::<span class="ident">new</span>(),
-    <span class="ident">qh</span>::<span class="ident">QH</span>::<span class="ident">new</span>(),
-    <span class="ident">qh</span>::<span class="ident">QH</span>::<span class="ident">new</span>(),
-    <span class="ident">qh</span>::<span class="ident">QH</span>::<span class="ident">new</span>(),
-    <span class="ident">qh</span>::<span class="ident">QH</span>::<span class="ident">new</span>(),
+<span class="kw">struct</span> <span class="ident">QhList</span>([<span class="ident">qh</span>::<span class="ident">Qh</span>; <span class="ident">QH_COUNT</span>]);
+<span class="kw">const</span> <span class="ident">QH_LIST_INIT</span>: <span class="ident">QhList</span> <span class="op">=</span> <span class="ident">QhList</span>([
+    <span class="ident">qh</span>::<span class="ident">Qh</span>::<span class="ident">new</span>(),
+    <span class="ident">qh</span>::<span class="ident">Qh</span>::<span class="ident">new</span>(),
+    <span class="ident">qh</span>::<span class="ident">Qh</span>::<span class="ident">new</span>(),
+    <span class="ident">qh</span>::<span class="ident">Qh</span>::<span class="ident">new</span>(),
+    <span class="ident">qh</span>::<span class="ident">Qh</span>::<span class="ident">new</span>(),
+    <span class="ident">qh</span>::<span class="ident">Qh</span>::<span class="ident">new</span>(),
+    <span class="ident">qh</span>::<span class="ident">Qh</span>::<span class="ident">new</span>(),
+    <span class="ident">qh</span>::<span class="ident">Qh</span>::<span class="ident">new</span>(),
+    <span class="ident">qh</span>::<span class="ident">Qh</span>::<span class="ident">new</span>(),
+    <span class="ident">qh</span>::<span class="ident">Qh</span>::<span class="ident">new</span>(),
+    <span class="ident">qh</span>::<span class="ident">Qh</span>::<span class="ident">new</span>(),
+    <span class="ident">qh</span>::<span class="ident">Qh</span>::<span class="ident">new</span>(),
+    <span class="ident">qh</span>::<span class="ident">Qh</span>::<span class="ident">new</span>(),
+    <span class="ident">qh</span>::<span class="ident">Qh</span>::<span class="ident">new</span>(),
+    <span class="ident">qh</span>::<span class="ident">Qh</span>::<span class="ident">new</span>(),
+    <span class="ident">qh</span>::<span class="ident">Qh</span>::<span class="ident">new</span>(),
 ]);
 
 <span class="kw">struct</span> <span class="ident">State</span> {
-    <span class="ident">qhs</span>: <span class="ident">QHList</span>,
-    <span class="ident">tds</span>: <span class="ident">TDList</span>,
+    <span class="ident">qhs</span>: <span class="ident">QhList</span>,
+    <span class="ident">tds</span>: <span class="ident">TdList</span>,
 }
 
 <span class="kw">const</span> <span class="ident">STATE_INIT</span>: <span class="ident">State</span> <span class="op">=</span> <span class="ident">State</span> {
@@ -219,7 +219,7 @@
 <span class="doccomment">/// This should only be called once. You must make sure that the static, mutable references</span>
 <span class="doccomment">/// aren&#39;t mutably aliased. Consider taking them from this collection, and assigning them</span>
 <span class="doccomment">/// elsewhere.</span>
-<span class="kw">pub</span> <span class="kw">unsafe</span> <span class="kw">fn</span> <span class="ident">steal_qhs</span>(<span class="ident">usb</span>: <span class="kw-2">&amp;</span><span class="ident">ral</span>::<span class="ident">usb</span>::<span class="ident">Instance</span>) <span class="op">-</span><span class="op">&gt;</span> [<span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="kw-2">&amp;</span><span class="lifetime">&#39;static</span> <span class="kw-2">mut</span> <span class="ident">qh</span>::<span class="ident">QH</span><span class="op">&gt;</span>; <span class="ident">QH_COUNT</span>] {
+<span class="kw">pub</span> <span class="kw">unsafe</span> <span class="kw">fn</span> <span class="ident">steal_qhs</span>(<span class="ident">usb</span>: <span class="kw-2">&amp;</span><span class="ident">ral</span>::<span class="ident">usb</span>::<span class="ident">Instance</span>) <span class="op">-</span><span class="op">&gt;</span> [<span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="kw-2">&amp;</span><span class="lifetime">&#39;static</span> <span class="kw-2">mut</span> <span class="ident">qh</span>::<span class="ident">Qh</span><span class="op">&gt;</span>; <span class="ident">QH_COUNT</span>] {
     <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">qhs</span> <span class="op">=</span> [
         <span class="prelude-val">None</span>, <span class="prelude-val">None</span>, <span class="prelude-val">None</span>, <span class="prelude-val">None</span>, <span class="prelude-val">None</span>, <span class="prelude-val">None</span>, <span class="prelude-val">None</span>, <span class="prelude-val">None</span>, <span class="prelude-val">None</span>, <span class="prelude-val">None</span>, <span class="prelude-val">None</span>, <span class="prelude-val">None</span>, <span class="prelude-val">None</span>, <span class="prelude-val">None</span>, <span class="prelude-val">None</span>,
         <span class="prelude-val">None</span>,
@@ -238,7 +238,7 @@
 <span class="doccomment">/// This should only be called once. You must make sure that the static, mutable references</span>
 <span class="doccomment">/// aren&#39;t mutably aliased. Consider taking them from this collection, and assigning them</span>
 <span class="doccomment">/// elsewhere.</span>
-<span class="kw">pub</span> <span class="kw">unsafe</span> <span class="kw">fn</span> <span class="ident">steal_tds</span>(<span class="ident">usb</span>: <span class="kw-2">&amp;</span><span class="ident">ral</span>::<span class="ident">usb</span>::<span class="ident">Instance</span>) <span class="op">-</span><span class="op">&gt;</span> [<span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="kw-2">&amp;</span><span class="lifetime">&#39;static</span> <span class="kw-2">mut</span> <span class="ident">td</span>::<span class="ident">TD</span><span class="op">&gt;</span>; <span class="ident">QH_COUNT</span>] {
+<span class="kw">pub</span> <span class="kw">unsafe</span> <span class="kw">fn</span> <span class="ident">steal_tds</span>(<span class="ident">usb</span>: <span class="kw-2">&amp;</span><span class="ident">ral</span>::<span class="ident">usb</span>::<span class="ident">Instance</span>) <span class="op">-</span><span class="op">&gt;</span> [<span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="kw-2">&amp;</span><span class="lifetime">&#39;static</span> <span class="kw-2">mut</span> <span class="ident">td</span>::<span class="ident">Td</span><span class="op">&gt;</span>; <span class="ident">QH_COUNT</span>] {
     <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">tds</span> <span class="op">=</span> [
         <span class="prelude-val">None</span>, <span class="prelude-val">None</span>, <span class="prelude-val">None</span>, <span class="prelude-val">None</span>, <span class="prelude-val">None</span>, <span class="prelude-val">None</span>, <span class="prelude-val">None</span>, <span class="prelude-val">None</span>, <span class="prelude-val">None</span>, <span class="prelude-val">None</span>, <span class="prelude-val">None</span>, <span class="prelude-val">None</span>, <span class="prelude-val">None</span>, <span class="prelude-val">None</span>, <span class="prelude-val">None</span>,
         <span class="prelude-val">None</span>,
@@ -249,4 +249,5 @@
     <span class="ident">tds</span>
 }
 </pre></div>
-</section><section id="search" class="content hidden"></section><section class="footer"></section><script>window.rootPath = "../../../";window.currentCrate = "imxrt_usbd";</script><script src="../../../main.js"></script><script src="../../../source-script.js"></script><script src="../../../source-files.js"></script><script defer src="../../../search-index.js"></script></body></html>
+</section><section id="search" class="content hidden"></section><section class="footer"></section><div id="rustdoc-vars" data-root-path="../../../" data-current-crate="imxrt_usbd"></div>
+    <script src="../../../main.js"></script><script src="../../../source-script.js"></script><script src="../../../source-files.js"></script><script defer src="../../../search-index.js"></script></body></html>

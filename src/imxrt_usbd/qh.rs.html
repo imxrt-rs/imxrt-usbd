@@ -133,24 +133,24 @@
 <span class="attribute">#![<span class="ident">allow</span>(<span class="ident">non_snake_case</span>, <span class="ident">non_upper_case_globals</span>)]</span>
 
 <span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">ral</span>;
-<span class="kw">use</span> <span class="kw">crate</span>::{<span class="ident">td</span>::<span class="ident">TD</span>, <span class="ident">vcell</span>::<span class="ident">VCell</span>};
+<span class="kw">use</span> <span class="kw">crate</span>::{<span class="ident">td</span>::<span class="ident">Td</span>, <span class="ident">vcell</span>::<span class="ident">VCell</span>};
 
 <span class="attribute">#[<span class="ident">repr</span>(<span class="ident">C</span>, <span class="ident">align</span>(<span class="number">64</span>))]</span>
-<span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">QH</span> {
+<span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">Qh</span> {
     <span class="ident">CAPABILITIES</span>: <span class="ident">VCell</span><span class="op">&lt;</span><span class="ident">u32</span><span class="op">&gt;</span>,
     <span class="comment">// No need to see this...</span>
     <span class="ident">_current_td_pointer</span>: <span class="ident">u32</span>,
-    <span class="ident">overlay</span>: <span class="ident">TD</span>,
+    <span class="ident">overlay</span>: <span class="ident">Td</span>,
     <span class="ident">setup</span>: <span class="ident">VCell</span><span class="op">&lt;</span><span class="ident">u64</span><span class="op">&gt;</span>,
 }
 
-<span class="kw">impl</span> <span class="ident">QH</span> {
+<span class="kw">impl</span> <span class="ident">Qh</span> {
     <span class="doccomment">/// Create a new QH, setting all bits to zero</span>
     <span class="kw">pub</span> <span class="kw">const</span> <span class="kw">fn</span> <span class="ident">new</span>() <span class="op">-</span><span class="op">&gt;</span> <span class="self">Self</span> {
-        <span class="ident">QH</span> {
+        <span class="ident">Qh</span> {
             <span class="ident">CAPABILITIES</span>: <span class="ident">VCell</span>::<span class="ident">new</span>(<span class="number">0</span>),
             <span class="ident">_current_td_pointer</span>: <span class="number">0</span>,
-            <span class="ident">overlay</span>: <span class="ident">TD</span>::<span class="ident">new</span>(),
+            <span class="ident">overlay</span>: <span class="ident">Td</span>::<span class="ident">new</span>(),
             <span class="ident">setup</span>: <span class="ident">VCell</span>::<span class="ident">new</span>(<span class="number">0</span>),
         }
     }
@@ -165,7 +165,7 @@
     }
 
     <span class="doccomment">/// Returns the next TD overlay</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">overlay_mut</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">TD</span> {
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">overlay_mut</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">Td</span> {
         <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>.<span class="ident">overlay</span>
     }
 
@@ -228,11 +228,11 @@
 
 <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">test</span>)]</span>
 <span class="kw">mod</span> <span class="ident">test</span> {
-    <span class="kw">use</span> <span class="kw">super</span>::<span class="ident">QH</span>;
+    <span class="kw">use</span> <span class="kw">super</span>::<span class="ident">Qh</span>;
 
     <span class="attribute">#[<span class="ident">test</span>]</span>
     <span class="kw">fn</span> <span class="ident">max_packet_len</span>() {
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">qh</span> <span class="op">=</span> <span class="ident">QH</span>::<span class="ident">new</span>();
+        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">qh</span> <span class="op">=</span> <span class="ident">Qh</span>::<span class="ident">new</span>();
         <span class="ident">qh</span>.<span class="ident">set_max_packet_len</span>(<span class="number">0x333</span>);
         <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">qh</span>.<span class="ident">max_packet_len</span>(), <span class="number">0x333</span>);
         <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">qh</span>.<span class="ident">CAPABILITIES</span>.<span class="ident">read</span>(), <span class="number">0x333</span> <span class="op">&lt;</span><span class="op">&lt;</span> <span class="number">16</span>);
@@ -240,19 +240,20 @@
 
     <span class="attribute">#[<span class="ident">test</span>]</span>
     <span class="kw">fn</span> <span class="ident">ios</span>() {
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">qh</span> <span class="op">=</span> <span class="ident">QH</span>::<span class="ident">new</span>();
+        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">qh</span> <span class="op">=</span> <span class="ident">Qh</span>::<span class="ident">new</span>();
         <span class="ident">qh</span>.<span class="ident">set_interrupt_on_setup</span>(<span class="bool-val">true</span>);
         <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">qh</span>.<span class="ident">CAPABILITIES</span>.<span class="ident">read</span>(), <span class="number">1</span> <span class="op">&lt;</span><span class="op">&lt;</span> <span class="number">15</span>);
     }
 
     <span class="attribute">#[<span class="ident">test</span>]</span>
     <span class="kw">fn</span> <span class="ident">zlt</span>() {
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">qh</span> <span class="op">=</span> <span class="ident">QH</span>::<span class="ident">new</span>();
+        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">qh</span> <span class="op">=</span> <span class="ident">Qh</span>::<span class="ident">new</span>();
         <span class="ident">qh</span>.<span class="ident">set_zero_length_termination</span>(<span class="bool-val">false</span>);
         <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">qh</span>.<span class="ident">CAPABILITIES</span>.<span class="ident">read</span>(), <span class="number">1</span> <span class="op">&lt;</span><span class="op">&lt;</span> <span class="number">29</span>);
     }
 }
 
-<span class="kw">const</span> <span class="kw">_</span>: [(); <span class="number">1</span>] <span class="op">=</span> [(); (<span class="ident">core</span>::<span class="ident">mem</span>::<span class="ident">size_of</span>::<span class="op">&lt;</span><span class="ident">QH</span><span class="op">&gt;</span>() <span class="op">&lt;</span><span class="op">=</span> <span class="number">64</span>) <span class="kw">as</span> <span class="ident">usize</span>];
+<span class="kw">const</span> <span class="kw">_</span>: [(); <span class="number">1</span>] <span class="op">=</span> [(); (<span class="ident">core</span>::<span class="ident">mem</span>::<span class="ident">size_of</span>::<span class="op">&lt;</span><span class="ident">Qh</span><span class="op">&gt;</span>() <span class="op">&lt;</span><span class="op">=</span> <span class="number">64</span>) <span class="kw">as</span> <span class="ident">usize</span>];
 </pre></div>
-</section><section id="search" class="content hidden"></section><section class="footer"></section><script>window.rootPath = "../../";window.currentCrate = "imxrt_usbd";</script><script src="../../main.js"></script><script src="../../source-script.js"></script><script src="../../source-files.js"></script><script defer src="../../search-index.js"></script></body></html>
+</section><section id="search" class="content hidden"></section><section class="footer"></section><div id="rustdoc-vars" data-root-path="../../" data-current-crate="imxrt_usbd"></div>
+    <script src="../../main.js"></script><script src="../../source-script.js"></script><script src="../../source-files.js"></script><script defer src="../../search-index.js"></script></body></html>

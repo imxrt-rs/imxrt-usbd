@@ -1,3 +1,3 @@
 (function() {var implementors = {};
-implementors["imxrt_usbd"] = [{"text":"impl !Freeze for BusAdapter","synthetic":true,"types":[]},{"text":"impl Freeze for Instance","synthetic":true,"types":[]}];
+implementors["imxrt_usbd"] = [{"text":"impl !Freeze for <a class=\"struct\" href=\"imxrt_usbd/full_speed/struct.BusAdapter.html\" title=\"struct imxrt_usbd::full_speed::BusAdapter\">BusAdapter</a>","synthetic":true,"types":["imxrt_usbd::full_speed::bus::BusAdapter"]},{"text":"impl Freeze for <a class=\"enum\" href=\"imxrt_usbd/enum.Instance.html\" title=\"enum imxrt_usbd::Instance\">Instance</a>","synthetic":true,"types":["imxrt_usbd::Instance"]}];
 if (window.register_implementors) {window.register_implementors(implementors);} else {window.pending_implementors = implementors;}})()

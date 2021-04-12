@@ -142,6 +142,7 @@
 <span id="139">139</span>
 <span id="140">140</span>
 <span id="141">141</span>
+<span id="142">142</span>
 </pre><div class="example-wrap"><pre class="rust ">
 <span class="doccomment">//! A USB driver for i.MX RT processors</span>
 <span class="doccomment">//!</span>
@@ -278,6 +279,7 @@
 <span class="doccomment">/// Note that some i.MX RT processors only have one USB instance (USB1).</span>
 <span class="doccomment">/// On those systems, it is invalid to ever indicate the USB2 instance.</span>
 <span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Debug</span>, <span class="ident">Clone</span>, <span class="ident">Copy</span>, <span class="ident">PartialEq</span>, <span class="ident">Eq</span>)]</span>
+<span class="attribute">#[<span class="ident">allow</span>(<span class="ident">clippy</span>::<span class="ident">upper_case_acronyms</span>)]</span> <span class="comment">// USB naming makes sense here</span>
 <span class="kw">pub</span> <span class="kw">enum</span> <span class="ident">Instance</span> {
     <span class="doccomment">/// The first USB register instance</span>
     <span class="ident">USB1</span>,
@@ -285,4 +287,5 @@
     <span class="ident">USB2</span>,
 }
 </pre></div>
-</section><section id="search" class="content hidden"></section><section class="footer"></section><script>window.rootPath = "../../";window.currentCrate = "imxrt_usbd";</script><script src="../../main.js"></script><script src="../../source-script.js"></script><script src="../../source-files.js"></script><script defer src="../../search-index.js"></script></body></html>
+</section><section id="search" class="content hidden"></section><section class="footer"></section><div id="rustdoc-vars" data-root-path="../../" data-current-crate="imxrt_usbd"></div>
+    <script src="../../main.js"></script><script src="../../source-script.js"></script><script src="../../source-files.js"></script><script defer src="../../search-index.js"></script></body></html>
