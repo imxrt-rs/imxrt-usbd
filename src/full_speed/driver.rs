@@ -7,7 +7,7 @@
 //! notes in the `initialize()` implementation.
 
 use super::{endpoint::Endpoint, state};
-use crate::{buffer, qh, ral, td, QH_COUNT};
+use crate::{buffer, gpt, qh, ral, td, QH_COUNT};
 use usb_device::{
     bus::PollResult,
     endpoint::{EndpointAddress, EndpointType},
@@ -135,6 +135,12 @@ impl FullSpeed {
         } else {
             ral::write_reg!(ral::usb, self.usb, USBINTR, 0);
         }
+    }
+
+    /// Acquire mutable access to a GPT timer
+    pub fn gpt_mut<R>(&mut self, instance: gpt::Instance, f: impl FnOnce(&mut gpt::Gpt) -> R) -> R {
+        let mut gpt = gpt::Gpt::new(&mut self.usb, instance);
+        f(&mut gpt)
     }
 
     pub fn set_address(&mut self, address: u8) {

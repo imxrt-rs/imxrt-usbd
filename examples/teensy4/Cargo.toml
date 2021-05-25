@@ -54,6 +54,10 @@ name = "configured"
 path = "src/configured.rs"
 
 [[bin]]
+name = "gpt"
+path = "src/gpt.rs"
+
+[[bin]]
 name = "serial"
 path = "src/serial.rs"
 

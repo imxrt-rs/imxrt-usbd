@@ -10,6 +10,7 @@
 //! Most of the interesting behavior happens in the driver.
 
 use super::driver::FullSpeed;
+use crate::gpt;
 use core::cell::RefCell;
 use cortex_m::interrupt::{self, Mutex};
 use usb_device::{
@@ -141,6 +142,27 @@ impl BusAdapter {
             usb.on_configured();
             debug!("CONFIGURED");
         });
+    }
+
+    /// Acquire one of the GPT timer instances.
+    ///
+    /// `instance` identifies which GPT instance you're accessing.
+    /// `gpt` requires a critical section to guarantee a single
+    /// mutable access to a USB GPT. See `cortex_m::interrupt::free`
+    /// for more information.
+    ///
+    /// # Panics
+    ///
+    /// Panics if the GPT instance is already borrowed. This could happen
+    /// if you call `borrow_gpt` again within the `func` callback.
+    pub fn borrow_gpt<R>(
+        &self,
+        cs: &cortex_m::interrupt::CriticalSection,
+        instance: gpt::Instance,
+        func: impl FnOnce(&mut gpt::Gpt) -> R,
+    ) -> R {
+        let usb = self.usb.borrow(cs);
+        usb.borrow_mut().gpt_mut(instance, func)
     }
 }
 
