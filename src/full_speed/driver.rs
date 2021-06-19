@@ -372,7 +372,7 @@ impl FullSpeed {
     ///
     /// This should only be called when the device is configured
     fn enable_endpoints(&mut self) {
-        for ep in self.endpoints.iter_mut().flat_map(core::convert::identity) {
+        for ep in self.endpoints.iter_mut().flatten() {
             ep.enable(&self.usb);
         }
     }
@@ -381,7 +381,7 @@ impl FullSpeed {
     fn prime_endpoints(&mut self) {
         for ep in self.endpoints[NON_ZERO_EPS]
             .iter_mut()
-            .flat_map(core::convert::identity)
+            .flatten()
             .filter(|ep| UsbDirection::Out == ep.address().direction())
         {
             if ep.is_enabled(&self.usb) {
@@ -393,10 +393,7 @@ impl FullSpeed {
 
     /// Initialize (or reinitialize) all non-zero endpoints
     fn initialize_endpoints(&mut self) {
-        for ep in self.endpoints[NON_ZERO_EPS]
-            .iter_mut()
-            .flat_map(core::convert::identity)
-        {
+        for ep in self.endpoints[NON_ZERO_EPS].iter_mut().flatten() {
             ep.initialize(&self.usb);
         }
     }
