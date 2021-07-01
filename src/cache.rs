@@ -7,11 +7,11 @@
 //! the routines that we need, and making sure that we're using
 //! them safely.
 //!
-//! cortex-m crate available at https://github.com/rust-embedded/cortex-m.
+//! cortex-m crate available at <https://github.com/rust-embedded/cortex-m>.
 //!
-//! See https://github.com/rust-embedded/cortex-m/issues/304, and also #239.
+//! See <https://github.com/rust-embedded/cortex-m/issues/304>, and also #239.
 //!
-//! https://github.com/rust-embedded/cortex-m/pull/320 indicates that this might
+//! <https://github.com/rust-embedded/cortex-m/pull/320> indicates that this might
 //! be available in a near-future cortex-m crate.
 
 /// Cleans and invalidates D-cache by address.
