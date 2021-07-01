@@ -440,6 +440,12 @@
 <span id="437">437</span>
 <span id="438">438</span>
 <span id="439">439</span>
+<span id="440">440</span>
+<span id="441">441</span>
+<span id="442">442</span>
+<span id="443">443</span>
+<span id="444">444</span>
+<span id="445">445</span>
 </pre><div class="example-wrap"><pre class="rust ">
 <span class="doccomment">//! Internal USB full-speed driver</span>
 <span class="doccomment">//!</span>
@@ -450,7 +456,7 @@
 <span class="doccomment">//! notes in the `initialize()` implementation.</span>
 
 <span class="kw">use</span> <span class="kw">super</span>::{<span class="ident">endpoint::Endpoint</span>, <span class="ident">state</span>};
-<span class="kw">use</span> <span class="kw">crate</span>::{<span class="ident">buffer</span>, <span class="ident">qh</span>, <span class="ident">ral</span>, <span class="ident">td</span>, <span class="ident">QH_COUNT</span>};
+<span class="kw">use</span> <span class="kw">crate</span>::{<span class="ident">buffer</span>, <span class="ident">gpt</span>, <span class="ident">qh</span>, <span class="ident">ral</span>, <span class="ident">td</span>, <span class="ident">QH_COUNT</span>};
 <span class="kw">use</span> <span class="ident">usb_device</span>::{
     <span class="ident">bus::PollResult</span>,
     <span class="ident">endpoint</span>::{<span class="ident">EndpointAddress</span>, <span class="ident">EndpointType</span>},
@@ -578,6 +584,12 @@
         } <span class="kw">else</span> {
             <span class="macro">ral::write_reg!</span>(<span class="ident">ral::usb</span>, <span class="self">self</span>.<span class="ident">usb</span>, <span class="ident">USBINTR</span>, <span class="number">0</span>);
         }
+    }
+
+    <span class="doccomment">/// Acquire mutable access to a GPT timer</span>
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">gpt_mut</span><span class="op">&lt;</span><span class="ident">R</span><span class="op">&gt;</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>, <span class="ident">instance</span>: <span class="ident">gpt::Instance</span>, <span class="ident">f</span>: <span class="kw">impl</span> <span class="ident">FnOnce</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">gpt::Gpt</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">R</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">R</span> {
+        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">gpt</span> <span class="op">=</span> <span class="ident">gpt::Gpt::new</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>.<span class="ident">usb</span>, <span class="ident">instance</span>);
+        <span class="ident">f</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">gpt</span>)
     }
 
     <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">set_address</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>, <span class="ident">address</span>: <span class="ident">u8</span>) {

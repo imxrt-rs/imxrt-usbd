@@ -281,6 +281,28 @@
 <span id="278">278</span>
 <span id="279">279</span>
 <span id="280">280</span>
+<span id="281">281</span>
+<span id="282">282</span>
+<span id="283">283</span>
+<span id="284">284</span>
+<span id="285">285</span>
+<span id="286">286</span>
+<span id="287">287</span>
+<span id="288">288</span>
+<span id="289">289</span>
+<span id="290">290</span>
+<span id="291">291</span>
+<span id="292">292</span>
+<span id="293">293</span>
+<span id="294">294</span>
+<span id="295">295</span>
+<span id="296">296</span>
+<span id="297">297</span>
+<span id="298">298</span>
+<span id="299">299</span>
+<span id="300">300</span>
+<span id="301">301</span>
+<span id="302">302</span>
 </pre><div class="example-wrap"><pre class="rust ">
 <span class="doccomment">//! USB bus implementation</span>
 <span class="doccomment">//!</span>
@@ -294,6 +316,7 @@
 <span class="doccomment">//! Most of the interesting behavior happens in the driver.</span>
 
 <span class="kw">use</span> <span class="kw">super</span><span class="ident">::driver::FullSpeed</span>;
+<span class="kw">use</span> <span class="kw">crate</span><span class="ident">::gpt</span>;
 <span class="kw">use</span> <span class="ident">core::cell::RefCell</span>;
 <span class="kw">use</span> <span class="ident">cortex_m::interrupt</span>::{<span class="self">self</span>, <span class="ident">Mutex</span>};
 <span class="kw">use</span> <span class="ident">usb_device</span>::{
@@ -425,6 +448,27 @@
             <span class="ident">usb</span>.<span class="ident">on_configured</span>();
             <span class="macro">debug!</span>(<span class="string">&quot;CONFIGURED&quot;</span>);
         });
+    }
+
+    <span class="doccomment">/// Acquire one of the GPT timer instances.</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// `instance` identifies which GPT instance you&#39;re accessing.</span>
+    <span class="doccomment">/// `gpt` requires a critical section to guarantee a single</span>
+    <span class="doccomment">/// mutable access to a USB GPT. See `cortex_m::interrupt::free`</span>
+    <span class="doccomment">/// for more information.</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// # Panics</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// Panics if the GPT instance is already borrowed. This could happen</span>
+    <span class="doccomment">/// if you call `borrow_gpt` again within the `func` callback.</span>
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">borrow_gpt</span><span class="op">&lt;</span><span class="ident">R</span><span class="op">&gt;</span>(
+        <span class="kw-2">&amp;</span><span class="self">self</span>,
+        <span class="ident">cs</span>: <span class="kw-2">&amp;</span><span class="ident">cortex_m::interrupt::CriticalSection</span>,
+        <span class="ident">instance</span>: <span class="ident">gpt::Instance</span>,
+        <span class="ident">func</span>: <span class="kw">impl</span> <span class="ident">FnOnce</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">gpt::Gpt</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">R</span>,
+    ) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">R</span> {
+        <span class="kw">let</span> <span class="ident">usb</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">usb</span>.<span class="ident">borrow</span>(<span class="ident">cs</span>);
+        <span class="ident">usb</span>.<span class="ident">borrow_mut</span>().<span class="ident">gpt_mut</span>(<span class="ident">instance</span>, <span class="ident">func</span>)
     }
 }
 

@@ -1,0 +1,1 @@
+initSidebarItems({"enum":[["Instance","GPT instance identifiers."],["Mode","GPT timer mode."]],"struct":[["Gpt","General purpose timer (GPT)."]]});
