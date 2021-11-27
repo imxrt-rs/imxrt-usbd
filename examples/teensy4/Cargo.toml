@@ -36,6 +36,10 @@ version = "0.2"
 [dependencies.usbd-serial]
 version = "0.1"
 
+# USB HID class
+[dependencies.usbd-hid]
+version = "0.5"
+
 # Logging over UART
 [dependencies.imxrt-uart-log]
 version = "0.2"
@@ -56,6 +60,10 @@ path = "src/configured.rs"
 [[bin]]
 name = "gpt"
 path = "src/gpt.rs"
+
+[[bin]]
+name = "mouse"
+path = "src/mouse.rs"
 
 [[bin]]
 name = "serial"
