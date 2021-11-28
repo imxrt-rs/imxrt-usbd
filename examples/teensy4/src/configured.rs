@@ -13,44 +13,17 @@
 #![no_std]
 #![no_main]
 
-use support::hal;
-use teensy4_bsp::t40;
-
 use usb_device::prelude::*;
 
 const UART_BAUD: u32 = 115_200;
 
 #[cortex_m_rt::entry]
 fn main() -> ! {
-    let hal::Peripherals {
-        iomuxc,
-        mut ccm,
-        dma: _dma,
-        uart,
-        ..
-    } = hal::Peripherals::take().unwrap();
-    let pins = t40::into_pins(iomuxc);
-    let mut led = support::configure_led(pins.p13);
+    let support::Peripherals {
+        mut led, mut ccm, ..
+    } = support::setup(core::time::Duration::from_millis(500), UART_BAUD);
 
-    // DMA initialization (for logging)
-    let mut dma_channels = _dma.clock(&mut ccm.handle);
-    let mut channel = dma_channels[7].take().unwrap();
-    channel.set_interrupt_on_completion(false); // We'll poll the logger ourselves...
-
-    //
-    // UART initialization (for logging)
-    //
-    let uarts = uart.clock(
-        &mut ccm.handle,
-        hal::ccm::uart::ClockSelect::OSC,
-        hal::ccm::uart::PrescalarSelect::DIVIDE_1,
-    );
-    let uart = uarts.uart2.init(pins.p14, pins.p15, UART_BAUD).unwrap();
-
-    let (tx, _) = uart.split();
-    imxrt_uart_log::dma::init(tx, channel, Default::default()).unwrap();
-
-    let (ccm, ccm_analog) = ccm.handle.raw();
+    let (ccm, ccm_analog) = ccm.raw();
     support::ccm::initialize(ccm, ccm_analog);
 
     let bus_adapter = support::new_bus_adapter();
@@ -61,7 +34,7 @@ fn main() -> ! {
         .build();
 
     loop {
-        imxrt_uart_log::dma::poll();
+        support::poll_logger();
         if !device.poll(&mut []) {
             continue;
         }

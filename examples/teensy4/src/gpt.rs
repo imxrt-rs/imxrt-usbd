@@ -43,7 +43,7 @@ fn main() -> ! {
         iomuxc, mut ccm, ..
     } = hal::Peripherals::take().unwrap();
     let pins = t40::into_pins(iomuxc);
-    let led = support::configure_led(pins.p13);
+    let led = teensy4_bsp::configure_led(pins.p13);
 
     let (ccm, ccm_analog) = ccm.handle.raw();
     support::ccm::initialize(ccm, ccm_analog);
