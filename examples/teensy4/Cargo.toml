@@ -76,3 +76,7 @@ path = "src/support.rs"
 [[bin]]
 name = "test_class"
 path = "src/test_class.rs"
+
+[[bin]]
+name = "usb_keypress"
+path = "src/usb_keypress.rs"
