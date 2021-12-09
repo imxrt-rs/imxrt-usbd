@@ -13,6 +13,7 @@ use super::driver::FullSpeed;
 use crate::gpt;
 use core::cell::RefCell;
 use cortex_m::interrupt::{self, Mutex};
+use usb_device::UsbError::WouldBlock;
 use usb_device::{
     bus::{PollResult, UsbBus},
     endpoint::{EndpointAddress, EndpointType},
@@ -227,27 +228,36 @@ impl UsbBus for BusAdapter {
     }
 
     fn write(&self, ep_addr: EndpointAddress, buf: &[u8]) -> usb_device::Result<usize> {
+        self.maybe_write(ep_addr, || Ok(buf))
+            .unwrap_or(Err(WouldBlock))
+    }
+
+    fn maybe_write<'a>(
+        &self,
+        ep_addr: EndpointAddress,
+        producer: impl FnOnce() -> usb_device::Result<&'a [u8]>,
+    ) -> Option<usb_device::Result<usize>> {
         self.with_usb_mut(|usb| {
             if !usb.is_allocated(ep_addr) {
-                return Err(usb_device::UsbError::InvalidEndpoint);
+                return Some(Err(usb_device::UsbError::InvalidEndpoint));
             }
 
             let written = if ep_addr.index() == 0 {
-                usb.ctrl0_write(buf)
+                usb.ctrl0_write(producer)
             } else {
-                usb.ep_write(buf, ep_addr)
-            }
-            .map_err(|status| {
-                warn!(
-                    "EP{} {:?} STATUS {:?}",
-                    ep_addr.index(),
-                    ep_addr.direction(),
+                usb.ep_write(producer, ep_addr)
+            };
+            written.map(|result| {
+                result.map_err(|status| {
+                    warn!(
+                        "EP{} {:?} STATUS {:?}",
+                        ep_addr.index(),
+                        ep_addr.direction(),
+                        status
+                    );
                     status
-                );
-                status
-            })?;
-
-            Ok(written)
+                })
+            })
         })
     }
 

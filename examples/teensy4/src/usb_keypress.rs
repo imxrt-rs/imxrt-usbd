@@ -63,22 +63,13 @@ fn keyboard_mission3(
     hid: &mut HIDClass<BusAdapter>,
     device: &mut UsbDevice<BusAdapter>,
 ) -> ! {
-    let msg = CodeSequence::new("Ia! Ia! Cthulhu fhtagn!  ");
-    let mut msg = PushBackIterator::from(msg);
+    let mut msg = CodeSequence::new("Ia! Ia! Cthulhu fhtagn!  ");
 
     loop {
-        //let codes: [u8; 6] = msg.next().unwrap();
-
-        let cmd = msg.next().unwrap();
-
-        // this would be simpler if we could ask hid if it were full, or if we could give it a callback to invoke if it is not full.
-        let would_block = match hid.push_input(&cmd) {
-            Ok(_x) => false,
-            Err(_usb_error) => {
-                // probably buffer full, try again later
-                msg.push_back(cmd);
-                true
-            }
+        let would_block = match hid.maybe_push_input(|| msg.next().unwrap()) {
+            None => false,
+            Some(Ok(_x)) => false,
+            Some(Err(_usb_error)) => true,
         };
 
         if would_block {
@@ -159,34 +150,6 @@ impl<'a> Iterator for CodeSequence<'a> {
 
     fn next(&mut self) -> Option<Self::Item> {
         Some(self.generate())
-    }
-}
-
-//
-
-struct PushBackIterator<T, I: Iterator<Item = T>> {
-    base: I,
-    buffer: Option<T>,
-}
-
-impl<T, I: Iterator<Item = T>> PushBackIterator<T, I> {
-    pub fn from(base: I) -> PushBackIterator<T, I> {
-        Self { base, buffer: None }
-    }
-
-    pub fn push_back(&mut self, val: T) {
-        self.buffer = Some(val);
-    }
-}
-
-impl<T, I: Iterator<Item = T>> Iterator for PushBackIterator<T, I> {
-    type Item = T;
-
-    fn next(&mut self) -> Option<Self::Item> {
-        match self.buffer.take() {
-            None => self.base.next(),
-            Some(val) => Some(val),
-        }
     }
 }
 

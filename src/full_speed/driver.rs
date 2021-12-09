@@ -228,29 +228,38 @@ impl FullSpeed {
     /// # Panics
     ///
     /// Panics if EP0 IN isn't allocated, or if EP0 OUT isn't allocated.
-    pub fn ctrl0_write(&mut self, buffer: &[u8]) -> Result<usize, UsbError> {
+    pub fn ctrl0_write<'a>(
+        &mut self,
+        producer: impl FnOnce() -> usb_device::Result<&'a [u8]>,
+    ) -> Option<Result<usize, UsbError>> {
         let ctrl_in = self.endpoints[CTRL_EP0_IN].as_mut().unwrap();
         debug!("EP0 In {}", buffer.len());
-        ctrl_in.check_errors()?;
+        if let Err(e) = ctrl_in.check_errors() {
+            return Some(Err(e));
+        }
 
         if ctrl_in.is_primed(&self.usb) {
-            return Err(UsbError::WouldBlock);
+            return None;
         }
 
         ctrl_in.clear_nack(&self.usb);
 
-        let written = ctrl_in.write(buffer);
-        ctrl_in.schedule_transfer(&self.usb, written);
+        Some(match producer() {
+            // can't use .and_then() because of borrowing issues
+            Ok(buffer) => {
+                let written = ctrl_in.write(buffer);
+                ctrl_in.schedule_transfer(&self.usb, written);
+                let ctrl_out = self.endpoints[CTRL_EP0_OUT].as_mut().unwrap();
+                if !ctrl_out.is_primed(&self.usb) {
+                    ctrl_out.clear_complete(&self.usb);
+                    ctrl_out.clear_nack(&self.usb);
+                    ctrl_out.schedule_transfer(&self.usb, 0);
+                }
 
-        // Might need an OUT schedule for a status phase...
-        let ctrl_out = self.endpoints[CTRL_EP0_OUT].as_mut().unwrap();
-        if !ctrl_out.is_primed(&self.usb) {
-            ctrl_out.clear_complete(&self.usb);
-            ctrl_out.clear_nack(&self.usb);
-            ctrl_out.schedule_transfer(&self.usb, 0);
-        }
-
-        Ok(written)
+                Ok(written)
+            }
+            Err(e) => Err(e),
+        })
     }
 
     /// Read data from an endpoint, and schedule the next transfer
@@ -283,20 +292,30 @@ impl FullSpeed {
     /// # Panics
     ///
     /// Panics if the endpoint isn't allocated.
-    pub fn ep_write(&mut self, buffer: &[u8], addr: EndpointAddress) -> Result<usize, UsbError> {
+    pub fn ep_write<'a>(
+        &mut self,
+        producer: impl FnOnce() -> usb_device::Result<&'a [u8]>,
+        addr: EndpointAddress,
+    ) -> Option<Result<usize, UsbError>> {
         let ep = self.endpoints[index(addr)].as_mut().unwrap();
-        ep.check_errors()?;
+        if let Err(e) = ep.check_errors() {
+            return Some(Err(e));
+        }
 
         if ep.is_primed(&self.usb) {
-            return Err(UsbError::WouldBlock);
+            return None;
         }
 
         ep.clear_nack(&self.usb);
 
-        let written = ep.write(buffer);
-        ep.schedule_transfer(&self.usb, written);
-
-        Ok(written)
+        Some(match producer() {
+            Ok(buf) => {
+                let written = ep.write(buf);
+                ep.schedule_transfer(&self.usb, written);
+                Ok(written)
+            }
+            Err(e) => Err(e),
+        })
     }
 
     /// Stall an endpoint
