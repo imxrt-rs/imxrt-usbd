@@ -368,12 +368,12 @@
     <span class="doccomment">/// `imxrt_ral::usb::Instance` type, since we&#39;re duplicating the RAL module</span>
     <span class="doccomment">/// in our package. Since that type isn&#39;t exposed outside of this crate, no</span>
     <span class="doccomment">/// one could create this `Gpt`, anyway.</span>
-    <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn</span> <span class="ident">new</span>(<span class="ident">usb</span>: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a</span> <span class="kw-2">mut</span> <span class="ident">ral::usb::Instance</span>, <span class="ident">gpt</span>: <span class="ident">Instance</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="self">Self</span> {
+    <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn</span> <span class="ident">new</span>(<span class="ident">usb</span>: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a</span> <span class="kw-2">mut</span> <span class="ident">ral::usb::Instance</span>, <span class="ident">gpt</span>: <span class="ident">Instance</span>) -&gt; <span class="self">Self</span> {
         <span class="self">Self</span> { <span class="ident">usb</span>, <span class="ident">gpt</span> }
     }
 
     <span class="doccomment">/// Returns the GPT instance identifier.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">instance</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">Instance</span> {
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">instance</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="ident">Instance</span> {
         <span class="self">self</span>.<span class="ident">gpt</span>
     }
 
@@ -382,24 +382,24 @@
     <span class="doccomment">/// Run will start counting down the timer. Use `stop()` to cancel a running timer.</span>
     <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">run</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>) {
         <span class="kw">match</span> <span class="self">self</span>.<span class="ident">gpt</span> {
-            <span class="ident">Instance::Gpt0</span> <span class="op">=</span><span class="op">&gt;</span> <span class="macro">ral::modify_reg!</span>(<span class="ident">ral::usb</span>, <span class="self">self</span>.<span class="ident">usb</span>, <span class="ident">GPTIMER0CTRL</span>, <span class="ident">GPTRUN</span>: <span class="number">1</span>),
-            <span class="ident">Instance::Gpt1</span> <span class="op">=</span><span class="op">&gt;</span> <span class="macro">ral::modify_reg!</span>(<span class="ident">ral::usb</span>, <span class="self">self</span>.<span class="ident">usb</span>, <span class="ident">GPTIMER1CTRL</span>, <span class="ident">GPTRUN</span>: <span class="number">1</span>),
+            <span class="ident">Instance::Gpt0</span> =&gt; <span class="macro">ral::modify_reg!</span>(<span class="ident">ral::usb</span>, <span class="self">self</span>.<span class="ident">usb</span>, <span class="ident">GPTIMER0CTRL</span>, <span class="ident">GPTRUN</span>: <span class="number">1</span>),
+            <span class="ident">Instance::Gpt1</span> =&gt; <span class="macro">ral::modify_reg!</span>(<span class="ident">ral::usb</span>, <span class="self">self</span>.<span class="ident">usb</span>, <span class="ident">GPTIMER1CTRL</span>, <span class="ident">GPTRUN</span>: <span class="number">1</span>),
         }
     }
 
     <span class="doccomment">/// Indicates if the timer is running (`true`) or stopped (`false`).</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">is_running</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">bool</span> {
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">is_running</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="ident">bool</span> {
         <span class="kw">match</span> <span class="self">self</span>.<span class="ident">gpt</span> {
-            <span class="ident">Instance::Gpt0</span> <span class="op">=</span><span class="op">&gt;</span> <span class="macro">ral::read_reg!</span>(<span class="ident">ral::usb</span>, <span class="self">self</span>.<span class="ident">usb</span>, <span class="ident">GPTIMER0CTRL</span>, <span class="ident">GPTRUN</span> <span class="op">=</span><span class="op">=</span> <span class="number">1</span>),
-            <span class="ident">Instance::Gpt1</span> <span class="op">=</span><span class="op">&gt;</span> <span class="macro">ral::read_reg!</span>(<span class="ident">ral::usb</span>, <span class="self">self</span>.<span class="ident">usb</span>, <span class="ident">GPTIMER1CTRL</span>, <span class="ident">GPTRUN</span> <span class="op">=</span><span class="op">=</span> <span class="number">1</span>),
+            <span class="ident">Instance::Gpt0</span> =&gt; <span class="macro">ral::read_reg!</span>(<span class="ident">ral::usb</span>, <span class="self">self</span>.<span class="ident">usb</span>, <span class="ident">GPTIMER0CTRL</span>, <span class="ident">GPTRUN</span> <span class="op">==</span> <span class="number">1</span>),
+            <span class="ident">Instance::Gpt1</span> =&gt; <span class="macro">ral::read_reg!</span>(<span class="ident">ral::usb</span>, <span class="self">self</span>.<span class="ident">usb</span>, <span class="ident">GPTIMER1CTRL</span>, <span class="ident">GPTRUN</span> <span class="op">==</span> <span class="number">1</span>),
         }
     }
 
     <span class="doccomment">/// Stop the timer.</span>
     <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">stop</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>) {
         <span class="kw">match</span> <span class="self">self</span>.<span class="ident">gpt</span> {
-            <span class="ident">Instance::Gpt0</span> <span class="op">=</span><span class="op">&gt;</span> <span class="macro">ral::modify_reg!</span>(<span class="ident">ral::usb</span>, <span class="self">self</span>.<span class="ident">usb</span>, <span class="ident">GPTIMER0CTRL</span>, <span class="ident">GPTRUN</span>: <span class="number">0</span>),
-            <span class="ident">Instance::Gpt1</span> <span class="op">=</span><span class="op">&gt;</span> <span class="macro">ral::modify_reg!</span>(<span class="ident">ral::usb</span>, <span class="self">self</span>.<span class="ident">usb</span>, <span class="ident">GPTIMER1CTRL</span>, <span class="ident">GPTRUN</span>: <span class="number">0</span>),
+            <span class="ident">Instance::Gpt0</span> =&gt; <span class="macro">ral::modify_reg!</span>(<span class="ident">ral::usb</span>, <span class="self">self</span>.<span class="ident">usb</span>, <span class="ident">GPTIMER0CTRL</span>, <span class="ident">GPTRUN</span>: <span class="number">0</span>),
+            <span class="ident">Instance::Gpt1</span> =&gt; <span class="macro">ral::modify_reg!</span>(<span class="ident">ral::usb</span>, <span class="self">self</span>.<span class="ident">usb</span>, <span class="ident">GPTIMER1CTRL</span>, <span class="ident">GPTRUN</span>: <span class="number">0</span>),
         }
     }
 
@@ -408,37 +408,37 @@
     <span class="doccomment">/// `reset` loads the counter value. It does not stop a running counter.</span>
     <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">reset</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>) {
         <span class="kw">match</span> <span class="self">self</span>.<span class="ident">gpt</span> {
-            <span class="ident">Instance::Gpt0</span> <span class="op">=</span><span class="op">&gt;</span> <span class="macro">ral::modify_reg!</span>(<span class="ident">ral::usb</span>, <span class="self">self</span>.<span class="ident">usb</span>, <span class="ident">GPTIMER0CTRL</span>, <span class="ident">GPTRST</span>: <span class="number">1</span>),
-            <span class="ident">Instance::Gpt1</span> <span class="op">=</span><span class="op">&gt;</span> <span class="macro">ral::modify_reg!</span>(<span class="ident">ral::usb</span>, <span class="self">self</span>.<span class="ident">usb</span>, <span class="ident">GPTIMER1CTRL</span>, <span class="ident">GPTRST</span>: <span class="number">1</span>),
+            <span class="ident">Instance::Gpt0</span> =&gt; <span class="macro">ral::modify_reg!</span>(<span class="ident">ral::usb</span>, <span class="self">self</span>.<span class="ident">usb</span>, <span class="ident">GPTIMER0CTRL</span>, <span class="ident">GPTRST</span>: <span class="number">1</span>),
+            <span class="ident">Instance::Gpt1</span> =&gt; <span class="macro">ral::modify_reg!</span>(<span class="ident">ral::usb</span>, <span class="self">self</span>.<span class="ident">usb</span>, <span class="ident">GPTIMER1CTRL</span>, <span class="ident">GPTRST</span>: <span class="number">1</span>),
         }
     }
 
     <span class="doccomment">/// Set the timer mode.</span>
     <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">set_mode</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>, <span class="ident">mode</span>: <span class="ident">Mode</span>) {
         <span class="kw">match</span> <span class="self">self</span>.<span class="ident">gpt</span> {
-            <span class="ident">Instance::Gpt0</span> <span class="op">=</span><span class="op">&gt;</span> {
+            <span class="ident">Instance::Gpt0</span> =&gt; {
                 <span class="macro">ral::modify_reg!</span>(<span class="ident">ral::usb</span>, <span class="self">self</span>.<span class="ident">usb</span>, <span class="ident">GPTIMER0CTRL</span>, <span class="ident">GPTMODE</span>: <span class="ident">mode</span> <span class="kw">as</span> <span class="ident">u32</span>)
             }
-            <span class="ident">Instance::Gpt1</span> <span class="op">=</span><span class="op">&gt;</span> {
+            <span class="ident">Instance::Gpt1</span> =&gt; {
                 <span class="macro">ral::modify_reg!</span>(<span class="ident">ral::usb</span>, <span class="self">self</span>.<span class="ident">usb</span>, <span class="ident">GPTIMER1CTRL</span>, <span class="ident">GPTMODE</span>: <span class="ident">mode</span> <span class="kw">as</span> <span class="ident">u32</span>)
             }
         }
     }
 
     <span class="doccomment">/// Returns the timer mode.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">mode</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">Mode</span> {
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">mode</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="ident">Mode</span> {
         <span class="kw">let</span> <span class="ident">mode</span>: <span class="ident">u32</span> <span class="op">=</span> <span class="kw">match</span> <span class="self">self</span>.<span class="ident">gpt</span> {
-            <span class="ident">Instance::Gpt0</span> <span class="op">=</span><span class="op">&gt;</span> {
+            <span class="ident">Instance::Gpt0</span> =&gt; {
                 <span class="macro">ral::read_reg!</span>(<span class="ident">ral::usb</span>, <span class="self">self</span>.<span class="ident">usb</span>, <span class="ident">GPTIMER0CTRL</span>, <span class="ident">GPTMODE</span>)
             }
-            <span class="ident">Instance::Gpt1</span> <span class="op">=</span><span class="op">&gt;</span> {
+            <span class="ident">Instance::Gpt1</span> =&gt; {
                 <span class="macro">ral::read_reg!</span>(<span class="ident">ral::usb</span>, <span class="self">self</span>.<span class="ident">usb</span>, <span class="ident">GPTIMER1CTRL</span>, <span class="ident">GPTMODE</span>)
             }
         };
 
-        <span class="kw">if</span> <span class="ident">mode</span> <span class="op">=</span><span class="op">=</span> (<span class="ident">Mode::Repeat</span> <span class="kw">as</span> <span class="ident">u32</span>) {
+        <span class="kw">if</span> <span class="ident">mode</span> <span class="op">==</span> (<span class="ident">Mode::Repeat</span> <span class="kw">as</span> <span class="ident">u32</span>) {
             <span class="ident">Mode::Repeat</span>
-        } <span class="kw">else</span> <span class="kw">if</span> <span class="ident">mode</span> <span class="op">=</span><span class="op">=</span> (<span class="ident">Mode::OneShot</span> <span class="kw">as</span> <span class="ident">u32</span>) {
+        } <span class="kw">else</span> <span class="kw">if</span> <span class="ident">mode</span> <span class="op">==</span> (<span class="ident">Mode::OneShot</span> <span class="kw">as</span> <span class="ident">u32</span>) {
             <span class="ident">Mode::OneShot</span>
         } <span class="kw">else</span> {
             <span class="comment">// All raw mode values handled</span>
@@ -456,34 +456,34 @@
     <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">set_load</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>, <span class="ident">us</span>: <span class="ident">u32</span>) {
         <span class="kw">let</span> <span class="ident">count</span> <span class="op">=</span> <span class="ident">us</span>.<span class="ident">min</span>(<span class="number">0xFF_FFFF</span>).<span class="ident">max</span>(<span class="number">1</span>).<span class="ident">saturating_sub</span>(<span class="number">1</span>);
         <span class="kw">match</span> <span class="self">self</span>.<span class="ident">gpt</span> {
-            <span class="ident">Instance::Gpt0</span> <span class="op">=</span><span class="op">&gt;</span> <span class="macro">ral::write_reg!</span>(<span class="ident">ral::usb</span>, <span class="self">self</span>.<span class="ident">usb</span>, <span class="ident">GPTIMER0LD</span>, <span class="ident">count</span>),
-            <span class="ident">Instance::Gpt1</span> <span class="op">=</span><span class="op">&gt;</span> <span class="macro">ral::write_reg!</span>(<span class="ident">ral::usb</span>, <span class="self">self</span>.<span class="ident">usb</span>, <span class="ident">GPTIMER1LD</span>, <span class="ident">count</span>),
+            <span class="ident">Instance::Gpt0</span> =&gt; <span class="macro">ral::write_reg!</span>(<span class="ident">ral::usb</span>, <span class="self">self</span>.<span class="ident">usb</span>, <span class="ident">GPTIMER0LD</span>, <span class="ident">count</span>),
+            <span class="ident">Instance::Gpt1</span> =&gt; <span class="macro">ral::write_reg!</span>(<span class="ident">ral::usb</span>, <span class="self">self</span>.<span class="ident">usb</span>, <span class="ident">GPTIMER1LD</span>, <span class="ident">count</span>),
         }
     }
 
     <span class="doccomment">/// Returns the counter load value.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">load</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">u32</span> {
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">load</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="ident">u32</span> {
         <span class="kw">match</span> <span class="self">self</span>.<span class="ident">gpt</span> {
-            <span class="ident">Instance::Gpt0</span> <span class="op">=</span><span class="op">&gt;</span> <span class="macro">ral::read_reg!</span>(<span class="ident">ral::usb</span>, <span class="self">self</span>.<span class="ident">usb</span>, <span class="ident">GPTIMER0LD</span>),
-            <span class="ident">Instance::Gpt1</span> <span class="op">=</span><span class="op">&gt;</span> <span class="macro">ral::read_reg!</span>(<span class="ident">ral::usb</span>, <span class="self">self</span>.<span class="ident">usb</span>, <span class="ident">GPTIMER1LD</span>),
+            <span class="ident">Instance::Gpt0</span> =&gt; <span class="macro">ral::read_reg!</span>(<span class="ident">ral::usb</span>, <span class="self">self</span>.<span class="ident">usb</span>, <span class="ident">GPTIMER0LD</span>),
+            <span class="ident">Instance::Gpt1</span> =&gt; <span class="macro">ral::read_reg!</span>(<span class="ident">ral::usb</span>, <span class="self">self</span>.<span class="ident">usb</span>, <span class="ident">GPTIMER1LD</span>),
         }
     }
 
     <span class="doccomment">/// Indicates if the timer has elapsed.</span>
     <span class="doccomment">///</span>
     <span class="doccomment">/// If the timer has elapsed, you should clear the elapsed flag with `clear_elapsed()`.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">is_elapsed</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">bool</span> {
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">is_elapsed</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="ident">bool</span> {
         <span class="kw">match</span> <span class="self">self</span>.<span class="ident">gpt</span> {
-            <span class="ident">Instance::Gpt0</span> <span class="op">=</span><span class="op">&gt;</span> <span class="macro">ral::read_reg!</span>(<span class="ident">ral::usb</span>, <span class="self">self</span>.<span class="ident">usb</span>, <span class="ident">USBSTS</span>, <span class="ident">TI0</span> <span class="op">=</span><span class="op">=</span> <span class="number">1</span>),
-            <span class="ident">Instance::Gpt1</span> <span class="op">=</span><span class="op">&gt;</span> <span class="macro">ral::read_reg!</span>(<span class="ident">ral::usb</span>, <span class="self">self</span>.<span class="ident">usb</span>, <span class="ident">USBSTS</span>, <span class="ident">TI1</span> <span class="op">=</span><span class="op">=</span> <span class="number">1</span>),
+            <span class="ident">Instance::Gpt0</span> =&gt; <span class="macro">ral::read_reg!</span>(<span class="ident">ral::usb</span>, <span class="self">self</span>.<span class="ident">usb</span>, <span class="ident">USBSTS</span>, <span class="ident">TI0</span> <span class="op">==</span> <span class="number">1</span>),
+            <span class="ident">Instance::Gpt1</span> =&gt; <span class="macro">ral::read_reg!</span>(<span class="ident">ral::usb</span>, <span class="self">self</span>.<span class="ident">usb</span>, <span class="ident">USBSTS</span>, <span class="ident">TI1</span> <span class="op">==</span> <span class="number">1</span>),
         }
     }
 
     <span class="doccomment">/// Clear the flag that indicates the timer has elapsed.</span>
     <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">clear_elapsed</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>) {
         <span class="kw">match</span> <span class="self">self</span>.<span class="ident">gpt</span> {
-            <span class="ident">Instance::Gpt0</span> <span class="op">=</span><span class="op">&gt;</span> <span class="macro">ral::modify_reg!</span>(<span class="ident">ral::usb</span>, <span class="self">self</span>.<span class="ident">usb</span>, <span class="ident">USBSTS</span>, <span class="ident">TI0</span>: <span class="number">1</span>),
-            <span class="ident">Instance::Gpt1</span> <span class="op">=</span><span class="op">&gt;</span> <span class="macro">ral::modify_reg!</span>(<span class="ident">ral::usb</span>, <span class="self">self</span>.<span class="ident">usb</span>, <span class="ident">USBSTS</span>, <span class="ident">TI1</span>: <span class="number">1</span>),
+            <span class="ident">Instance::Gpt0</span> =&gt; <span class="macro">ral::modify_reg!</span>(<span class="ident">ral::usb</span>, <span class="self">self</span>.<span class="ident">usb</span>, <span class="ident">USBSTS</span>, <span class="ident">TI0</span>: <span class="number">1</span>),
+            <span class="ident">Instance::Gpt1</span> =&gt; <span class="macro">ral::modify_reg!</span>(<span class="ident">ral::usb</span>, <span class="self">self</span>.<span class="ident">usb</span>, <span class="ident">USBSTS</span>, <span class="ident">TI1</span>: <span class="number">1</span>),
         }
     }
 
@@ -493,16 +493,16 @@
     <span class="doccomment">/// interrupt enable state.</span>
     <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">set_interrupt_enabled</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>, <span class="ident">enable</span>: <span class="ident">bool</span>) {
         <span class="kw">match</span> <span class="self">self</span>.<span class="ident">gpt</span> {
-            <span class="ident">Instance::Gpt0</span> <span class="op">=</span><span class="op">&gt;</span> <span class="macro">ral::modify_reg!</span>(<span class="ident">ral::usb</span>, <span class="self">self</span>.<span class="ident">usb</span>, <span class="ident">USBINTR</span>, <span class="ident">TIE0</span>: <span class="ident">enable</span> <span class="kw">as</span> <span class="ident">u32</span>),
-            <span class="ident">Instance::Gpt1</span> <span class="op">=</span><span class="op">&gt;</span> <span class="macro">ral::modify_reg!</span>(<span class="ident">ral::usb</span>, <span class="self">self</span>.<span class="ident">usb</span>, <span class="ident">USBINTR</span>, <span class="ident">TIE1</span>: <span class="ident">enable</span> <span class="kw">as</span> <span class="ident">u32</span>),
+            <span class="ident">Instance::Gpt0</span> =&gt; <span class="macro">ral::modify_reg!</span>(<span class="ident">ral::usb</span>, <span class="self">self</span>.<span class="ident">usb</span>, <span class="ident">USBINTR</span>, <span class="ident">TIE0</span>: <span class="ident">enable</span> <span class="kw">as</span> <span class="ident">u32</span>),
+            <span class="ident">Instance::Gpt1</span> =&gt; <span class="macro">ral::modify_reg!</span>(<span class="ident">ral::usb</span>, <span class="self">self</span>.<span class="ident">usb</span>, <span class="ident">USBINTR</span>, <span class="ident">TIE1</span>: <span class="ident">enable</span> <span class="kw">as</span> <span class="ident">u32</span>),
         }
     }
 
     <span class="doccomment">/// Indicates if interrupt generation is enabled.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">is_interrupt_enabled</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">bool</span> {
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">is_interrupt_enabled</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="ident">bool</span> {
         <span class="kw">match</span> <span class="self">self</span>.<span class="ident">gpt</span> {
-            <span class="ident">Instance::Gpt0</span> <span class="op">=</span><span class="op">&gt;</span> <span class="macro">ral::read_reg!</span>(<span class="ident">ral::usb</span>, <span class="self">self</span>.<span class="ident">usb</span>, <span class="ident">USBINTR</span>, <span class="ident">TIE0</span> <span class="op">=</span><span class="op">=</span> <span class="number">1</span>),
-            <span class="ident">Instance::Gpt1</span> <span class="op">=</span><span class="op">&gt;</span> <span class="macro">ral::read_reg!</span>(<span class="ident">ral::usb</span>, <span class="self">self</span>.<span class="ident">usb</span>, <span class="ident">USBINTR</span>, <span class="ident">TIE1</span> <span class="op">=</span><span class="op">=</span> <span class="number">1</span>),
+            <span class="ident">Instance::Gpt0</span> =&gt; <span class="macro">ral::read_reg!</span>(<span class="ident">ral::usb</span>, <span class="self">self</span>.<span class="ident">usb</span>, <span class="ident">USBINTR</span>, <span class="ident">TIE0</span> <span class="op">==</span> <span class="number">1</span>),
+            <span class="ident">Instance::Gpt1</span> =&gt; <span class="macro">ral::read_reg!</span>(<span class="ident">ral::usb</span>, <span class="self">self</span>.<span class="ident">usb</span>, <span class="ident">USBINTR</span>, <span class="ident">TIE1</span> <span class="op">==</span> <span class="number">1</span>),
         }
     }
 }

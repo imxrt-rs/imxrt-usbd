@@ -86,7 +86,7 @@
 <span class="doccomment">/// from main memory.</span>
 <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">clean_invalidate_dcache_by_address</span>(<span class="ident">addr</span>: <span class="ident">usize</span>, <span class="ident">size</span>: <span class="ident">usize</span>) {
     <span class="comment">// No-op zero sized operations</span>
-    <span class="kw">if</span> <span class="ident">size</span> <span class="op">=</span><span class="op">=</span> <span class="number">0</span> {
+    <span class="kw">if</span> <span class="ident">size</span> <span class="op">==</span> <span class="number">0</span> {
         <span class="kw">return</span>;
     }
 

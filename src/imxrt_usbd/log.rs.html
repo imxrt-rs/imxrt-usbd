@@ -40,28 +40,28 @@
 <span class="attribute">#![<span class="ident">allow</span>(<span class="ident">unused</span>)]</span>
 
 <span class="macro">macro_rules!</span> <span class="ident">trace</span> {
-    ($(<span class="macro-nonterminal">$</span><span class="macro-nonterminal">args</span>:<span class="ident">tt</span>)<span class="kw-2">*</span>) <span class="op">=</span><span class="op">&gt;</span> {
+    ($(<span class="macro-nonterminal">$</span><span class="macro-nonterminal">args</span>:<span class="ident">tt</span>)<span class="kw-2">*</span>) =&gt; {
         <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;__log&quot;</span>)]</span>
         <span class="macro">::log::trace!</span>(<span class="ident">target</span>: <span class="string">&quot;&quot;</span>, $(<span class="macro-nonterminal">$</span><span class="macro-nonterminal">args</span>)<span class="kw-2">*</span>)
     };
 }
 
 <span class="macro">macro_rules!</span> <span class="ident">debug</span> {
-    ($(<span class="macro-nonterminal">$</span><span class="macro-nonterminal">args</span>:<span class="ident">tt</span>)<span class="kw-2">*</span>) <span class="op">=</span><span class="op">&gt;</span> {
+    ($(<span class="macro-nonterminal">$</span><span class="macro-nonterminal">args</span>:<span class="ident">tt</span>)<span class="kw-2">*</span>) =&gt; {
         <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;__log&quot;</span>)]</span>
         <span class="macro">::log::debug!</span>(<span class="ident">target</span>: <span class="string">&quot;&quot;</span>, $(<span class="macro-nonterminal">$</span><span class="macro-nonterminal">args</span>)<span class="kw-2">*</span>)
     };
 }
 
 <span class="macro">macro_rules!</span> <span class="ident">info</span> {
-    ($(<span class="macro-nonterminal">$</span><span class="macro-nonterminal">args</span>:<span class="ident">tt</span>)<span class="kw-2">*</span>) <span class="op">=</span><span class="op">&gt;</span> {
+    ($(<span class="macro-nonterminal">$</span><span class="macro-nonterminal">args</span>:<span class="ident">tt</span>)<span class="kw-2">*</span>) =&gt; {
         <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;__log&quot;</span>)]</span>
         <span class="macro">::log::info!</span>(<span class="ident">target</span>: <span class="string">&quot;&quot;</span>, $(<span class="macro-nonterminal">$</span><span class="macro-nonterminal">args</span>)<span class="kw-2">*</span>)
     };
 }
 
 <span class="macro">macro_rules!</span> <span class="ident">warn</span> {
-    ($(<span class="macro-nonterminal">$</span><span class="macro-nonterminal">args</span>:<span class="ident">tt</span>)<span class="kw-2">*</span>) <span class="op">=</span><span class="op">&gt;</span> {
+    ($(<span class="macro-nonterminal">$</span><span class="macro-nonterminal">args</span>:<span class="ident">tt</span>)<span class="kw-2">*</span>) =&gt; {
         <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;__log&quot;</span>)]</span>
         <span class="macro">::log::warn!</span>(<span class="ident">target</span>: <span class="string">&quot;&quot;</span>, $(<span class="macro-nonterminal">$</span><span class="macro-nonterminal">args</span>)<span class="kw-2">*</span>)
     };

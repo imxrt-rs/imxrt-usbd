@@ -12,7 +12,7 @@ or USB2 registers. This includes</p>
 <p>When an instance of <code>Peripherals</code> exists, you must make sure that
 nothing else, other than the owner of the <code>Peripherals</code> object,
 accesses those registers.</p>
-<h1 id="safety" class="section-header"><a href="#safety">Safety</a></h1>
+<h2 id="safety" class="section-header"><a href="#safety">Safety</a></h2>
 <p><code>Peripherals</code> should only be implemented on a type that
 owns the various register blocks required for all USB
 operation. Incorrect usage, or failure to ensure exclusive
@@ -21,7 +21,7 @@ ownership, could lead to data races and incorrect USB functionality.</p>
 identifier is valid for your chip. Not all i.MX RT peripherals
 have a USB2 peripheral instance, so you must ensure that the
 implementation is correct for your chip.</p>
-<h1 id="example" class="section-header"><a href="#example">Example</a></h1>
+<h2 id="example" class="section-header"><a href="#example">Example</a></h2>
 <p>A safe implementation of <code>Peripherals</code> that works with the
 <code>imxrt-ral</code> register access layer. Assume that <code>ral</code> is
 shorthand for <code>imxrt_ral</code>, like</p>
@@ -39,7 +39,7 @@ shorthand for <code>imxrt_ral</code>, like</p>
 
 <span class="kw">impl</span> <span class="ident">Peripherals</span> {
     <span class="doccomment">/// Panics if the instances are already taken</span>
-    <span class="kw">fn</span> <span class="ident">usb1</span>() <span class="op">-</span><span class="op">&gt;</span> <span class="ident">Peripherals</span> {
+    <span class="kw">fn</span> <span class="ident">usb1</span>() -&gt; <span class="ident">Peripherals</span> {
         <span class="self">Self</span> {
             <span class="ident">_usb</span>: <span class="ident">ral::usb::USB1::take</span>().<span class="ident">unwrap</span>(),
             <span class="ident">_phy</span>: <span class="ident">ral::usbphy::USBPHY1::take</span>().<span class="ident">unwrap</span>(),
@@ -54,7 +54,7 @@ shorthand for <code>imxrt_ral</code>, like</p>
 <span class="comment">// guaranteed to be singletons. Given this approach, no one else</span>
 <span class="comment">// can safely access the USB registers.</span>
 <span class="kw">unsafe</span> <span class="kw">impl</span> <span class="ident">imxrt_usbd::Peripherals</span> <span class="kw">for</span> <span class="ident">Peripherals</span> {
-    <span class="kw">fn</span> <span class="ident">instance</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">imxrt_usbd::Instance</span> {
+    <span class="kw">fn</span> <span class="ident">instance</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="ident">imxrt_usbd::Instance</span> {
         <span class="ident">imxrt_usbd::Instance::USB1</span>
     }
 }
