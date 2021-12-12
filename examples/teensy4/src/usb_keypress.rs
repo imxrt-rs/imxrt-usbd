@@ -6,7 +6,6 @@
 
 use teensy4_panic as _;
 
-use core::str::Chars;
 use imxrt_usbd::full_speed::BusAdapter;
 use teensy4_bsp::LED;
 use usb_device::device::UsbDevice;
@@ -63,20 +62,33 @@ fn keyboard_mission3(
     hid: &mut HIDClass<BusAdapter>,
     device: &mut UsbDevice<BusAdapter>,
 ) -> ! {
-    let msg = CodeSequence::new("Ia! Ia! Cthulhu fhtagn!  ");
-    let mut msg = PushBackIterator::from(msg);
+    let mut msg = b"Ia! Ia! Cthulhu fhtagn!  "
+        .iter()
+        // Repeate once we hit the end.
+        // This means we never return None.
+        .cycle()
+        // &u8 -> u8
+        .copied()
+        // u8 -> KeyboardReport
+        .map(translate_char)
+        // Check the next keyboard report,
+        // and only pop if we could send
+        // the event.
+        .peekable();
 
     loop {
         //let codes: [u8; 6] = msg.next().unwrap();
 
-        let cmd = msg.next().unwrap();
+        let cmd = msg.peek().unwrap();
 
         // this would be simpler if we could ask hid if it were full, or if we could give it a callback to invoke if it is not full.
-        let would_block = match hid.push_input(&cmd) {
-            Ok(_x) => false,
+        let would_block = match hid.push_input(cmd) {
+            Ok(_x) => {
+                msg.next().unwrap();
+                false
+            }
             Err(_usb_error) => {
                 // probably buffer full, try again later
-                msg.push_back(cmd);
                 true
             }
         };
@@ -102,91 +114,23 @@ fn simple_kr(modifier: u8, keycodes: [u8; 6]) -> KeyboardReport {
     }
 }
 
-fn translate_char(ch: char) -> Option<KeyboardReport> {
+fn translate_char(ch: u8) -> KeyboardReport {
     match ch {
-        'a'..='z' => {
-            let code = (ch as u8) - b'a' + 4;
-            Some(simple_kr(0, [code, 0, 0, 0, 0, 0]))
+        b'a'..=b'z' => {
+            let code = ch - b'a' + 4;
+            simple_kr(0, [code, 0, 0, 0, 0, 0])
         }
-        'A'..='Z' => {
-            let code = (ch as u8) - b'A' + 4;
-            Some(simple_kr(2, [code, 0, 0, 0, 0, 0]))
+        b'A'..=b'Z' => {
+            let code = ch - b'A' + 4;
+            simple_kr(2, [code, 0, 0, 0, 0, 0])
         }
-        '!'..=')' => {
-            let code = (ch as u8) - b'!' + 0x1e;
-            Some(simple_kr(2, [code, 0, 0, 0, 0, 0]))
+        b'!'..=b')' => {
+            let code = ch - b'!' + 0x1e;
+            simple_kr(2, [code, 0, 0, 0, 0, 0])
         }
-        ' ' => Some(simple_kr(0, [0x2c, 0, 0, 0, 0, 0])),
+        b' ' => simple_kr(0, [0x2c, 0, 0, 0, 0, 0]),
         // lots of stuff is missing, and I'm sure there are keyboard layouts that this is incorrect for.
-        _ => None,
-    }
-}
-
-//
-
-struct CodeSequence<'a> {
-    orig: &'a str,
-    iter: Chars<'a>,
-}
-
-impl<'a> CodeSequence<'a> {
-    pub fn new(orig: &'a str) -> CodeSequence<'a> {
-        CodeSequence {
-            orig,
-            iter: orig.chars(),
-        }
-    }
-
-    pub fn generate(&mut self) -> KeyboardReport {
-        loop {
-            let ch = self.iter.next();
-            match ch {
-                None => {
-                    self.iter = self.orig.chars();
-                }
-                Some(ch) => {
-                    if let Some(code) = translate_char(ch) {
-                        return code;
-                    }
-                }
-            }
-        }
-    }
-}
-
-impl<'a> Iterator for CodeSequence<'a> {
-    type Item = KeyboardReport;
-
-    fn next(&mut self) -> Option<Self::Item> {
-        Some(self.generate())
-    }
-}
-
-//
-
-struct PushBackIterator<T, I: Iterator<Item = T>> {
-    base: I,
-    buffer: Option<T>,
-}
-
-impl<T, I: Iterator<Item = T>> PushBackIterator<T, I> {
-    pub fn from(base: I) -> PushBackIterator<T, I> {
-        Self { base, buffer: None }
-    }
-
-    pub fn push_back(&mut self, val: T) {
-        self.buffer = Some(val);
-    }
-}
-
-impl<T, I: Iterator<Item = T>> Iterator for PushBackIterator<T, I> {
-    type Item = T;
-
-    fn next(&mut self) -> Option<Self::Item> {
-        match self.buffer.take() {
-            None => self.base.next(),
-            Some(val) => Some(val),
-        }
+        _ => panic!("Unsupported character '{}'", ch),
     }
 }
 
