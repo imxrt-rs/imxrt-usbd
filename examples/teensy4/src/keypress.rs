@@ -58,7 +58,8 @@ fn keyboard_mission3(
     device: &mut UsbDevice<BusAdapter>,
 ) -> ! {
     let mut msg = b"Ia! Ia! Cthulhu fhtagn!  "
-        .iter()
+        // Iterate over bytes
+        .into_iter()
         // Repeate once we hit the end.
         // This means we never return None.
         .cycle()
