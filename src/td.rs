@@ -111,7 +111,7 @@ bitflags::bitflags! {
     pub struct Status : u32 {
         const ACTIVE = TOKEN::STATUS::RW::ACTIVE;
         const HALTED = TOKEN::STATUS::RW::HALTED;
-        const DATA_BUS_ERROR = TOKEN::STATUS::RW::DATA_BUS_ERROR;
+        const DATA_BUFFER_ERROR = TOKEN::STATUS::RW::DATA_BUFFER_ERROR;
         const TRANSACTION_ERROR = TOKEN::STATUS::RW::TRANSACTION_ERROR;
     }
 }
@@ -123,7 +123,7 @@ mod TOKEN {
         pub mod RW {
             pub const ACTIVE: u32 = 1 << 7;
             pub const HALTED: u32 = 1 << 6;
-            pub const DATA_BUS_ERROR: u32 = 1 << 5;
+            pub const DATA_BUFFER_ERROR: u32 = 1 << 5;
             pub const TRANSACTION_ERROR: u32 = 1 << 3;
         }
         pub mod R {}
