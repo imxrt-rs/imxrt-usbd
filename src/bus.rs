@@ -99,6 +99,12 @@ pub use super::driver::Speed;
 /// to quickly respond to `poll()` outputs, and schedule the next transfer
 /// in the time required for devices. This becomes more important as you
 /// increase driver speeds.
+///
+/// The hardware can zero-length terminate (ZLT) packets as needed if you
+/// call [`enable_zlt`](BusAdapter::enable_zlt). By default, this feature is
+/// off, because most `usb-device` classes / devices take care to send zero-length
+/// packets, and enabling this feature could interfere with the class / device
+/// behaviors.
 pub struct BusAdapter {
     usb: Mutex<RefCell<Driver>>,
 }
@@ -145,6 +151,22 @@ impl BusAdapter {
     /// call [`poll()`](BusAdapter::poll).
     pub fn set_interrupts(&self, interrupts: bool) {
         self.with_usb_mut(|usb| usb.set_interrupts(interrupts));
+    }
+
+    /// Enable zero-length termination (ZLT) for the given endpoint
+    ///
+    /// When ZLT is enabled, software does not need to send a zero-length packet
+    /// to terminate a transfer where the number of bytes equals the max packet size.
+    /// The hardware will send this zero-length packet itself. By default, ZLT is off,
+    /// and software is expected to send these packets. Enable this if you're confident
+    /// that your (third-party) device / USB class isn't already sending these packets.
+    ///
+    /// # Panics
+    ///
+    /// `enable_zlt` must be called before the endpoint is allocated. If the endpoint is
+    /// already allocated, this call panics.
+    pub fn enable_zlt(&self, ep_addr: EndpointAddress) {
+        self.with_usb_mut(|usb| usb.enable_zlt(ep_addr));
     }
 
     /// Interrupt-safe, immutable access to the USB peripheral

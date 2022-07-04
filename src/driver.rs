@@ -142,6 +142,34 @@ impl Driver {
         ral::write_reg!(ral::usb, self.usb, USBINTR, 0);
 
         state::assign_endptlistaddr(&self.usb);
+
+        // Turn off ZLT for each endpoint. Software (usb-device and associated drivers)
+        // are expected to sent ZLPs as necessary. This setting can be overridden on an
+        // endpoint-by-endpoint basis before endpoint allocation.
+        self.qhs.iter_mut().for_each(|qh| {
+            if let Some(qh) = qh {
+                qh.set_zero_length_termination(false);
+            }
+        });
+    }
+
+    /// Enable zero-length termination (ZLT) for the given endpoint
+    ///
+    /// When ZLT is enabled, software does not need to send a zero-length packet
+    /// to terminate a transfer where the number of bytes equals the max packet size.
+    /// The hardware will send this zero-length packet itself. By default, ZLT is off,
+    /// and software is expected to send these packets. Enable this if you're confident
+    /// that your (third-party) device / USB class isn't already sending these packets.
+    ///
+    /// # Panics
+    ///
+    /// `enable_zlt` must be called before the endpoint is allocated. If the endpoint is
+    /// already allocated, this call panics.
+    pub fn enable_zlt(&mut self, ep_addr: EndpointAddress) {
+        let qh = self.qhs[index(ep_addr)]
+            .as_mut()
+            .expect("Endpoint is already allocated");
+        qh.set_zero_length_termination(true);
     }
 
     /// Enable (`true`) or disable (`false`) USB interrupts
@@ -364,7 +392,6 @@ impl Driver {
 
         let max_packet_size = buffer.len();
         qh.set_max_packet_len(max_packet_size);
-        qh.set_zero_length_termination(false);
         qh.set_interrupt_on_setup(
             EndpointType::Control == kind && addr.direction() == UsbDirection::Out,
         );
