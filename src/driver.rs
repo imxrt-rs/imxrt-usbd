@@ -176,9 +176,9 @@ impl Driver {
     pub fn set_interrupts(&mut self, interrupts: bool) {
         if interrupts {
             // Keep this in sync with the poll() behaviors
-            ral::write_reg!(ral::usb, self.usb, USBINTR, UE: 1, URE: 1, PCE: 1);
+            ral::modify_reg!(ral::usb, self.usb, USBINTR, UE: 1, URE: 1, PCE: 1);
         } else {
-            ral::write_reg!(ral::usb, self.usb, USBINTR, 0);
+            ral::modify_reg!(ral::usb, self.usb, USBINTR, UE: 0, URE: 0, PCE: 0);
         }
     }
 

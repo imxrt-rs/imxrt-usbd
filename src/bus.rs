@@ -245,32 +245,12 @@ impl BusAdapter {
     /// Acquire one of the GPT timer instances.
     ///
     /// `instance` identifies which GPT instance you're accessing.
-    /// `gpt` requires a critical section to guarantee a single
-    /// mutable access to a USB GPT. See `cortex_m::interrupt::free`
-    /// for more information.
+    /// This may take a critical section for the duration of `func`.
     ///
     /// # Panics
     ///
     /// Panics if the GPT instance is already borrowed. This could happen
-    /// if you call `borrow_gpt` again within the `func` callback.
-    pub fn borrow_gpt<R>(
-        &self,
-        cs: &cortex_m::interrupt::CriticalSection,
-        instance: gpt::Instance,
-        func: impl FnOnce(&mut gpt::Gpt) -> R,
-    ) -> R {
-        let usb = self.usb.borrow(cs);
-        usb.borrow_mut().gpt_mut(instance, func)
-    }
-
-    /// Acquire one of the GPT timer instances.
-    ///
-    /// `instance` identifies which GPT instance you're accessing.
-    ///
-    /// # Panics
-    ///
-    /// Panics if the GPT instance is already borrowed. This could happen
-    /// if you call `borrow_gpt` again within the `func` callback.
+    /// if you call `gpt_mut` again within the `func` callback.
     pub fn gpt_mut<R>(&self, instance: gpt::Instance, func: impl FnOnce(&mut gpt::Gpt) -> R) -> R {
         self.with_usb_mut(|usb| usb.gpt_mut(instance, func))
     }

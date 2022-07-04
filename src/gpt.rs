@@ -26,11 +26,8 @@
 //! #    unsafe { &mut ENDPOINT_MEMORY }
 //! );
 //!
-//! // Prepare a GPT before creating a USB device
-//! # let cs = unsafe { &cortex_m::interrupt::CriticalSection::new() };
-//! // Note: borrow_cpt requires a critical section. See the docs for
-//! // more information.
-//! bus_adapter.borrow_gpt(cs, gpt::Instance::Gpt0, |gpt| {
+//! // Prepare a GPT before creating a USB device;
+//! bus_adapter.gpt_mut(gpt::Instance::Gpt0, |gpt| {
 //!     gpt.stop(); // Stop the timer, just in case it's already running...
 //!     gpt.clear_elapsed(); // Clear any outstanding elapsed flags
 //!     gpt.set_interrupt_enabled(false); // Enable or disable interrupts
@@ -49,10 +46,10 @@
 //!
 //! // You can still access the timer through the bus() method on
 //! // the USB device.
-//! device.bus().borrow_gpt(cs, gpt::Instance::Gpt0, |gpt| gpt.run()); // Timer running!
+//! device.bus().gpt_mut(gpt::Instance::Gpt0, |gpt| gpt.run()); // Timer running!
 //!
 //! loop {
-//!     device.bus().borrow_gpt(cs, gpt::Instance::Gpt0, |gpt| {
+//!     device.bus().gpt_mut(gpt::Instance::Gpt0, |gpt| {
 //!         if gpt.is_elapsed() {
 //!             gpt.clear_elapsed();
 //!             // Timer elapsed!
@@ -228,8 +225,8 @@ impl<'a> Gpt<'a> {
     /// Clear the flag that indicates the timer has elapsed.
     pub fn clear_elapsed(&mut self) {
         match self.gpt {
-            Instance::Gpt0 => ral::modify_reg!(ral::usb, self.usb, USBSTS, TI0: 1),
-            Instance::Gpt1 => ral::modify_reg!(ral::usb, self.usb, USBSTS, TI1: 1),
+            Instance::Gpt0 => ral::write_reg!(ral::usb, self.usb, USBSTS, TI0: 1),
+            Instance::Gpt1 => ral::write_reg!(ral::usb, self.usb, USBSTS, TI1: 1),
         }
     }
 

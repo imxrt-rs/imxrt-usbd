@@ -49,15 +49,13 @@ fn main() -> ! {
     support::ccm::initialize(ccm, ccm_analog);
 
     let bus_adapter = support::new_bus_adapter();
-    cortex_m::interrupt::free(|cs| {
-        bus_adapter.borrow_gpt(cs, GPT_INSTANCE, |gpt| {
-            gpt.stop();
-            gpt.clear_elapsed();
-            gpt.set_interrupt_enabled(GPT_INTERRUPT);
-            gpt.set_mode(GPT_MODE);
-            gpt.set_load(LED_PERIOD_US);
-            gpt.reset();
-        });
+    bus_adapter.gpt_mut(GPT_INSTANCE, |gpt| {
+        gpt.stop();
+        gpt.clear_elapsed();
+        gpt.set_interrupt_enabled(GPT_INTERRUPT);
+        gpt.set_mode(GPT_MODE);
+        gpt.set_load(LED_PERIOD_US);
+        gpt.reset();
     });
 
     if GPT_INTERRUPT {
@@ -72,33 +70,35 @@ fn example_interrupt(led: teensy4_bsp::LED, bus_adapter: imxrt_usbd::BusAdapter)
     static mut BUS_ADAPTER: Option<imxrt_usbd::BusAdapter> = None;
     static mut LED: Option<teensy4_bsp::LED> = None;
 
-    cortex_m::interrupt::free(|cs| unsafe {
+    cortex_m::interrupt::free(|_| unsafe {
         BUS_ADAPTER = Some(bus_adapter);
         LED = Some(led);
         cortex_m::peripheral::NVIC::unmask(interrupt::USB_OTG1);
-        let bus_adapter = BUS_ADAPTER.as_mut().unwrap();
-        bus_adapter.borrow_gpt(cs, GPT_INSTANCE, |gpt| gpt.run());
     });
 
     #[cortex_m_rt::interrupt]
     fn USB_OTG1() {
-        cortex_m::interrupt::free(|cs| {
-            let bus_adapter = unsafe { BUS_ADAPTER.as_mut().unwrap() };
-            let led = unsafe { LED.as_mut().unwrap() };
+        let bus_adapter = unsafe { BUS_ADAPTER.as_mut().unwrap() };
+        let led = unsafe { LED.as_mut().unwrap() };
 
-            bus_adapter.borrow_gpt(cs, GPT_INSTANCE, |gpt| {
-                if gpt.is_elapsed() {
-                    gpt.clear_elapsed();
-                    led.toggle();
+        // Note: gpt_mut takes a critical section.
+        bus_adapter.gpt_mut(GPT_INSTANCE, |gpt| {
+            if !gpt.is_running() {
+                gpt.run();
+            }
 
-                    if GPT_MODE != gpt::Mode::Repeat {
-                        gpt.reset();
-                    }
+            if gpt.is_elapsed() {
+                gpt.clear_elapsed();
+                led.toggle();
+
+                if GPT_MODE != gpt::Mode::Repeat {
+                    gpt.reset();
                 }
-            });
+            }
         });
     }
 
+    cortex_m::peripheral::NVIC::pend(interrupt::USB_OTG1);
     loop {
         cortex_m::asm::wfi()
     }
@@ -107,21 +107,18 @@ fn example_interrupt(led: teensy4_bsp::LED, bus_adapter: imxrt_usbd::BusAdapter)
 /// The endless loop when interrupts are disabled, and we're polling the
 /// GPT timer for completion.
 fn example_polling(mut led: teensy4_bsp::LED, bus_adapter: imxrt_usbd::BusAdapter) -> ! {
-    // Note: running loop in a critical section. A real
-    // system shouldn't do this.
-    cortex_m::interrupt::free(|cs| {
-        bus_adapter.borrow_gpt(cs, GPT_INSTANCE, |gpt| {
-            gpt.run();
-            loop {
-                if gpt.is_elapsed() {
-                    gpt.clear_elapsed();
-                    led.toggle();
+    // Note: gpt_mut takes a critical section.
+    bus_adapter.gpt_mut(GPT_INSTANCE, |gpt| {
+        gpt.run();
+        loop {
+            if gpt.is_elapsed() {
+                gpt.clear_elapsed();
+                led.toggle();
 
-                    if GPT_MODE != gpt::Mode::Repeat {
-                        gpt.reset();
-                    }
+                if GPT_MODE != gpt::Mode::Repeat {
+                    gpt.reset();
                 }
             }
-        })
+        }
     })
 }
