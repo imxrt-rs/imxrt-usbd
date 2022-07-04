@@ -107,6 +107,7 @@ pub use super::driver::Speed;
 /// behaviors.
 pub struct BusAdapter {
     usb: Mutex<RefCell<Driver>>,
+    cs: Option<cortex_m::interrupt::CriticalSection>,
 }
 
 impl BusAdapter {
@@ -135,6 +136,38 @@ impl BusAdapter {
         buffer: &'static mut [u8],
         speed: Speed,
     ) -> Self {
+        Self::init(peripherals, buffer, speed, None)
+    }
+
+    /// Create a USB bus adapter that never takes a critical section
+    ///
+    /// See [`BusAdapter::with_speed`] for general information.
+    ///
+    /// # Safety
+    ///
+    /// The returned object fakes its `Sync` safety. Specifically, the object
+    /// will not take critical sections in its `&[mut] self` methods to ensure safe
+    /// access. By using this object, you must manually hold the guarantees of
+    /// `Sync` without the compiler's help.
+    pub unsafe fn without_critical_sections<P: crate::Peripherals>(
+        peripherals: P,
+        buffer: &'static mut [u8],
+        speed: Speed,
+    ) -> Self {
+        Self::init(
+            peripherals,
+            buffer,
+            speed,
+            Some(cortex_m::interrupt::CriticalSection::new()),
+        )
+    }
+
+    fn init<P: crate::Peripherals>(
+        peripherals: P,
+        buffer: &'static mut [u8],
+        speed: Speed,
+        cs: Option<cortex_m::interrupt::CriticalSection>,
+    ) -> Self {
         let mut usb = Driver::new(peripherals);
 
         usb.initialize(speed);
@@ -142,9 +175,9 @@ impl BusAdapter {
 
         BusAdapter {
             usb: Mutex::new(RefCell::new(usb)),
+            cs,
         }
     }
-
     /// Enable (`true`) or disable (`false`) interrupts for this USB peripheral
     ///
     /// The interrupt causes are implementation specific. To handle the interrupt,
@@ -169,22 +202,32 @@ impl BusAdapter {
         self.with_usb_mut(|usb| usb.enable_zlt(ep_addr));
     }
 
-    /// Interrupt-safe, immutable access to the USB peripheral
+    /// Immutable access to the USB peripheral
     fn with_usb<R>(&self, func: impl FnOnce(&Driver) -> R) -> R {
-        interrupt::free(|cs| {
+        let with_cs = |cs: &'_ _| {
             let usb = self.usb.borrow(cs);
             let usb = usb.borrow();
             func(&usb)
-        })
+        };
+        if let Some(cs) = &self.cs {
+            with_cs(cs)
+        } else {
+            interrupt::free(with_cs)
+        }
     }
 
-    /// Interrupt-safe, mutable access to the USB peripheral
+    /// Mutable access to the USB peripheral
     fn with_usb_mut<R>(&self, func: impl FnOnce(&mut Driver) -> R) -> R {
-        interrupt::free(|cs| {
+        let with_cs = |cs: &'_ _| {
             let usb = self.usb.borrow(cs);
             let mut usb = usb.borrow_mut();
             func(&mut usb)
-        })
+        };
+        if let Some(cs) = &self.cs {
+            with_cs(cs)
+        } else {
+            interrupt::free(with_cs)
+        }
     }
 
     /// Apply device configurations, and perform other post-configuration actions
@@ -218,6 +261,18 @@ impl BusAdapter {
     ) -> R {
         let usb = self.usb.borrow(cs);
         usb.borrow_mut().gpt_mut(instance, func)
+    }
+
+    /// Acquire one of the GPT timer instances.
+    ///
+    /// `instance` identifies which GPT instance you're accessing.
+    ///
+    /// # Panics
+    ///
+    /// Panics if the GPT instance is already borrowed. This could happen
+    /// if you call `borrow_gpt` again within the `func` callback.
+    pub fn gpt_mut<R>(&self, instance: gpt::Instance, func: impl FnOnce(&mut gpt::Gpt) -> R) -> R {
+        self.with_usb_mut(|usb| usb.gpt_mut(instance, func))
     }
 }
 
