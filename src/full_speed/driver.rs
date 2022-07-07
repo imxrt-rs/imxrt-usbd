@@ -409,18 +409,21 @@ impl FullSpeed {
     /// Poll for reset or USB traffic
     pub fn poll(&mut self) -> PollResult {
         let usbsts = ral::read_reg!(ral::usb, self.usb, USBSTS);
-        ral::write_reg!(ral::usb, self.usb, USBSTS, usbsts);
-
         use ral::usb::USBSTS;
+
         if usbsts & USBSTS::URI::mask != 0 {
+            ral::write_reg!(ral::usb, self.usb, USBSTS, URI: 1);
             return PollResult::Reset;
         }
 
         if usbsts & USBSTS::PCI::mask != 0 {
+            ral::write_reg!(ral::usb, self.usb, USBSTS, PCI: 1);
             self.initialize_endpoints();
         }
 
         if usbsts & USBSTS::UI::mask != 0 {
+            ral::write_reg!(ral::usb, self.usb, USBSTS, UI: 1);
+
             trace!(
                 "{:X} {:X}",
                 ral::read_reg!(ral::usb, self.usb, ENDPTSETUPSTAT),
