@@ -110,8 +110,11 @@ impl FullSpeed {
         ral::write_reg!(ral::usbphy, self.phy, CTRL_CLR, CLKGATE: 1);
         ral::write_reg!(ral::usbphy, self.phy, PWD, 0);
 
-        ral::modify_reg!(ral::usb, self.usb, USBCMD, RST: 1);
+        ral::write_reg!(ral::usb, self.usb, USBCMD, RST: 1);
         while ral::read_reg!(ral::usb, self.usb, USBCMD, RST == 1) {}
+        // ITC is reset to some non-immediate value. Use the 'immediate' value by default.
+        // (Note: this also zeros all other USBCMD fields.)
+        ral::write_reg!(ral::usb, self.usb, USBCMD, ITC: 0);
 
         ral::write_reg!(ral::usb, self.usb, USBMODE, CM: CM_2, SLOM: 1);
 
@@ -151,8 +154,7 @@ impl FullSpeed {
     }
 
     pub fn attach(&mut self) {
-        // Using a write to set RST high, and to clear ITC field
-        ral::write_reg!(ral::usb, self.usb, USBCMD, RS: 1);
+        ral::modify_reg!(ral::usb, self.usb, USBCMD, RS: 1);
     }
 
     pub fn bus_reset(&mut self) {
