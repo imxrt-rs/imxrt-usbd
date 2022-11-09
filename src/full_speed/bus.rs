@@ -119,7 +119,7 @@ impl BusAdapter {
         interrupt::free(|cs| {
             let usb = self.usb.borrow(cs);
             let usb = usb.borrow();
-            func(&*usb)
+            func(&usb)
         })
     }
 
@@ -128,7 +128,7 @@ impl BusAdapter {
         interrupt::free(|cs| {
             let usb = self.usb.borrow(cs);
             let mut usb = usb.borrow_mut();
-            func(&mut *usb)
+            func(&mut usb)
         })
     }
 
@@ -232,6 +232,8 @@ impl UsbBus for BusAdapter {
                 return Err(usb_device::UsbError::InvalidEndpoint);
             }
 
+            // Keep map_err if warn! is compiled out.
+            #[allow(clippy::map_identity)]
             let written = if ep_addr.index() == 0 {
                 usb.ctrl0_write(buf)
             } else {
@@ -257,6 +259,8 @@ impl UsbBus for BusAdapter {
                 return Err(usb_device::UsbError::InvalidEndpoint);
             }
 
+            // Keep map_err if warn! is compiled out.
+            #[allow(clippy::map_identity)]
             let read = if ep_addr.index() == 0 {
                 usb.ctrl0_read(buf)
             } else {
