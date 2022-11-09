@@ -1,1 +1,1 @@
-initSidebarItems({"struct":[["BusAdapter","A `UsbBus` implementation"]]});
+window.SIDEBAR_ITEMS = {"struct":[["BusAdapter","A `UsbBus` implementation"]]};

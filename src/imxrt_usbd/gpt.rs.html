@@ -1,102 +1,102 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `src&#x2F;gpt.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>gpt.rs - source</title><link rel="stylesheet" type="text/css" href="../../normalize.css"><link rel="stylesheet" type="text/css" href="../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../light.css"  id="themeStyle"><link rel="stylesheet" type="text/css" href="../../dark.css" disabled ><link rel="stylesheet" type="text/css" href="../../ayu.css" disabled ><script id="default-settings" ></script><script src="../../storage.js"></script><script src="../../crates.js"></script><noscript><link rel="stylesheet" href="../../noscript.css"></noscript><link rel="alternate icon" type="image/png" href="../../favicon-16x16.png"><link rel="alternate icon" type="image/png" href="../../favicon-32x32.png"><link rel="icon" type="image/svg+xml" href="../../favicon.svg"><style type="text/css">#crate-search{background-image:url("../../down-arrow.svg");}</style></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="sidebar-menu" role="button">&#9776;</div><a href='../../imxrt_usbd/index.html'><div class='logo-container rust-logo'><img src='../../rust-logo.png' alt='logo'></div></a></nav><div class="theme-picker"><button id="theme-picker" aria-label="Pick another theme!" aria-haspopup="menu" title="themes"><img width="18" height="18" alt="Pick another theme!" src="../../brush.svg"></button><div id="theme-choices" role="menu"></div></div><nav class="sub"><form class="search-form"><div class="search-container"><div><select id="crate-search"><option value="All crates">All crates</option></select><input class="search-input" name="search" disabled autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"></div><button type="button" id="help-button" title="help">?</button><a id="settings-menu" href="../../settings.html" title="settings"><img width="18" height="18" alt="Change settings" src="../../wheel.svg"></a></div></form></nav><section id="main" class="content"><div class="example-wrap"><pre class="line-numbers"><span id="1">  1</span>
-<span id="2">  2</span>
-<span id="3">  3</span>
-<span id="4">  4</span>
-<span id="5">  5</span>
-<span id="6">  6</span>
-<span id="7">  7</span>
-<span id="8">  8</span>
-<span id="9">  9</span>
-<span id="10"> 10</span>
-<span id="11"> 11</span>
-<span id="12"> 12</span>
-<span id="13"> 13</span>
-<span id="14"> 14</span>
-<span id="15"> 15</span>
-<span id="16"> 16</span>
-<span id="17"> 17</span>
-<span id="18"> 18</span>
-<span id="19"> 19</span>
-<span id="20"> 20</span>
-<span id="21"> 21</span>
-<span id="22"> 22</span>
-<span id="23"> 23</span>
-<span id="24"> 24</span>
-<span id="25"> 25</span>
-<span id="26"> 26</span>
-<span id="27"> 27</span>
-<span id="28"> 28</span>
-<span id="29"> 29</span>
-<span id="30"> 30</span>
-<span id="31"> 31</span>
-<span id="32"> 32</span>
-<span id="33"> 33</span>
-<span id="34"> 34</span>
-<span id="35"> 35</span>
-<span id="36"> 36</span>
-<span id="37"> 37</span>
-<span id="38"> 38</span>
-<span id="39"> 39</span>
-<span id="40"> 40</span>
-<span id="41"> 41</span>
-<span id="42"> 42</span>
-<span id="43"> 43</span>
-<span id="44"> 44</span>
-<span id="45"> 45</span>
-<span id="46"> 46</span>
-<span id="47"> 47</span>
-<span id="48"> 48</span>
-<span id="49"> 49</span>
-<span id="50"> 50</span>
-<span id="51"> 51</span>
-<span id="52"> 52</span>
-<span id="53"> 53</span>
-<span id="54"> 54</span>
-<span id="55"> 55</span>
-<span id="56"> 56</span>
-<span id="57"> 57</span>
-<span id="58"> 58</span>
-<span id="59"> 59</span>
-<span id="60"> 60</span>
-<span id="61"> 61</span>
-<span id="62"> 62</span>
-<span id="63"> 63</span>
-<span id="64"> 64</span>
-<span id="65"> 65</span>
-<span id="66"> 66</span>
-<span id="67"> 67</span>
-<span id="68"> 68</span>
-<span id="69"> 69</span>
-<span id="70"> 70</span>
-<span id="71"> 71</span>
-<span id="72"> 72</span>
-<span id="73"> 73</span>
-<span id="74"> 74</span>
-<span id="75"> 75</span>
-<span id="76"> 76</span>
-<span id="77"> 77</span>
-<span id="78"> 78</span>
-<span id="79"> 79</span>
-<span id="80"> 80</span>
-<span id="81"> 81</span>
-<span id="82"> 82</span>
-<span id="83"> 83</span>
-<span id="84"> 84</span>
-<span id="85"> 85</span>
-<span id="86"> 86</span>
-<span id="87"> 87</span>
-<span id="88"> 88</span>
-<span id="89"> 89</span>
-<span id="90"> 90</span>
-<span id="91"> 91</span>
-<span id="92"> 92</span>
-<span id="93"> 93</span>
-<span id="94"> 94</span>
-<span id="95"> 95</span>
-<span id="96"> 96</span>
-<span id="97"> 97</span>
-<span id="98"> 98</span>
-<span id="99"> 99</span>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `src/gpt.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>gpt.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceSerif4-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../FiraSans-Regular.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../FiraSans-Medium.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceCodePro-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceSerif4-Bold.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceCodePro-Semibold.ttf.woff2"><link rel="stylesheet" href="../../normalize.css"><link rel="stylesheet" href="../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" href="../../ayu.css" disabled><link rel="stylesheet" href="../../dark.css" disabled><link rel="stylesheet" href="../../light.css" id="themeStyle"><script id="default-settings" ></script><script src="../../storage.js"></script><script defer src="../../source-script.js"></script><script defer src="../../source-files.js"></script><script defer src="../../main.js"></script><noscript><link rel="stylesheet" href="../../noscript.css"></noscript><link rel="alternate icon" type="image/png" href="../../favicon-16x16.png"><link rel="alternate icon" type="image/png" href="../../favicon-32x32.png"><link rel="icon" type="image/svg+xml" href="../../favicon.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="mobile-topbar"><button class="sidebar-menu-toggle">&#9776;</button><a class="sidebar-logo" href="../../imxrt_usbd/index.html"><div class="logo-container"><img class="rust-logo" src="../../rust-logo.svg" alt="logo"></div></a><h2 class="location"></h2></nav><nav class="sidebar"><a class="sidebar-logo" href="../../imxrt_usbd/index.html"><div class="logo-container"><img class="rust-logo" src="../../rust-logo.svg" alt="logo"></div></a></nav><main><div class="width-limiter"><div class="sub-container"><a class="sub-logo-container" href="../../imxrt_usbd/index.html"><img class="rust-logo" src="../../rust-logo.svg" alt="logo"></a><nav class="sub"><form class="search-form"><div class="search-container"><span></span><input class="search-input" name="search" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><button type="button">?</button></div><div id="settings-menu" tabindex="-1"><a href="../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../wheel.svg"></a></div></div></form></nav></div><section id="main-content" class="content"><div class="example-wrap"><pre class="line-numbers"><span id="1">1</span>
+<span id="2">2</span>
+<span id="3">3</span>
+<span id="4">4</span>
+<span id="5">5</span>
+<span id="6">6</span>
+<span id="7">7</span>
+<span id="8">8</span>
+<span id="9">9</span>
+<span id="10">10</span>
+<span id="11">11</span>
+<span id="12">12</span>
+<span id="13">13</span>
+<span id="14">14</span>
+<span id="15">15</span>
+<span id="16">16</span>
+<span id="17">17</span>
+<span id="18">18</span>
+<span id="19">19</span>
+<span id="20">20</span>
+<span id="21">21</span>
+<span id="22">22</span>
+<span id="23">23</span>
+<span id="24">24</span>
+<span id="25">25</span>
+<span id="26">26</span>
+<span id="27">27</span>
+<span id="28">28</span>
+<span id="29">29</span>
+<span id="30">30</span>
+<span id="31">31</span>
+<span id="32">32</span>
+<span id="33">33</span>
+<span id="34">34</span>
+<span id="35">35</span>
+<span id="36">36</span>
+<span id="37">37</span>
+<span id="38">38</span>
+<span id="39">39</span>
+<span id="40">40</span>
+<span id="41">41</span>
+<span id="42">42</span>
+<span id="43">43</span>
+<span id="44">44</span>
+<span id="45">45</span>
+<span id="46">46</span>
+<span id="47">47</span>
+<span id="48">48</span>
+<span id="49">49</span>
+<span id="50">50</span>
+<span id="51">51</span>
+<span id="52">52</span>
+<span id="53">53</span>
+<span id="54">54</span>
+<span id="55">55</span>
+<span id="56">56</span>
+<span id="57">57</span>
+<span id="58">58</span>
+<span id="59">59</span>
+<span id="60">60</span>
+<span id="61">61</span>
+<span id="62">62</span>
+<span id="63">63</span>
+<span id="64">64</span>
+<span id="65">65</span>
+<span id="66">66</span>
+<span id="67">67</span>
+<span id="68">68</span>
+<span id="69">69</span>
+<span id="70">70</span>
+<span id="71">71</span>
+<span id="72">72</span>
+<span id="73">73</span>
+<span id="74">74</span>
+<span id="75">75</span>
+<span id="76">76</span>
+<span id="77">77</span>
+<span id="78">78</span>
+<span id="79">79</span>
+<span id="80">80</span>
+<span id="81">81</span>
+<span id="82">82</span>
+<span id="83">83</span>
+<span id="84">84</span>
+<span id="85">85</span>
+<span id="86">86</span>
+<span id="87">87</span>
+<span id="88">88</span>
+<span id="89">89</span>
+<span id="90">90</span>
+<span id="91">91</span>
+<span id="92">92</span>
+<span id="93">93</span>
+<span id="94">94</span>
+<span id="95">95</span>
+<span id="96">96</span>
+<span id="97">97</span>
+<span id="98">98</span>
+<span id="99">99</span>
 <span id="100">100</span>
 <span id="101">101</span>
 <span id="102">102</span>
@@ -252,261 +252,259 @@
 <span id="252">252</span>
 <span id="253">253</span>
 <span id="254">254</span>
-</pre><pre class="rust"><code><span class="doccomment">//! USB general purpose timers.</span>
-<span class="doccomment">//!</span>
-<span class="doccomment">//! Each USB OTG peripheral has two general purpose timers (GPT). You can access</span>
-<span class="doccomment">//! GPTs through your USB driver.</span>
-<span class="doccomment">//!</span>
-<span class="doccomment">//! # Example</span>
-<span class="doccomment">//!</span>
-<span class="doccomment">//! This example shows how to access a GPT through the</span>
-<span class="doccomment">//! [`full_speed::BusAdapter`](crate::full_speed::BusAdapter) API. The example skips</span>
-<span class="doccomment">//! the bus adapter and USB device setup in order to focus on the GPT API. See the bus</span>
-<span class="doccomment">//! adapter documentation for more information.</span>
-<span class="doccomment">//!</span>
-<span class="doccomment">//! ```no_run</span>
-<span class="doccomment">//! use imxrt_usbd::full_speed::BusAdapter;</span>
-<span class="doccomment">//! use imxrt_usbd::gpt;</span>
-<span class="doccomment">//!</span>
-<span class="doccomment">//! # struct Ps; use imxrt_usbd::Instance as Inst;</span>
-<span class="doccomment">//! # unsafe impl imxrt_usbd::Peripherals for Ps { fn instance(&amp;self) -&gt; Inst { panic!() } }</span>
-<span class="doccomment">//! # static mut ENDPOINT_MEMORY: [u8; 1024] = [0; 1024];</span>
-<span class="doccomment">//!</span>
-<span class="doccomment">//! # let my_usb_peripherals = // Your Peripherals instance...</span>
-<span class="doccomment">//! #   Ps;</span>
-<span class="doccomment">//! let bus_adapter = BusAdapter::new(</span>
-<span class="doccomment">//!     // ...</span>
-<span class="doccomment">//! #    my_usb_peripherals,</span>
-<span class="doccomment">//! #    unsafe { &amp;mut ENDPOINT_MEMORY }</span>
-<span class="doccomment">//! );</span>
-<span class="doccomment">//!</span>
-<span class="doccomment">//! // Prepare a GPT before creating a USB device</span>
-<span class="doccomment">//! # let cs = unsafe { &amp;cortex_m::interrupt::CriticalSection::new() };</span>
-<span class="doccomment">//! // Note: borrow_cpt requires a critical section. See the docs for</span>
-<span class="doccomment">//! // more information.</span>
-<span class="doccomment">//! bus_adapter.borrow_gpt(cs, gpt::Instance::Gpt0, |gpt| {</span>
-<span class="doccomment">//!     gpt.stop(); // Stop the timer, just in case it&#39;s already running...</span>
-<span class="doccomment">//!     gpt.clear_elapsed(); // Clear any outstanding elapsed flags</span>
-<span class="doccomment">//!     gpt.set_interrupt_enabled(false); // Enable or disable interrupts</span>
-<span class="doccomment">//!     gpt.set_load(75_000); // Elapse after 75ms (75000us)</span>
-<span class="doccomment">//!     gpt.set_mode(gpt::Mode::Repeat); // Repeat the timer after it elapses</span>
-<span class="doccomment">//!     gpt.reset(); // Load the value into the counter</span>
-<span class="doccomment">//! });</span>
-<span class="doccomment">//! // The timer isn&#39;t running until you call run()...</span>
-<span class="doccomment">//!</span>
-<span class="doccomment">//! # use usb_device::prelude::*;</span>
-<span class="doccomment">//! let bus_allocator = usb_device::bus::UsbBusAllocator::new(bus_adapter);</span>
-<span class="doccomment">//!</span>
-<span class="doccomment">//! let mut device = UsbDeviceBuilder::new(&amp;bus_allocator, UsbVidPid(0x5824, 0x27dd))</span>
-<span class="doccomment">//!     .product(&quot;imxrt-usbd&quot;)</span>
-<span class="doccomment">//!     .build();</span>
-<span class="doccomment">//!</span>
-<span class="doccomment">//! // You can still access the timer through the bus() method on</span>
-<span class="doccomment">//! // the USB device.</span>
-<span class="doccomment">//! device.bus().borrow_gpt(cs, gpt::Instance::Gpt0, |gpt| gpt.run()); // Timer running!</span>
-<span class="doccomment">//!</span>
-<span class="doccomment">//! loop {</span>
-<span class="doccomment">//!     device.bus().borrow_gpt(cs, gpt::Instance::Gpt0, |gpt| {</span>
-<span class="doccomment">//!         if gpt.is_elapsed() {</span>
-<span class="doccomment">//!             gpt.clear_elapsed();</span>
-<span class="doccomment">//!             // Timer elapsed!</span>
-<span class="doccomment">//!</span>
-<span class="doccomment">//!             // If your mode is Mode::OneShot, you will need</span>
-<span class="doccomment">//!             // to call reset() to re-enable the timer. You also</span>
-<span class="doccomment">//!             // need to call reset() whenever you change the timer</span>
-<span class="doccomment">//!             // load value.</span>
-<span class="doccomment">//!         }</span>
-<span class="doccomment">//!     });</span>
-<span class="doccomment">//! }</span>
-<span class="doccomment">//! ```</span>
+</pre><pre class="rust"><code><span class="doccomment">//! USB general purpose timers.
+//!
+//! Each USB OTG peripheral has two general purpose timers (GPT). You can access
+//! GPTs through your USB driver.
+//!
+//! # Example
+//!
+//! This example shows how to access a GPT through the
+//! [`full_speed::BusAdapter`](crate::full_speed::BusAdapter) API. The example skips
+//! the bus adapter and USB device setup in order to focus on the GPT API. See the bus
+//! adapter documentation for more information.
+//!
+//! ```no_run
+//! use imxrt_usbd::full_speed::BusAdapter;
+//! use imxrt_usbd::gpt;
+//!
+//! # struct Ps; use imxrt_usbd::Instance as Inst;
+//! # unsafe impl imxrt_usbd::Peripherals for Ps { fn instance(&amp;self) -&gt; Inst { panic!() } }
+//! # static mut ENDPOINT_MEMORY: [u8; 1024] = [0; 1024];
+//!
+//! # let my_usb_peripherals = // Your Peripherals instance...
+//! #   Ps;
+//! let bus_adapter = BusAdapter::new(
+//!     // ...
+//! #    my_usb_peripherals,
+//! #    unsafe { &amp;mut ENDPOINT_MEMORY }
+//! );
+//!
+//! // Prepare a GPT before creating a USB device
+//! # let cs = unsafe { &amp;cortex_m::interrupt::CriticalSection::new() };
+//! // Note: borrow_cpt requires a critical section. See the docs for
+//! // more information.
+//! bus_adapter.borrow_gpt(cs, gpt::Instance::Gpt0, |gpt| {
+//!     gpt.stop(); // Stop the timer, just in case it&#39;s already running...
+//!     gpt.clear_elapsed(); // Clear any outstanding elapsed flags
+//!     gpt.set_interrupt_enabled(false); // Enable or disable interrupts
+//!     gpt.set_load(75_000); // Elapse after 75ms (75000us)
+//!     gpt.set_mode(gpt::Mode::Repeat); // Repeat the timer after it elapses
+//!     gpt.reset(); // Load the value into the counter
+//! });
+//! // The timer isn&#39;t running until you call run()...
+//!
+//! # use usb_device::prelude::*;
+//! let bus_allocator = usb_device::bus::UsbBusAllocator::new(bus_adapter);
+//!
+//! let mut device = UsbDeviceBuilder::new(&amp;bus_allocator, UsbVidPid(0x5824, 0x27dd))
+//!     .product(&quot;imxrt-usbd&quot;)
+//!     .build();
+//!
+//! // You can still access the timer through the bus() method on
+//! // the USB device.
+//! device.bus().borrow_gpt(cs, gpt::Instance::Gpt0, |gpt| gpt.run()); // Timer running!
+//!
+//! loop {
+//!     device.bus().borrow_gpt(cs, gpt::Instance::Gpt0, |gpt| {
+//!         if gpt.is_elapsed() {
+//!             gpt.clear_elapsed();
+//!             // Timer elapsed!
+//!
+//!             // If your mode is Mode::OneShot, you will need
+//!             // to call reset() to re-enable the timer. You also
+//!             // need to call reset() whenever you change the timer
+//!             // load value.
+//!         }
+//!     });
+//! }
+//! ```
 
-<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::ral</span>;
+</span><span class="kw">use </span><span class="kw">crate</span>::ral;
 
-<span class="doccomment">/// GPT timer mode.</span>
-<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Debug</span>, <span class="ident">Clone</span>, <span class="ident">Copy</span>, <span class="ident">PartialEq</span>, <span class="ident">Eq</span>)]</span>
-<span class="attribute">#[<span class="ident">repr</span>(<span class="ident">u32</span>)]</span>
-<span class="kw">pub</span> <span class="kw">enum</span> <span class="ident">Mode</span> {
-    <span class="doccomment">/// In one shot mode, the timer will count down to zero, generate an interrupt,</span>
-    <span class="doccomment">/// and stop until the counter is reset by software.</span>
-    <span class="ident">OneShot</span> <span class="op">=</span> <span class="number">0</span>,
-    <span class="doccomment">/// In repeat mode, the timer will count down to zero, generate an interrupt and</span>
-    <span class="doccomment">/// automatically reload the counter value to start again.</span>
-    <span class="ident">Repeat</span> <span class="op">=</span> <span class="number">1</span>,
+<span class="doccomment">/// GPT timer mode.
+</span><span class="attribute">#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[repr(u32)]
+</span><span class="kw">pub enum </span>Mode {
+    <span class="doccomment">/// In one shot mode, the timer will count down to zero, generate an interrupt,
+    /// and stop until the counter is reset by software.
+    </span>OneShot = <span class="number">0</span>,
+    <span class="doccomment">/// In repeat mode, the timer will count down to zero, generate an interrupt and
+    /// automatically reload the counter value to start again.
+    </span>Repeat = <span class="number">1</span>,
 }
 
-<span class="doccomment">/// GPT instance identifiers.</span>
-<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Debug</span>, <span class="ident">Clone</span>, <span class="ident">Copy</span>, <span class="ident">PartialEq</span>, <span class="ident">Eq</span>)]</span>
-<span class="attribute">#[<span class="ident">repr</span>(<span class="ident">u32</span>)]</span>
-<span class="kw">pub</span> <span class="kw">enum</span> <span class="ident">Instance</span> {
-    <span class="doccomment">/// The GPT0 timer instance.</span>
-    <span class="ident">Gpt0</span>,
-    <span class="doccomment">/// The GPT1 timer instance.</span>
-    <span class="ident">Gpt1</span>,
+<span class="doccomment">/// GPT instance identifiers.
+</span><span class="attribute">#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[repr(u32)]
+</span><span class="kw">pub enum </span>Instance {
+    <span class="doccomment">/// The GPT0 timer instance.
+    </span>Gpt0,
+    <span class="doccomment">/// The GPT1 timer instance.
+    </span>Gpt1,
 }
 
-<span class="doccomment">/// General purpose timer (GPT).</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// USB GPTs have a 1us resolution. The counter is 24 bits wide. GPTs can generate</span>
-<span class="doccomment">/// USB interrupts that are independent of USB protocol interrupts. This lets you</span>
-<span class="doccomment">/// add additional, time-driven logic into your USB ISR and driver state machine.</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// See the module-level documentation for an example.</span>
-<span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">Gpt</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span> {
-    <span class="doccomment">/// Borrow of USB registers from a peripheral</span>
-    <span class="ident">usb</span>: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a</span> <span class="kw-2">mut</span> <span class="ident">ral::usb::Instance</span>,
-    <span class="doccomment">/// GPT instance</span>
-    <span class="ident">gpt</span>: <span class="ident">Instance</span>,
+<span class="doccomment">/// General purpose timer (GPT).
+///
+/// USB GPTs have a 1us resolution. The counter is 24 bits wide. GPTs can generate
+/// USB interrupts that are independent of USB protocol interrupts. This lets you
+/// add additional, time-driven logic into your USB ISR and driver state machine.
+///
+/// See the module-level documentation for an example.
+</span><span class="kw">pub struct </span>Gpt&lt;<span class="lifetime">&#39;a</span>&gt; {
+    <span class="doccomment">/// Borrow of USB registers from a peripheral
+    </span>usb: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span><span class="kw-2">mut </span>ral::usb::Instance,
+    <span class="doccomment">/// GPT instance
+    </span>gpt: Instance,
 }
 
-<span class="kw">impl</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span> <span class="ident">Gpt</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span> {
-    <span class="doccomment">/// Create a GPT instance over the USB core registers.</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// *Why take a mutable reference?* The mutable reference prevents you from</span>
-    <span class="doccomment">/// creating two GPTs that alias the same GPT instance.</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// *Why not `pub`?* The `ral::usb::Instance` isn&#39;t compatible with the</span>
-    <span class="doccomment">/// `imxrt_ral::usb::Instance` type, since we&#39;re duplicating the RAL module</span>
-    <span class="doccomment">/// in our package. Since that type isn&#39;t exposed outside of this crate, no</span>
-    <span class="doccomment">/// one could create this `Gpt`, anyway.</span>
-    <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn</span> <span class="ident">new</span>(<span class="ident">usb</span>: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a</span> <span class="kw-2">mut</span> <span class="ident">ral::usb::Instance</span>, <span class="ident">gpt</span>: <span class="ident">Instance</span>) -&gt; <span class="self">Self</span> {
-        <span class="self">Self</span> { <span class="ident">usb</span>, <span class="ident">gpt</span> }
+<span class="kw">impl</span>&lt;<span class="lifetime">&#39;a</span>&gt; Gpt&lt;<span class="lifetime">&#39;a</span>&gt; {
+    <span class="doccomment">/// Create a GPT instance over the USB core registers.
+    ///
+    /// *Why take a mutable reference?* The mutable reference prevents you from
+    /// creating two GPTs that alias the same GPT instance.
+    ///
+    /// *Why not `pub`?* The `ral::usb::Instance` isn&#39;t compatible with the
+    /// `imxrt_ral::usb::Instance` type, since we&#39;re duplicating the RAL module
+    /// in our package. Since that type isn&#39;t exposed outside of this crate, no
+    /// one could create this `Gpt`, anyway.
+    </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>new(usb: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span><span class="kw-2">mut </span>ral::usb::Instance, gpt: Instance) -&gt; <span class="self">Self </span>{
+        <span class="self">Self </span>{ usb, gpt }
     }
 
-    <span class="doccomment">/// Returns the GPT instance identifier.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">instance</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="ident">Instance</span> {
-        <span class="self">self</span>.<span class="ident">gpt</span>
+    <span class="doccomment">/// Returns the GPT instance identifier.
+    </span><span class="kw">pub fn </span>instance(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; Instance {
+        <span class="self">self</span>.gpt
     }
 
-    <span class="doccomment">/// Run the GPT timer.</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// Run will start counting down the timer. Use `stop()` to cancel a running timer.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">run</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>) {
-        <span class="kw">match</span> <span class="self">self</span>.<span class="ident">gpt</span> {
-            <span class="ident">Instance::Gpt0</span> =&gt; <span class="macro">ral::modify_reg!</span>(<span class="ident">ral::usb</span>, <span class="self">self</span>.<span class="ident">usb</span>, <span class="ident">GPTIMER0CTRL</span>, <span class="ident">GPTRUN</span>: <span class="number">1</span>),
-            <span class="ident">Instance::Gpt1</span> =&gt; <span class="macro">ral::modify_reg!</span>(<span class="ident">ral::usb</span>, <span class="self">self</span>.<span class="ident">usb</span>, <span class="ident">GPTIMER1CTRL</span>, <span class="ident">GPTRUN</span>: <span class="number">1</span>),
+    <span class="doccomment">/// Run the GPT timer.
+    ///
+    /// Run will start counting down the timer. Use `stop()` to cancel a running timer.
+    </span><span class="kw">pub fn </span>run(<span class="kw-2">&amp;mut </span><span class="self">self</span>) {
+        <span class="kw">match </span><span class="self">self</span>.gpt {
+            Instance::Gpt0 =&gt; <span class="macro">ral::modify_reg!</span>(ral::usb, <span class="self">self</span>.usb, GPTIMER0CTRL, GPTRUN: <span class="number">1</span>),
+            Instance::Gpt1 =&gt; <span class="macro">ral::modify_reg!</span>(ral::usb, <span class="self">self</span>.usb, GPTIMER1CTRL, GPTRUN: <span class="number">1</span>),
         }
     }
 
-    <span class="doccomment">/// Indicates if the timer is running (`true`) or stopped (`false`).</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">is_running</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="ident">bool</span> {
-        <span class="kw">match</span> <span class="self">self</span>.<span class="ident">gpt</span> {
-            <span class="ident">Instance::Gpt0</span> =&gt; <span class="macro">ral::read_reg!</span>(<span class="ident">ral::usb</span>, <span class="self">self</span>.<span class="ident">usb</span>, <span class="ident">GPTIMER0CTRL</span>, <span class="ident">GPTRUN</span> <span class="op">==</span> <span class="number">1</span>),
-            <span class="ident">Instance::Gpt1</span> =&gt; <span class="macro">ral::read_reg!</span>(<span class="ident">ral::usb</span>, <span class="self">self</span>.<span class="ident">usb</span>, <span class="ident">GPTIMER1CTRL</span>, <span class="ident">GPTRUN</span> <span class="op">==</span> <span class="number">1</span>),
+    <span class="doccomment">/// Indicates if the timer is running (`true`) or stopped (`false`).
+    </span><span class="kw">pub fn </span>is_running(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; bool {
+        <span class="kw">match </span><span class="self">self</span>.gpt {
+            Instance::Gpt0 =&gt; <span class="macro">ral::read_reg!</span>(ral::usb, <span class="self">self</span>.usb, GPTIMER0CTRL, GPTRUN == <span class="number">1</span>),
+            Instance::Gpt1 =&gt; <span class="macro">ral::read_reg!</span>(ral::usb, <span class="self">self</span>.usb, GPTIMER1CTRL, GPTRUN == <span class="number">1</span>),
         }
     }
 
-    <span class="doccomment">/// Stop the timer.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">stop</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>) {
-        <span class="kw">match</span> <span class="self">self</span>.<span class="ident">gpt</span> {
-            <span class="ident">Instance::Gpt0</span> =&gt; <span class="macro">ral::modify_reg!</span>(<span class="ident">ral::usb</span>, <span class="self">self</span>.<span class="ident">usb</span>, <span class="ident">GPTIMER0CTRL</span>, <span class="ident">GPTRUN</span>: <span class="number">0</span>),
-            <span class="ident">Instance::Gpt1</span> =&gt; <span class="macro">ral::modify_reg!</span>(<span class="ident">ral::usb</span>, <span class="self">self</span>.<span class="ident">usb</span>, <span class="ident">GPTIMER1CTRL</span>, <span class="ident">GPTRUN</span>: <span class="number">0</span>),
+    <span class="doccomment">/// Stop the timer.
+    </span><span class="kw">pub fn </span>stop(<span class="kw-2">&amp;mut </span><span class="self">self</span>) {
+        <span class="kw">match </span><span class="self">self</span>.gpt {
+            Instance::Gpt0 =&gt; <span class="macro">ral::modify_reg!</span>(ral::usb, <span class="self">self</span>.usb, GPTIMER0CTRL, GPTRUN: <span class="number">0</span>),
+            Instance::Gpt1 =&gt; <span class="macro">ral::modify_reg!</span>(ral::usb, <span class="self">self</span>.usb, GPTIMER1CTRL, GPTRUN: <span class="number">0</span>),
         }
     }
 
-    <span class="doccomment">/// Reset the timer.</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// `reset` loads the counter value. It does not stop a running counter.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">reset</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>) {
-        <span class="kw">match</span> <span class="self">self</span>.<span class="ident">gpt</span> {
-            <span class="ident">Instance::Gpt0</span> =&gt; <span class="macro">ral::modify_reg!</span>(<span class="ident">ral::usb</span>, <span class="self">self</span>.<span class="ident">usb</span>, <span class="ident">GPTIMER0CTRL</span>, <span class="ident">GPTRST</span>: <span class="number">1</span>),
-            <span class="ident">Instance::Gpt1</span> =&gt; <span class="macro">ral::modify_reg!</span>(<span class="ident">ral::usb</span>, <span class="self">self</span>.<span class="ident">usb</span>, <span class="ident">GPTIMER1CTRL</span>, <span class="ident">GPTRST</span>: <span class="number">1</span>),
+    <span class="doccomment">/// Reset the timer.
+    ///
+    /// `reset` loads the counter value. It does not stop a running counter.
+    </span><span class="kw">pub fn </span>reset(<span class="kw-2">&amp;mut </span><span class="self">self</span>) {
+        <span class="kw">match </span><span class="self">self</span>.gpt {
+            Instance::Gpt0 =&gt; <span class="macro">ral::modify_reg!</span>(ral::usb, <span class="self">self</span>.usb, GPTIMER0CTRL, GPTRST: <span class="number">1</span>),
+            Instance::Gpt1 =&gt; <span class="macro">ral::modify_reg!</span>(ral::usb, <span class="self">self</span>.usb, GPTIMER1CTRL, GPTRST: <span class="number">1</span>),
         }
     }
 
-    <span class="doccomment">/// Set the timer mode.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">set_mode</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>, <span class="ident">mode</span>: <span class="ident">Mode</span>) {
-        <span class="kw">match</span> <span class="self">self</span>.<span class="ident">gpt</span> {
-            <span class="ident">Instance::Gpt0</span> =&gt; {
-                <span class="macro">ral::modify_reg!</span>(<span class="ident">ral::usb</span>, <span class="self">self</span>.<span class="ident">usb</span>, <span class="ident">GPTIMER0CTRL</span>, <span class="ident">GPTMODE</span>: <span class="ident">mode</span> <span class="kw">as</span> <span class="ident">u32</span>)
+    <span class="doccomment">/// Set the timer mode.
+    </span><span class="kw">pub fn </span>set_mode(<span class="kw-2">&amp;mut </span><span class="self">self</span>, mode: Mode) {
+        <span class="kw">match </span><span class="self">self</span>.gpt {
+            Instance::Gpt0 =&gt; {
+                <span class="macro">ral::modify_reg!</span>(ral::usb, <span class="self">self</span>.usb, GPTIMER0CTRL, GPTMODE: mode <span class="kw">as </span>u32)
             }
-            <span class="ident">Instance::Gpt1</span> =&gt; {
-                <span class="macro">ral::modify_reg!</span>(<span class="ident">ral::usb</span>, <span class="self">self</span>.<span class="ident">usb</span>, <span class="ident">GPTIMER1CTRL</span>, <span class="ident">GPTMODE</span>: <span class="ident">mode</span> <span class="kw">as</span> <span class="ident">u32</span>)
+            Instance::Gpt1 =&gt; {
+                <span class="macro">ral::modify_reg!</span>(ral::usb, <span class="self">self</span>.usb, GPTIMER1CTRL, GPTMODE: mode <span class="kw">as </span>u32)
             }
         }
     }
 
-    <span class="doccomment">/// Returns the timer mode.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">mode</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="ident">Mode</span> {
-        <span class="kw">let</span> <span class="ident">mode</span>: <span class="ident">u32</span> <span class="op">=</span> <span class="kw">match</span> <span class="self">self</span>.<span class="ident">gpt</span> {
-            <span class="ident">Instance::Gpt0</span> =&gt; {
-                <span class="macro">ral::read_reg!</span>(<span class="ident">ral::usb</span>, <span class="self">self</span>.<span class="ident">usb</span>, <span class="ident">GPTIMER0CTRL</span>, <span class="ident">GPTMODE</span>)
+    <span class="doccomment">/// Returns the timer mode.
+    </span><span class="kw">pub fn </span>mode(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; Mode {
+        <span class="kw">let </span>mode: u32 = <span class="kw">match </span><span class="self">self</span>.gpt {
+            Instance::Gpt0 =&gt; {
+                <span class="macro">ral::read_reg!</span>(ral::usb, <span class="self">self</span>.usb, GPTIMER0CTRL, GPTMODE)
             }
-            <span class="ident">Instance::Gpt1</span> =&gt; {
-                <span class="macro">ral::read_reg!</span>(<span class="ident">ral::usb</span>, <span class="self">self</span>.<span class="ident">usb</span>, <span class="ident">GPTIMER1CTRL</span>, <span class="ident">GPTMODE</span>)
+            Instance::Gpt1 =&gt; {
+                <span class="macro">ral::read_reg!</span>(ral::usb, <span class="self">self</span>.usb, GPTIMER1CTRL, GPTMODE)
             }
         };
 
-        <span class="kw">if</span> <span class="ident">mode</span> <span class="op">==</span> (<span class="ident">Mode::Repeat</span> <span class="kw">as</span> <span class="ident">u32</span>) {
-            <span class="ident">Mode::Repeat</span>
-        } <span class="kw">else</span> <span class="kw">if</span> <span class="ident">mode</span> <span class="op">==</span> (<span class="ident">Mode::OneShot</span> <span class="kw">as</span> <span class="ident">u32</span>) {
-            <span class="ident">Mode::OneShot</span>
-        } <span class="kw">else</span> {
-            <span class="comment">// All raw mode values handled</span>
-            <span class="macro">unreachable!</span>()
+        <span class="kw">if </span>mode == (Mode::Repeat <span class="kw">as </span>u32) {
+            Mode::Repeat
+        } <span class="kw">else if </span>mode == (Mode::OneShot <span class="kw">as </span>u32) {
+            Mode::OneShot
+        } <span class="kw">else </span>{
+            <span class="comment">// All raw mode values handled
+            </span><span class="macro">unreachable!</span>()
         }
     }
 
-    <span class="doccomment">/// Set the counter load value.</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// `us` is the number of microseconds to count. `us` will saturate at a 24-bit value (0xFFFFFF,</span>
-    <span class="doccomment">/// or 16.777215 seconds). A value of `0` will result in a 1us delay.</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// Note that the load count value is not loaded until the next call to `reset()` (one shot mode)</span>
-    <span class="doccomment">/// or until after the timer elapses (repeat mode).</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">set_load</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>, <span class="ident">us</span>: <span class="ident">u32</span>) {
-        <span class="kw">let</span> <span class="ident">count</span> <span class="op">=</span> <span class="ident">us</span>.<span class="ident">min</span>(<span class="number">0xFF_FFFF</span>).<span class="ident">max</span>(<span class="number">1</span>).<span class="ident">saturating_sub</span>(<span class="number">1</span>);
-        <span class="kw">match</span> <span class="self">self</span>.<span class="ident">gpt</span> {
-            <span class="ident">Instance::Gpt0</span> =&gt; <span class="macro">ral::write_reg!</span>(<span class="ident">ral::usb</span>, <span class="self">self</span>.<span class="ident">usb</span>, <span class="ident">GPTIMER0LD</span>, <span class="ident">count</span>),
-            <span class="ident">Instance::Gpt1</span> =&gt; <span class="macro">ral::write_reg!</span>(<span class="ident">ral::usb</span>, <span class="self">self</span>.<span class="ident">usb</span>, <span class="ident">GPTIMER1LD</span>, <span class="ident">count</span>),
+    <span class="doccomment">/// Set the counter load value.
+    ///
+    /// `us` is the number of microseconds to count. `us` will saturate at a 24-bit value (0xFFFFFF,
+    /// or 16.777215 seconds). A value of `0` will result in a 1us delay.
+    ///
+    /// Note that the load count value is not loaded until the next call to `reset()` (one shot mode)
+    /// or until after the timer elapses (repeat mode).
+    </span><span class="kw">pub fn </span>set_load(<span class="kw-2">&amp;mut </span><span class="self">self</span>, us: u32) {
+        <span class="kw">let </span>count = us.min(<span class="number">0xFF_FFFF</span>).max(<span class="number">1</span>).saturating_sub(<span class="number">1</span>);
+        <span class="kw">match </span><span class="self">self</span>.gpt {
+            Instance::Gpt0 =&gt; <span class="macro">ral::write_reg!</span>(ral::usb, <span class="self">self</span>.usb, GPTIMER0LD, count),
+            Instance::Gpt1 =&gt; <span class="macro">ral::write_reg!</span>(ral::usb, <span class="self">self</span>.usb, GPTIMER1LD, count),
         }
     }
 
-    <span class="doccomment">/// Returns the counter load value.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">load</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="ident">u32</span> {
-        <span class="kw">match</span> <span class="self">self</span>.<span class="ident">gpt</span> {
-            <span class="ident">Instance::Gpt0</span> =&gt; <span class="macro">ral::read_reg!</span>(<span class="ident">ral::usb</span>, <span class="self">self</span>.<span class="ident">usb</span>, <span class="ident">GPTIMER0LD</span>),
-            <span class="ident">Instance::Gpt1</span> =&gt; <span class="macro">ral::read_reg!</span>(<span class="ident">ral::usb</span>, <span class="self">self</span>.<span class="ident">usb</span>, <span class="ident">GPTIMER1LD</span>),
+    <span class="doccomment">/// Returns the counter load value.
+    </span><span class="kw">pub fn </span>load(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; u32 {
+        <span class="kw">match </span><span class="self">self</span>.gpt {
+            Instance::Gpt0 =&gt; <span class="macro">ral::read_reg!</span>(ral::usb, <span class="self">self</span>.usb, GPTIMER0LD),
+            Instance::Gpt1 =&gt; <span class="macro">ral::read_reg!</span>(ral::usb, <span class="self">self</span>.usb, GPTIMER1LD),
         }
     }
 
-    <span class="doccomment">/// Indicates if the timer has elapsed.</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// If the timer has elapsed, you should clear the elapsed flag with `clear_elapsed()`.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">is_elapsed</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="ident">bool</span> {
-        <span class="kw">match</span> <span class="self">self</span>.<span class="ident">gpt</span> {
-            <span class="ident">Instance::Gpt0</span> =&gt; <span class="macro">ral::read_reg!</span>(<span class="ident">ral::usb</span>, <span class="self">self</span>.<span class="ident">usb</span>, <span class="ident">USBSTS</span>, <span class="ident">TI0</span> <span class="op">==</span> <span class="number">1</span>),
-            <span class="ident">Instance::Gpt1</span> =&gt; <span class="macro">ral::read_reg!</span>(<span class="ident">ral::usb</span>, <span class="self">self</span>.<span class="ident">usb</span>, <span class="ident">USBSTS</span>, <span class="ident">TI1</span> <span class="op">==</span> <span class="number">1</span>),
+    <span class="doccomment">/// Indicates if the timer has elapsed.
+    ///
+    /// If the timer has elapsed, you should clear the elapsed flag with `clear_elapsed()`.
+    </span><span class="kw">pub fn </span>is_elapsed(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; bool {
+        <span class="kw">match </span><span class="self">self</span>.gpt {
+            Instance::Gpt0 =&gt; <span class="macro">ral::read_reg!</span>(ral::usb, <span class="self">self</span>.usb, USBSTS, TI0 == <span class="number">1</span>),
+            Instance::Gpt1 =&gt; <span class="macro">ral::read_reg!</span>(ral::usb, <span class="self">self</span>.usb, USBSTS, TI1 == <span class="number">1</span>),
         }
     }
 
-    <span class="doccomment">/// Clear the flag that indicates the timer has elapsed.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">clear_elapsed</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>) {
-        <span class="kw">match</span> <span class="self">self</span>.<span class="ident">gpt</span> {
-            <span class="ident">Instance::Gpt0</span> =&gt; <span class="macro">ral::modify_reg!</span>(<span class="ident">ral::usb</span>, <span class="self">self</span>.<span class="ident">usb</span>, <span class="ident">USBSTS</span>, <span class="ident">TI0</span>: <span class="number">1</span>),
-            <span class="ident">Instance::Gpt1</span> =&gt; <span class="macro">ral::modify_reg!</span>(<span class="ident">ral::usb</span>, <span class="self">self</span>.<span class="ident">usb</span>, <span class="ident">USBSTS</span>, <span class="ident">TI1</span>: <span class="number">1</span>),
+    <span class="doccomment">/// Clear the flag that indicates the timer has elapsed.
+    </span><span class="kw">pub fn </span>clear_elapsed(<span class="kw-2">&amp;mut </span><span class="self">self</span>) {
+        <span class="kw">match </span><span class="self">self</span>.gpt {
+            Instance::Gpt0 =&gt; <span class="macro">ral::modify_reg!</span>(ral::usb, <span class="self">self</span>.usb, USBSTS, TI0: <span class="number">1</span>),
+            Instance::Gpt1 =&gt; <span class="macro">ral::modify_reg!</span>(ral::usb, <span class="self">self</span>.usb, USBSTS, TI1: <span class="number">1</span>),
         }
     }
 
-    <span class="doccomment">/// Enable or disable interrupt generation when the timer elapses.</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// If enabled (`true`), an elapsed GPT will generate an interrupt. This happens regardless of the USB</span>
-    <span class="doccomment">/// interrupt enable state.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">set_interrupt_enabled</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>, <span class="ident">enable</span>: <span class="ident">bool</span>) {
-        <span class="kw">match</span> <span class="self">self</span>.<span class="ident">gpt</span> {
-            <span class="ident">Instance::Gpt0</span> =&gt; <span class="macro">ral::modify_reg!</span>(<span class="ident">ral::usb</span>, <span class="self">self</span>.<span class="ident">usb</span>, <span class="ident">USBINTR</span>, <span class="ident">TIE0</span>: <span class="ident">enable</span> <span class="kw">as</span> <span class="ident">u32</span>),
-            <span class="ident">Instance::Gpt1</span> =&gt; <span class="macro">ral::modify_reg!</span>(<span class="ident">ral::usb</span>, <span class="self">self</span>.<span class="ident">usb</span>, <span class="ident">USBINTR</span>, <span class="ident">TIE1</span>: <span class="ident">enable</span> <span class="kw">as</span> <span class="ident">u32</span>),
+    <span class="doccomment">/// Enable or disable interrupt generation when the timer elapses.
+    ///
+    /// If enabled (`true`), an elapsed GPT will generate an interrupt. This happens regardless of the USB
+    /// interrupt enable state.
+    </span><span class="kw">pub fn </span>set_interrupt_enabled(<span class="kw-2">&amp;mut </span><span class="self">self</span>, enable: bool) {
+        <span class="kw">match </span><span class="self">self</span>.gpt {
+            Instance::Gpt0 =&gt; <span class="macro">ral::modify_reg!</span>(ral::usb, <span class="self">self</span>.usb, USBINTR, TIE0: enable <span class="kw">as </span>u32),
+            Instance::Gpt1 =&gt; <span class="macro">ral::modify_reg!</span>(ral::usb, <span class="self">self</span>.usb, USBINTR, TIE1: enable <span class="kw">as </span>u32),
         }
     }
 
-    <span class="doccomment">/// Indicates if interrupt generation is enabled.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">is_interrupt_enabled</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="ident">bool</span> {
-        <span class="kw">match</span> <span class="self">self</span>.<span class="ident">gpt</span> {
-            <span class="ident">Instance::Gpt0</span> =&gt; <span class="macro">ral::read_reg!</span>(<span class="ident">ral::usb</span>, <span class="self">self</span>.<span class="ident">usb</span>, <span class="ident">USBINTR</span>, <span class="ident">TIE0</span> <span class="op">==</span> <span class="number">1</span>),
-            <span class="ident">Instance::Gpt1</span> =&gt; <span class="macro">ral::read_reg!</span>(<span class="ident">ral::usb</span>, <span class="self">self</span>.<span class="ident">usb</span>, <span class="ident">USBINTR</span>, <span class="ident">TIE1</span> <span class="op">==</span> <span class="number">1</span>),
+    <span class="doccomment">/// Indicates if interrupt generation is enabled.
+    </span><span class="kw">pub fn </span>is_interrupt_enabled(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; bool {
+        <span class="kw">match </span><span class="self">self</span>.gpt {
+            Instance::Gpt0 =&gt; <span class="macro">ral::read_reg!</span>(ral::usb, <span class="self">self</span>.usb, USBINTR, TIE0 == <span class="number">1</span>),
+            Instance::Gpt1 =&gt; <span class="macro">ral::read_reg!</span>(ral::usb, <span class="self">self</span>.usb, USBINTR, TIE1 == <span class="number">1</span>),
         }
     }
 }
 </code></pre></div>
-</section><section id="search" class="content hidden"></section><div id="rustdoc-vars" data-root-path="../../" data-current-crate="imxrt_usbd" data-search-index-js="../../search-index.js" data-search-js="../../search.js"></div>
-    <script src="../../main.js"></script><script src="../../source-script.js"></script><script src="../../source-files.js"></script>
-</body></html>
+</section></div></main><div id="rustdoc-vars" data-root-path="../../" data-current-crate="imxrt_usbd" data-themes="ayu,dark,light" data-resource-suffix="" data-rustdoc-version="1.65.0 (897e37553 2022-11-02)" ></div></body></html>

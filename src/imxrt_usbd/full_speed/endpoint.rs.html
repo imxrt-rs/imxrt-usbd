@@ -1,102 +1,102 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `src&#x2F;full_speed&#x2F;endpoint.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>endpoint.rs - source</title><link rel="stylesheet" type="text/css" href="../../../normalize.css"><link rel="stylesheet" type="text/css" href="../../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../../light.css"  id="themeStyle"><link rel="stylesheet" type="text/css" href="../../../dark.css" disabled ><link rel="stylesheet" type="text/css" href="../../../ayu.css" disabled ><script id="default-settings" ></script><script src="../../../storage.js"></script><script src="../../../crates.js"></script><noscript><link rel="stylesheet" href="../../../noscript.css"></noscript><link rel="alternate icon" type="image/png" href="../../../favicon-16x16.png"><link rel="alternate icon" type="image/png" href="../../../favicon-32x32.png"><link rel="icon" type="image/svg+xml" href="../../../favicon.svg"><style type="text/css">#crate-search{background-image:url("../../../down-arrow.svg");}</style></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="sidebar-menu" role="button">&#9776;</div><a href='../../../imxrt_usbd/index.html'><div class='logo-container rust-logo'><img src='../../../rust-logo.png' alt='logo'></div></a></nav><div class="theme-picker"><button id="theme-picker" aria-label="Pick another theme!" aria-haspopup="menu" title="themes"><img width="18" height="18" alt="Pick another theme!" src="../../../brush.svg"></button><div id="theme-choices" role="menu"></div></div><nav class="sub"><form class="search-form"><div class="search-container"><div><select id="crate-search"><option value="All crates">All crates</option></select><input class="search-input" name="search" disabled autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"></div><button type="button" id="help-button" title="help">?</button><a id="settings-menu" href="../../../settings.html" title="settings"><img width="18" height="18" alt="Change settings" src="../../../wheel.svg"></a></div></form></nav><section id="main" class="content"><div class="example-wrap"><pre class="line-numbers"><span id="1">  1</span>
-<span id="2">  2</span>
-<span id="3">  3</span>
-<span id="4">  4</span>
-<span id="5">  5</span>
-<span id="6">  6</span>
-<span id="7">  7</span>
-<span id="8">  8</span>
-<span id="9">  9</span>
-<span id="10"> 10</span>
-<span id="11"> 11</span>
-<span id="12"> 12</span>
-<span id="13"> 13</span>
-<span id="14"> 14</span>
-<span id="15"> 15</span>
-<span id="16"> 16</span>
-<span id="17"> 17</span>
-<span id="18"> 18</span>
-<span id="19"> 19</span>
-<span id="20"> 20</span>
-<span id="21"> 21</span>
-<span id="22"> 22</span>
-<span id="23"> 23</span>
-<span id="24"> 24</span>
-<span id="25"> 25</span>
-<span id="26"> 26</span>
-<span id="27"> 27</span>
-<span id="28"> 28</span>
-<span id="29"> 29</span>
-<span id="30"> 30</span>
-<span id="31"> 31</span>
-<span id="32"> 32</span>
-<span id="33"> 33</span>
-<span id="34"> 34</span>
-<span id="35"> 35</span>
-<span id="36"> 36</span>
-<span id="37"> 37</span>
-<span id="38"> 38</span>
-<span id="39"> 39</span>
-<span id="40"> 40</span>
-<span id="41"> 41</span>
-<span id="42"> 42</span>
-<span id="43"> 43</span>
-<span id="44"> 44</span>
-<span id="45"> 45</span>
-<span id="46"> 46</span>
-<span id="47"> 47</span>
-<span id="48"> 48</span>
-<span id="49"> 49</span>
-<span id="50"> 50</span>
-<span id="51"> 51</span>
-<span id="52"> 52</span>
-<span id="53"> 53</span>
-<span id="54"> 54</span>
-<span id="55"> 55</span>
-<span id="56"> 56</span>
-<span id="57"> 57</span>
-<span id="58"> 58</span>
-<span id="59"> 59</span>
-<span id="60"> 60</span>
-<span id="61"> 61</span>
-<span id="62"> 62</span>
-<span id="63"> 63</span>
-<span id="64"> 64</span>
-<span id="65"> 65</span>
-<span id="66"> 66</span>
-<span id="67"> 67</span>
-<span id="68"> 68</span>
-<span id="69"> 69</span>
-<span id="70"> 70</span>
-<span id="71"> 71</span>
-<span id="72"> 72</span>
-<span id="73"> 73</span>
-<span id="74"> 74</span>
-<span id="75"> 75</span>
-<span id="76"> 76</span>
-<span id="77"> 77</span>
-<span id="78"> 78</span>
-<span id="79"> 79</span>
-<span id="80"> 80</span>
-<span id="81"> 81</span>
-<span id="82"> 82</span>
-<span id="83"> 83</span>
-<span id="84"> 84</span>
-<span id="85"> 85</span>
-<span id="86"> 86</span>
-<span id="87"> 87</span>
-<span id="88"> 88</span>
-<span id="89"> 89</span>
-<span id="90"> 90</span>
-<span id="91"> 91</span>
-<span id="92"> 92</span>
-<span id="93"> 93</span>
-<span id="94"> 94</span>
-<span id="95"> 95</span>
-<span id="96"> 96</span>
-<span id="97"> 97</span>
-<span id="98"> 98</span>
-<span id="99"> 99</span>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `src/full_speed/endpoint.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>endpoint.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceSerif4-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../FiraSans-Regular.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../FiraSans-Medium.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceCodePro-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceSerif4-Bold.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceCodePro-Semibold.ttf.woff2"><link rel="stylesheet" href="../../../normalize.css"><link rel="stylesheet" href="../../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" href="../../../ayu.css" disabled><link rel="stylesheet" href="../../../dark.css" disabled><link rel="stylesheet" href="../../../light.css" id="themeStyle"><script id="default-settings" ></script><script src="../../../storage.js"></script><script defer src="../../../source-script.js"></script><script defer src="../../../source-files.js"></script><script defer src="../../../main.js"></script><noscript><link rel="stylesheet" href="../../../noscript.css"></noscript><link rel="alternate icon" type="image/png" href="../../../favicon-16x16.png"><link rel="alternate icon" type="image/png" href="../../../favicon-32x32.png"><link rel="icon" type="image/svg+xml" href="../../../favicon.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="mobile-topbar"><button class="sidebar-menu-toggle">&#9776;</button><a class="sidebar-logo" href="../../../imxrt_usbd/index.html"><div class="logo-container"><img class="rust-logo" src="../../../rust-logo.svg" alt="logo"></div></a><h2 class="location"></h2></nav><nav class="sidebar"><a class="sidebar-logo" href="../../../imxrt_usbd/index.html"><div class="logo-container"><img class="rust-logo" src="../../../rust-logo.svg" alt="logo"></div></a></nav><main><div class="width-limiter"><div class="sub-container"><a class="sub-logo-container" href="../../../imxrt_usbd/index.html"><img class="rust-logo" src="../../../rust-logo.svg" alt="logo"></a><nav class="sub"><form class="search-form"><div class="search-container"><span></span><input class="search-input" name="search" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><button type="button">?</button></div><div id="settings-menu" tabindex="-1"><a href="../../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../../wheel.svg"></a></div></div></form></nav></div><section id="main-content" class="content"><div class="example-wrap"><pre class="line-numbers"><span id="1">1</span>
+<span id="2">2</span>
+<span id="3">3</span>
+<span id="4">4</span>
+<span id="5">5</span>
+<span id="6">6</span>
+<span id="7">7</span>
+<span id="8">8</span>
+<span id="9">9</span>
+<span id="10">10</span>
+<span id="11">11</span>
+<span id="12">12</span>
+<span id="13">13</span>
+<span id="14">14</span>
+<span id="15">15</span>
+<span id="16">16</span>
+<span id="17">17</span>
+<span id="18">18</span>
+<span id="19">19</span>
+<span id="20">20</span>
+<span id="21">21</span>
+<span id="22">22</span>
+<span id="23">23</span>
+<span id="24">24</span>
+<span id="25">25</span>
+<span id="26">26</span>
+<span id="27">27</span>
+<span id="28">28</span>
+<span id="29">29</span>
+<span id="30">30</span>
+<span id="31">31</span>
+<span id="32">32</span>
+<span id="33">33</span>
+<span id="34">34</span>
+<span id="35">35</span>
+<span id="36">36</span>
+<span id="37">37</span>
+<span id="38">38</span>
+<span id="39">39</span>
+<span id="40">40</span>
+<span id="41">41</span>
+<span id="42">42</span>
+<span id="43">43</span>
+<span id="44">44</span>
+<span id="45">45</span>
+<span id="46">46</span>
+<span id="47">47</span>
+<span id="48">48</span>
+<span id="49">49</span>
+<span id="50">50</span>
+<span id="51">51</span>
+<span id="52">52</span>
+<span id="53">53</span>
+<span id="54">54</span>
+<span id="55">55</span>
+<span id="56">56</span>
+<span id="57">57</span>
+<span id="58">58</span>
+<span id="59">59</span>
+<span id="60">60</span>
+<span id="61">61</span>
+<span id="62">62</span>
+<span id="63">63</span>
+<span id="64">64</span>
+<span id="65">65</span>
+<span id="66">66</span>
+<span id="67">67</span>
+<span id="68">68</span>
+<span id="69">69</span>
+<span id="70">70</span>
+<span id="71">71</span>
+<span id="72">72</span>
+<span id="73">73</span>
+<span id="74">74</span>
+<span id="75">75</span>
+<span id="76">76</span>
+<span id="77">77</span>
+<span id="78">78</span>
+<span id="79">79</span>
+<span id="80">80</span>
+<span id="81">81</span>
+<span id="82">82</span>
+<span id="83">83</span>
+<span id="84">84</span>
+<span id="85">85</span>
+<span id="86">86</span>
+<span id="87">87</span>
+<span id="88">88</span>
+<span id="89">89</span>
+<span id="90">90</span>
+<span id="91">91</span>
+<span id="92">92</span>
+<span id="93">93</span>
+<span id="94">94</span>
+<span id="95">95</span>
+<span id="96">96</span>
+<span id="97">97</span>
+<span id="98">98</span>
+<span id="99">99</span>
 <span id="100">100</span>
 <span id="101">101</span>
 <span id="102">102</span>
@@ -269,278 +269,276 @@
 <span id="269">269</span>
 <span id="270">270</span>
 <span id="271">271</span>
-</pre><pre class="rust"><code><span class="doccomment">//! Full-speed endpoints</span>
-<span class="doccomment">//!</span>
-<span class="doccomment">//! Use endpoints to</span>
-<span class="doccomment">//!</span>
-<span class="doccomment">//! - read and write to endpoint memory buffers</span>
-<span class="doccomment">//! - schedule transfers</span>
-<span class="doccomment">//! - check transfer statuses</span>
-<span class="doccomment">//! - signal endpoint state to the host</span>
-<span class="doccomment">//!</span>
-<span class="doccomment">//! The endpoint &quot;owns&quot; the static QH and TD memory. These</span>
-<span class="doccomment">//! are temporarily stored in the driver behind an Option.</span>
-<span class="doccomment">//! Once allocated, the driver will move the reference into</span>
-<span class="doccomment">//! the endpoint, where it resides forever. You can use methods</span>
-<span class="doccomment">//! on the endpoint to safely access QH and TD state.</span>
-<span class="doccomment">//!</span>
-<span class="doccomment">//! The endpoints take immutable borrows of the USB instance.</span>
-<span class="doccomment">//! The contract is that, if the *Endpoint* is mutable, it&#39;s</span>
-<span class="doccomment">//! permitted to modify its own USB register (or register</span>
-<span class="doccomment">//! field). This gives us a kind of loose runtime ownership</span>
-<span class="doccomment">//! of endpoint registers, but it only works if all endpoints</span>
-<span class="doccomment">//! are owned by the same object, since we rely on carrying</span>
-<span class="doccomment">//! the mutable borrow to prevent races. That&#39;s how today&#39;s</span>
-<span class="doccomment">//! driver works.</span>
+</pre><pre class="rust"><code><span class="doccomment">//! Full-speed endpoints
+//!
+//! Use endpoints to
+//!
+//! - read and write to endpoint memory buffers
+//! - schedule transfers
+//! - check transfer statuses
+//! - signal endpoint state to the host
+//!
+//! The endpoint &quot;owns&quot; the static QH and TD memory. These
+//! are temporarily stored in the driver behind an Option.
+//! Once allocated, the driver will move the reference into
+//! the endpoint, where it resides forever. You can use methods
+//! on the endpoint to safely access QH and TD state.
+//!
+//! The endpoints take immutable borrows of the USB instance.
+//! The contract is that, if the *Endpoint* is mutable, it&#39;s
+//! permitted to modify its own USB register (or register
+//! field). This gives us a kind of loose runtime ownership
+//! of endpoint registers, but it only works if all endpoints
+//! are owned by the same object, since we rely on carrying
+//! the mutable borrow to prevent races. That&#39;s how today&#39;s
+//! driver works.
 
-<span class="kw">use</span> <span class="kw">crate</span>::{
-    <span class="ident">buffer::Buffer</span>,
-    <span class="ident">qh::Qh</span>,
-    <span class="ident">ral</span>,
-    <span class="ident">ral::endpoint_control</span>,
-    <span class="ident">td</span>::{<span class="ident">Status</span>, <span class="ident">Td</span>},
+</span><span class="kw">use crate</span>::{
+    buffer::Buffer,
+    qh::Qh,
+    ral,
+    ral::endpoint_control,
+    td::{Status, Td},
 };
-<span class="kw">use</span> <span class="ident">usb_device</span>::{
-    <span class="ident">endpoint</span>::{<span class="ident">EndpointAddress</span>, <span class="ident">EndpointType</span>},
-    <span class="ident">UsbDirection</span>, <span class="ident">UsbError</span>,
+<span class="kw">use </span>usb_device::{
+    endpoint::{EndpointAddress, EndpointType},
+    UsbDirection, UsbError,
 };
 
-<span class="doccomment">/// A USB endpoint</span>
-<span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">Endpoint</span> {
-    <span class="ident">address</span>: <span class="ident">EndpointAddress</span>,
-    <span class="ident">qh</span>: <span class="kw-2">&amp;</span><span class="lifetime">&#39;static</span> <span class="kw-2">mut</span> <span class="ident">Qh</span>,
-    <span class="ident">td</span>: <span class="kw-2">&amp;</span><span class="lifetime">&#39;static</span> <span class="kw-2">mut</span> <span class="ident">Td</span>,
-    <span class="ident">buffer</span>: <span class="ident">Buffer</span>,
-    <span class="ident">kind</span>: <span class="ident">EndpointType</span>,
+<span class="doccomment">/// A USB endpoint
+</span><span class="kw">pub struct </span>Endpoint {
+    address: EndpointAddress,
+    qh: <span class="kw-2">&amp;</span><span class="lifetime">&#39;static </span><span class="kw-2">mut </span>Qh,
+    td: <span class="kw-2">&amp;</span><span class="lifetime">&#39;static </span><span class="kw-2">mut </span>Td,
+    buffer: Buffer,
+    kind: EndpointType,
 }
 
-<span class="kw">impl</span> <span class="ident">Endpoint</span> {
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">new</span>(
-        <span class="ident">address</span>: <span class="ident">EndpointAddress</span>,
-        <span class="ident">qh</span>: <span class="kw-2">&amp;</span><span class="lifetime">&#39;static</span> <span class="kw-2">mut</span> <span class="ident">Qh</span>,
-        <span class="ident">td</span>: <span class="kw-2">&amp;</span><span class="lifetime">&#39;static</span> <span class="kw-2">mut</span> <span class="ident">Td</span>,
-        <span class="ident">buffer</span>: <span class="ident">Buffer</span>,
-        <span class="ident">kind</span>: <span class="ident">EndpointType</span>,
-    ) -&gt; <span class="self">Self</span> {
-        <span class="ident">Endpoint</span> {
-            <span class="ident">address</span>,
-            <span class="ident">qh</span>,
-            <span class="ident">td</span>,
-            <span class="ident">buffer</span>,
-            <span class="ident">kind</span>,
+<span class="kw">impl </span>Endpoint {
+    <span class="kw">pub fn </span>new(
+        address: EndpointAddress,
+        qh: <span class="kw-2">&amp;</span><span class="lifetime">&#39;static </span><span class="kw-2">mut </span>Qh,
+        td: <span class="kw-2">&amp;</span><span class="lifetime">&#39;static </span><span class="kw-2">mut </span>Td,
+        buffer: Buffer,
+        kind: EndpointType,
+    ) -&gt; <span class="self">Self </span>{
+        Endpoint {
+            address,
+            qh,
+            td,
+            buffer,
+            kind,
         }
     }
 
-    <span class="doccomment">/// Indicates if the transfer descriptor is active</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">is_primed</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">usb</span>: <span class="kw-2">&amp;</span><span class="ident">ral::usb::Instance</span>) -&gt; <span class="ident">bool</span> {
-        (<span class="kw">match</span> <span class="self">self</span>.<span class="ident">address</span>.<span class="ident">direction</span>() {
-            <span class="ident">UsbDirection::In</span> =&gt; <span class="macro">ral::read_reg!</span>(<span class="ident">ral::usb</span>, <span class="ident">usb</span>, <span class="ident">ENDPTSTAT</span>, <span class="ident">ETBR</span>),
-            <span class="ident">UsbDirection::Out</span> =&gt; <span class="macro">ral::read_reg!</span>(<span class="ident">ral::usb</span>, <span class="ident">usb</span>, <span class="ident">ENDPTSTAT</span>, <span class="ident">ERBR</span>),
-        } <span class="op">&amp;</span> (<span class="number">1</span> <span class="op">&lt;</span><span class="op">&lt;</span> <span class="self">self</span>.<span class="ident">address</span>.<span class="ident">index</span>()))
-            <span class="op">!</span><span class="op">=</span> <span class="number">0</span>
-    }
+    <span class="doccomment">/// Indicates if the transfer descriptor is active
+    </span><span class="kw">pub fn </span>is_primed(<span class="kw-2">&amp;</span><span class="self">self</span>, usb: <span class="kw-2">&amp;</span>ral::usb::Instance) -&gt; bool {
+        (<span class="kw">match </span><span class="self">self</span>.address.direction() {
+            UsbDirection::In =&gt; <span class="macro">ral::read_reg!</span>(ral::usb, usb, ENDPTSTAT, ETBR),
+            UsbDirection::Out =&gt; <span class="macro">ral::read_reg!</span>(ral::usb, usb, ENDPTSTAT, ERBR),
+        } &amp; (<span class="number">1 </span>&lt;&lt; <span class="self">self</span>.address.index()))
+            != <span class="number">0
+    </span>}
 
-    <span class="doccomment">/// Check for any transfer status, which is signaled through</span>
-    <span class="doccomment">/// an error</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">check_errors</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span>(), <span class="ident">UsbError</span><span class="op">&gt;</span> {
-        <span class="kw">let</span> <span class="ident">status</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">td</span>.<span class="ident">status</span>();
-        <span class="kw">if</span> <span class="ident">status</span>.<span class="ident">contains</span>(<span class="ident">Status::TRANSACTION_ERROR</span>)
-            <span class="op">|</span> <span class="ident">status</span>.<span class="ident">contains</span>(<span class="ident">Status::DATA_BUS_ERROR</span>)
-            <span class="op">|</span> <span class="ident">status</span>.<span class="ident">contains</span>(<span class="ident">Status::HALTED</span>)
+    <span class="doccomment">/// Check for any transfer status, which is signaled through
+    /// an error
+    </span><span class="kw">pub fn </span>check_errors(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;(), UsbError&gt; {
+        <span class="kw">let </span>status = <span class="self">self</span>.td.status();
+        <span class="kw">if </span>status.contains(Status::TRANSACTION_ERROR)
+            | status.contains(Status::DATA_BUFFER_ERROR)
+            | status.contains(Status::HALTED)
         {
-            <span class="prelude-val">Err</span>(<span class="ident">UsbError::InvalidState</span>)
-        } <span class="kw">else</span> {
+            <span class="prelude-val">Err</span>(UsbError::InvalidState)
+        } <span class="kw">else </span>{
             <span class="prelude-val">Ok</span>(())
         }
     }
 
-    <span class="doccomment">/// Initialize the endpoint, should be called soon after it&#39;s assigned,</span>
-    <span class="doccomment">/// or after transitioning out of configuration (reset the endpoint).</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">initialize</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>, <span class="ident">usb</span>: <span class="kw-2">&amp;</span><span class="ident">ral::usb::Instance</span>) {
-        <span class="kw">if</span> <span class="self">self</span>.<span class="ident">address</span>.<span class="ident">index</span>() <span class="op">!</span><span class="op">=</span> <span class="number">0</span> {
-            <span class="kw">let</span> <span class="ident">endptctrl</span> <span class="op">=</span> <span class="ident">endpoint_control::register</span>(<span class="ident">usb</span>, <span class="self">self</span>.<span class="ident">address</span>.<span class="ident">index</span>());
-            <span class="kw">match</span> <span class="self">self</span>.<span class="ident">address</span>.<span class="ident">direction</span>() {
-                <span class="ident">UsbDirection::In</span> =&gt; {
-                    <span class="macro">ral::modify_reg!</span>(<span class="ident">endpoint_control</span>, <span class="kw-2">&amp;</span><span class="ident">endptctrl</span>, <span class="ident">ENDPTCTRL</span>, <span class="ident">TXE</span>: <span class="number">0</span>, <span class="ident">TXT</span>: <span class="ident">EndpointType::Bulk</span> <span class="kw">as</span> <span class="ident">u32</span>)
+    <span class="doccomment">/// Initialize the endpoint, should be called soon after it&#39;s assigned,
+    /// or after transitioning out of configuration (reset the endpoint).
+    </span><span class="kw">pub fn </span>initialize(<span class="kw-2">&amp;mut </span><span class="self">self</span>, usb: <span class="kw-2">&amp;</span>ral::usb::Instance) {
+        <span class="kw">if </span><span class="self">self</span>.address.index() != <span class="number">0 </span>{
+            <span class="kw">let </span>endptctrl = endpoint_control::register(usb, <span class="self">self</span>.address.index());
+            <span class="kw">match </span><span class="self">self</span>.address.direction() {
+                UsbDirection::In =&gt; {
+                    <span class="macro">ral::modify_reg!</span>(endpoint_control, <span class="kw-2">&amp;</span>endptctrl, ENDPTCTRL, TXE: <span class="number">0</span>, TXT: EndpointType::Bulk <span class="kw">as </span>u32)
                 }
-                <span class="ident">UsbDirection::Out</span> =&gt; {
-                    <span class="macro">ral::modify_reg!</span>(<span class="ident">endpoint_control</span>, <span class="kw-2">&amp;</span><span class="ident">endptctrl</span>, <span class="ident">ENDPTCTRL</span>, <span class="ident">RXE</span>: <span class="number">0</span>, <span class="ident">RXT</span>: <span class="ident">EndpointType::Bulk</span> <span class="kw">as</span> <span class="ident">u32</span>)
-                }
-            }
-        }
-    }
-
-    <span class="doccomment">/// Returns the endpoint address</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">address</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="ident">EndpointAddress</span> {
-        <span class="self">self</span>.<span class="ident">address</span>
-    }
-
-    <span class="doccomment">/// Returns the maximum packet length supported by this endpoint</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">max_packet_len</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="ident">usize</span> {
-        <span class="self">self</span>.<span class="ident">qh</span>.<span class="ident">max_packet_len</span>()
-    }
-
-    <span class="doccomment">/// Indicates if this endpoint has received setup data</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">has_setup</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">usb</span>: <span class="kw-2">&amp;</span><span class="ident">ral::usb::Instance</span>) -&gt; <span class="ident">bool</span> {
-        <span class="macro">ral::read_reg!</span>(<span class="ident">ral::usb</span>, <span class="ident">usb</span>, <span class="ident">ENDPTSETUPSTAT</span>) <span class="op">&amp;</span> (<span class="number">1</span> <span class="op">&lt;</span><span class="op">&lt;</span> <span class="self">self</span>.<span class="ident">address</span>.<span class="ident">index</span>()) <span class="op">!</span><span class="op">=</span> <span class="number">0</span>
-    }
-
-    <span class="doccomment">/// Read the setup buffer from this endpoint</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// This is only meaningful for a control OUT endpoint.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">read_setup</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>, <span class="ident">usb</span>: <span class="kw-2">&amp;</span><span class="ident">ral::usb::Instance</span>) -&gt; <span class="ident">u64</span> {
-        <span class="comment">// Reference manual isn&#39;t really clear on whe we should clear the ENDPTSETUPSTAT</span>
-        <span class="comment">// bit...</span>
-        <span class="comment">//</span>
-        <span class="comment">// - section &quot;Control Endpoint Operational Model&quot; says that we should clear it</span>
-        <span class="comment">//   *before* attempting to read the setup buffer, but</span>
-        <span class="comment">// - section &quot;Operational Model For Setup Transfers&quot; says to do it *after*</span>
-        <span class="comment">//   we read the setup buffer</span>
-        <span class="comment">//</span>
-        <span class="comment">// We&#39;re going with the &quot;before&quot; approach here. (Reference manual is iMXRT1060, rev2)</span>
-        <span class="macro">ral::write_reg!</span>(<span class="ident">ral::usb</span>, <span class="ident">usb</span>, <span class="ident">ENDPTSETUPSTAT</span>, <span class="number">1</span> <span class="op">&lt;</span><span class="op">&lt;</span> <span class="self">self</span>.<span class="ident">address</span>.<span class="ident">index</span>());
-        <span class="kw">loop</span> {
-            <span class="macro">ral::modify_reg!</span>(<span class="ident">ral::usb</span>, <span class="ident">usb</span>, <span class="ident">USBCMD</span>, <span class="ident">SUTW</span>: <span class="number">1</span>);
-            <span class="kw">let</span> <span class="ident">setup</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">qh</span>.<span class="ident">setup</span>();
-            <span class="kw">if</span> <span class="macro">ral::read_reg!</span>(<span class="ident">ral::usb</span>, <span class="ident">usb</span>, <span class="ident">USBCMD</span>, <span class="ident">SUTW</span> <span class="op">==</span> <span class="number">1</span>) {
-                <span class="macro">ral::modify_reg!</span>(<span class="ident">ral::usb</span>, <span class="ident">usb</span>, <span class="ident">USBCMD</span>, <span class="ident">SUTW</span>: <span class="number">0</span>);
-                <span class="kw">return</span> <span class="ident">setup</span>;
-            }
-        }
-    }
-
-    <span class="doccomment">/// Read data from the endpoint into `buffer`</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// Returns the number of bytes read into `buffer`, which is constrained by the</span>
-    <span class="doccomment">/// max packet length, and the number of bytes received in the last transfer.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">read</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>, <span class="ident">buffer</span>: <span class="kw-2">&amp;</span><span class="kw-2">mut</span> [<span class="ident">u8</span>]) -&gt; <span class="ident">usize</span> {
-        <span class="kw">let</span> <span class="ident">size</span> <span class="op">=</span> <span class="self">self</span>
-            .<span class="ident">qh</span>
-            .<span class="ident">max_packet_len</span>()
-            .<span class="ident">min</span>(<span class="ident">buffer</span>.<span class="ident">len</span>())
-            .<span class="ident">min</span>(<span class="self">self</span>.<span class="ident">td</span>.<span class="ident">bytes_transferred</span>());
-        <span class="self">self</span>.<span class="ident">buffer</span>.<span class="ident">volatile_read</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">buffer</span>[..<span class="ident">size</span>])
-    }
-
-    <span class="doccomment">/// Write `buffer` to the endpoint buffer</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// Returns the number of bytes written from `buffer`, which is constrained</span>
-    <span class="doccomment">/// by the max packet length.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">write</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>, <span class="ident">buffer</span>: <span class="kw-2">&amp;</span>[<span class="ident">u8</span>]) -&gt; <span class="ident">usize</span> {
-        <span class="kw">let</span> <span class="ident">size</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">qh</span>.<span class="ident">max_packet_len</span>().<span class="ident">min</span>(<span class="ident">buffer</span>.<span class="ident">len</span>());
-        <span class="kw">let</span> <span class="ident">written</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">buffer</span>.<span class="ident">volatile_write</span>(<span class="kw-2">&amp;</span><span class="ident">buffer</span>[..<span class="ident">size</span>]);
-        <span class="self">self</span>.<span class="ident">buffer</span>.<span class="ident">clean_invalidate_dcache</span>(<span class="ident">size</span>);
-        <span class="ident">written</span>
-    }
-
-    <span class="doccomment">/// Clear the complete bit for this endpoint</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">clear_complete</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>, <span class="ident">usb</span>: <span class="kw-2">&amp;</span><span class="ident">ral::usb::Instance</span>) {
-        <span class="kw">match</span> <span class="self">self</span>.<span class="ident">address</span>.<span class="ident">direction</span>() {
-            <span class="ident">UsbDirection::In</span> =&gt; {
-                <span class="macro">ral::write_reg!</span>(<span class="ident">ral::usb</span>, <span class="ident">usb</span>, <span class="ident">ENDPTCOMPLETE</span>, <span class="ident">ETCE</span>: <span class="number">1</span> <span class="op">&lt;</span><span class="op">&lt;</span> <span class="self">self</span>.<span class="ident">address</span>.<span class="ident">index</span>())
-            }
-            <span class="ident">UsbDirection::Out</span> =&gt; {
-                <span class="macro">ral::write_reg!</span>(<span class="ident">ral::usb</span>, <span class="ident">usb</span>, <span class="ident">ENDPTCOMPLETE</span>, <span class="ident">ERCE</span>: <span class="number">1</span> <span class="op">&lt;</span><span class="op">&lt;</span> <span class="self">self</span>.<span class="ident">address</span>.<span class="ident">index</span>())
-            }
-        }
-    }
-
-    <span class="doccomment">/// Schedule a transfer of `size` bytes from the endpoint buffer</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// Caller should check to see if there is an active transfer, or if the previous</span>
-    <span class="doccomment">/// transfer resulted in an error or halt.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">schedule_transfer</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>, <span class="ident">usb</span>: <span class="kw-2">&amp;</span><span class="ident">ral::usb::Instance</span>, <span class="ident">size</span>: <span class="ident">usize</span>) {
-        <span class="self">self</span>.<span class="ident">td</span>.<span class="ident">set_terminate</span>();
-        <span class="self">self</span>.<span class="ident">td</span>.<span class="ident">set_buffer</span>(<span class="self">self</span>.<span class="ident">buffer</span>.<span class="ident">as_ptr_mut</span>(), <span class="ident">size</span>);
-        <span class="self">self</span>.<span class="ident">td</span>.<span class="ident">set_interrupt_on_complete</span>(<span class="bool-val">true</span>);
-        <span class="self">self</span>.<span class="ident">td</span>.<span class="ident">set_active</span>();
-        <span class="self">self</span>.<span class="ident">td</span>.<span class="ident">clean_invalidate_dcache</span>();
-
-        <span class="self">self</span>.<span class="ident">qh</span>.<span class="ident">overlay_mut</span>().<span class="ident">set_next</span>(<span class="self">self</span>.<span class="ident">td</span>);
-        <span class="self">self</span>.<span class="ident">qh</span>.<span class="ident">overlay_mut</span>().<span class="ident">clear_status</span>();
-        <span class="self">self</span>.<span class="ident">qh</span>.<span class="ident">clean_invalidate_dcache</span>();
-
-        <span class="kw">match</span> <span class="self">self</span>.<span class="ident">address</span>.<span class="ident">direction</span>() {
-            <span class="ident">UsbDirection::In</span> =&gt; {
-                <span class="macro">ral::write_reg!</span>(<span class="ident">ral::usb</span>, <span class="ident">usb</span>, <span class="ident">ENDPTPRIME</span>, <span class="ident">PETB</span>: <span class="number">1</span> <span class="op">&lt;</span><span class="op">&lt;</span> <span class="self">self</span>.<span class="ident">address</span>.<span class="ident">index</span>())
-            }
-            <span class="ident">UsbDirection::Out</span> =&gt; {
-                <span class="macro">ral::write_reg!</span>(<span class="ident">ral::usb</span>, <span class="ident">usb</span>, <span class="ident">ENDPTPRIME</span>, <span class="ident">PERB</span>: <span class="number">1</span> <span class="op">&lt;</span><span class="op">&lt;</span> <span class="self">self</span>.<span class="ident">address</span>.<span class="ident">index</span>())
-            }
-        }
-        <span class="kw">while</span> <span class="macro">ral::read_reg!</span>(<span class="ident">ral::usb</span>, <span class="ident">usb</span>, <span class="ident">ENDPTPRIME</span>) <span class="op">!</span><span class="op">=</span> <span class="number">0</span> {}
-    }
-
-    <span class="doccomment">/// Stall or unstall the endpoint</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">set_stalled</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>, <span class="ident">usb</span>: <span class="kw-2">&amp;</span><span class="ident">ral::usb::Instance</span>, <span class="ident">stall</span>: <span class="ident">bool</span>) {
-        <span class="kw">let</span> <span class="ident">endptctrl</span> <span class="op">=</span> <span class="ident">endpoint_control::register</span>(<span class="ident">usb</span>, <span class="self">self</span>.<span class="ident">address</span>.<span class="ident">index</span>());
-
-        <span class="kw">match</span> <span class="self">self</span>.<span class="ident">address</span>.<span class="ident">direction</span>() {
-            <span class="ident">UsbDirection::In</span> =&gt; {
-                <span class="macro">ral::modify_reg!</span>(<span class="ident">endpoint_control</span>, <span class="kw-2">&amp;</span><span class="ident">endptctrl</span>, <span class="ident">ENDPTCTRL</span>, <span class="ident">TXS</span>: <span class="ident">stall</span> <span class="kw">as</span> <span class="ident">u32</span>)
-            }
-            <span class="ident">UsbDirection::Out</span> =&gt; {
-                <span class="macro">ral::modify_reg!</span>(<span class="ident">endpoint_control</span>, <span class="kw-2">&amp;</span><span class="ident">endptctrl</span>, <span class="ident">ENDPTCTRL</span>, <span class="ident">RXS</span>: <span class="ident">stall</span> <span class="kw">as</span> <span class="ident">u32</span>)
-            }
-        }
-    }
-
-    <span class="doccomment">/// Indicates if the endpoint is stalled</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">is_stalled</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">usb</span>: <span class="kw-2">&amp;</span><span class="ident">ral::usb::Instance</span>) -&gt; <span class="ident">bool</span> {
-        <span class="kw">let</span> <span class="ident">endptctrl</span> <span class="op">=</span> <span class="ident">endpoint_control::register</span>(<span class="ident">usb</span>, <span class="self">self</span>.<span class="ident">address</span>.<span class="ident">index</span>());
-
-        <span class="kw">match</span> <span class="self">self</span>.<span class="ident">address</span>.<span class="ident">direction</span>() {
-            <span class="ident">UsbDirection::In</span> =&gt; <span class="macro">ral::read_reg!</span>(<span class="ident">endpoint_control</span>, <span class="kw-2">&amp;</span><span class="ident">endptctrl</span>, <span class="ident">ENDPTCTRL</span>, <span class="ident">TXS</span> <span class="op">==</span> <span class="number">1</span>),
-            <span class="ident">UsbDirection::Out</span> =&gt; <span class="macro">ral::read_reg!</span>(<span class="ident">endpoint_control</span>, <span class="kw-2">&amp;</span><span class="ident">endptctrl</span>, <span class="ident">ENDPTCTRL</span>, <span class="ident">RXS</span> <span class="op">==</span> <span class="number">1</span>),
-        }
-    }
-
-    <span class="doccomment">/// Enable the endpoint</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// This should be called only after the USB device has been configured.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">enable</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>, <span class="ident">usb</span>: <span class="kw-2">&amp;</span><span class="ident">ral::usb::Instance</span>) {
-        <span class="comment">// EP0 is always enabled</span>
-        <span class="kw">if</span> <span class="self">self</span>.<span class="ident">address</span>.<span class="ident">index</span>() <span class="op">!</span><span class="op">=</span> <span class="number">0</span> {
-            <span class="kw">let</span> <span class="ident">endptctrl</span> <span class="op">=</span> <span class="ident">endpoint_control::register</span>(<span class="ident">usb</span>, <span class="self">self</span>.<span class="ident">address</span>.<span class="ident">index</span>());
-            <span class="kw">match</span> <span class="self">self</span>.<span class="ident">address</span>.<span class="ident">direction</span>() {
-                <span class="ident">UsbDirection::In</span> =&gt; {
-                    <span class="macro">ral::modify_reg!</span>(<span class="ident">endpoint_control</span>, <span class="kw-2">&amp;</span><span class="ident">endptctrl</span>, <span class="ident">ENDPTCTRL</span>, <span class="ident">TXE</span>: <span class="number">1</span>, <span class="ident">TXR</span>: <span class="number">1</span>, <span class="ident">TXT</span>: <span class="self">self</span>.<span class="ident">kind</span> <span class="kw">as</span> <span class="ident">u32</span>)
-                }
-                <span class="ident">UsbDirection::Out</span> =&gt; {
-                    <span class="macro">ral::modify_reg!</span>(<span class="ident">endpoint_control</span>, <span class="kw-2">&amp;</span><span class="ident">endptctrl</span>, <span class="ident">ENDPTCTRL</span>, <span class="ident">RXE</span>: <span class="number">1</span>, <span class="ident">RXR</span>: <span class="number">1</span>, <span class="ident">RXT</span>: <span class="self">self</span>.<span class="ident">kind</span> <span class="kw">as</span> <span class="ident">u32</span>)
+                UsbDirection::Out =&gt; {
+                    <span class="macro">ral::modify_reg!</span>(endpoint_control, <span class="kw-2">&amp;</span>endptctrl, ENDPTCTRL, RXE: <span class="number">0</span>, RXT: EndpointType::Bulk <span class="kw">as </span>u32)
                 }
             }
         }
     }
 
-    <span class="doccomment">/// Indicates if this endpoint is enabled</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// Endpoint 0, the control endpoint, is always enabled.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">is_enabled</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">usb</span>: <span class="kw-2">&amp;</span><span class="ident">ral::usb::Instance</span>) -&gt; <span class="ident">bool</span> {
-        <span class="kw">if</span> <span class="self">self</span>.<span class="ident">address</span>.<span class="ident">index</span>() <span class="op">==</span> <span class="number">0</span> {
-            <span class="kw">return</span> <span class="bool-val">true</span>;
-        }
+    <span class="doccomment">/// Returns the endpoint address
+    </span><span class="kw">pub fn </span>address(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; EndpointAddress {
+        <span class="self">self</span>.address
+    }
 
-        <span class="kw">let</span> <span class="ident">endptctrl</span> <span class="op">=</span> <span class="ident">endpoint_control::register</span>(<span class="ident">usb</span>, <span class="self">self</span>.<span class="ident">address</span>.<span class="ident">index</span>());
-        <span class="kw">match</span> <span class="self">self</span>.<span class="ident">address</span>.<span class="ident">direction</span>() {
-            <span class="ident">UsbDirection::In</span> =&gt; <span class="macro">ral::read_reg!</span>(<span class="ident">endpoint_control</span>, <span class="kw-2">&amp;</span><span class="ident">endptctrl</span>, <span class="ident">ENDPTCTRL</span>, <span class="ident">TXE</span> <span class="op">==</span> <span class="number">1</span>),
-            <span class="ident">UsbDirection::Out</span> =&gt; <span class="macro">ral::read_reg!</span>(<span class="ident">endpoint_control</span>, <span class="kw-2">&amp;</span><span class="ident">endptctrl</span>, <span class="ident">ENDPTCTRL</span>, <span class="ident">RXE</span> <span class="op">==</span> <span class="number">1</span>),
+    <span class="doccomment">/// Returns the maximum packet length supported by this endpoint
+    </span><span class="kw">pub fn </span>max_packet_len(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; usize {
+        <span class="self">self</span>.qh.max_packet_len()
+    }
+
+    <span class="doccomment">/// Indicates if this endpoint has received setup data
+    </span><span class="kw">pub fn </span>has_setup(<span class="kw-2">&amp;</span><span class="self">self</span>, usb: <span class="kw-2">&amp;</span>ral::usb::Instance) -&gt; bool {
+        <span class="macro">ral::read_reg!</span>(ral::usb, usb, ENDPTSETUPSTAT) &amp; (<span class="number">1 </span>&lt;&lt; <span class="self">self</span>.address.index()) != <span class="number">0
+    </span>}
+
+    <span class="doccomment">/// Read the setup buffer from this endpoint
+    ///
+    /// This is only meaningful for a control OUT endpoint.
+    </span><span class="kw">pub fn </span>read_setup(<span class="kw-2">&amp;mut </span><span class="self">self</span>, usb: <span class="kw-2">&amp;</span>ral::usb::Instance) -&gt; u64 {
+        <span class="comment">// Reference manual isn&#39;t really clear on whe we should clear the ENDPTSETUPSTAT
+        // bit...
+        //
+        // - section &quot;Control Endpoint Operational Model&quot; says that we should clear it
+        //   *before* attempting to read the setup buffer, but
+        // - section &quot;Operational Model For Setup Transfers&quot; says to do it *after*
+        //   we read the setup buffer
+        //
+        // We&#39;re going with the &quot;before&quot; approach here. (Reference manual is iMXRT1060, rev2)
+        </span><span class="macro">ral::write_reg!</span>(ral::usb, usb, ENDPTSETUPSTAT, <span class="number">1 </span>&lt;&lt; <span class="self">self</span>.address.index());
+        <span class="kw">loop </span>{
+            <span class="macro">ral::modify_reg!</span>(ral::usb, usb, USBCMD, SUTW: <span class="number">1</span>);
+            <span class="kw">let </span>setup = <span class="self">self</span>.qh.setup();
+            <span class="kw">if </span><span class="macro">ral::read_reg!</span>(ral::usb, usb, USBCMD, SUTW == <span class="number">1</span>) {
+                <span class="macro">ral::modify_reg!</span>(ral::usb, usb, USBCMD, SUTW: <span class="number">0</span>);
+                <span class="kw">return </span>setup;
+            }
         }
     }
 
-    <span class="doccomment">/// Clear the NACK bit for this endpoint</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">clear_nack</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>, <span class="ident">usb</span>: <span class="kw-2">&amp;</span><span class="ident">ral::usb::Instance</span>) {
-        <span class="kw">match</span> <span class="self">self</span>.<span class="ident">address</span>.<span class="ident">direction</span>() {
-            <span class="ident">UsbDirection::In</span> =&gt; {
-                <span class="macro">ral::write_reg!</span>(<span class="ident">ral::usb</span>, <span class="ident">usb</span>, <span class="ident">ENDPTNAK</span>, <span class="ident">EPTN</span>: <span class="number">1</span> <span class="op">&lt;</span><span class="op">&lt;</span> <span class="self">self</span>.<span class="ident">address</span>.<span class="ident">index</span>())
+    <span class="doccomment">/// Read data from the endpoint into `buffer`
+    ///
+    /// Returns the number of bytes read into `buffer`, which is constrained by the
+    /// max packet length, and the number of bytes received in the last transfer.
+    </span><span class="kw">pub fn </span>read(<span class="kw-2">&amp;mut </span><span class="self">self</span>, buffer: <span class="kw-2">&amp;mut </span>[u8]) -&gt; usize {
+        <span class="kw">let </span>size = <span class="self">self
+            </span>.qh
+            .max_packet_len()
+            .min(buffer.len())
+            .min(<span class="self">self</span>.td.bytes_transferred());
+        <span class="self">self</span>.buffer.volatile_read(<span class="kw-2">&amp;mut </span>buffer[..size])
+    }
+
+    <span class="doccomment">/// Write `buffer` to the endpoint buffer
+    ///
+    /// Returns the number of bytes written from `buffer`, which is constrained
+    /// by the max packet length.
+    </span><span class="kw">pub fn </span>write(<span class="kw-2">&amp;mut </span><span class="self">self</span>, buffer: <span class="kw-2">&amp;</span>[u8]) -&gt; usize {
+        <span class="kw">let </span>size = <span class="self">self</span>.qh.max_packet_len().min(buffer.len());
+        <span class="kw">let </span>written = <span class="self">self</span>.buffer.volatile_write(<span class="kw-2">&amp;</span>buffer[..size]);
+        <span class="self">self</span>.buffer.clean_invalidate_dcache(size);
+        written
+    }
+
+    <span class="doccomment">/// Clear the complete bit for this endpoint
+    </span><span class="kw">pub fn </span>clear_complete(<span class="kw-2">&amp;mut </span><span class="self">self</span>, usb: <span class="kw-2">&amp;</span>ral::usb::Instance) {
+        <span class="kw">match </span><span class="self">self</span>.address.direction() {
+            UsbDirection::In =&gt; {
+                <span class="macro">ral::write_reg!</span>(ral::usb, usb, ENDPTCOMPLETE, ETCE: <span class="number">1 </span>&lt;&lt; <span class="self">self</span>.address.index())
             }
-            <span class="ident">UsbDirection::Out</span> =&gt; {
-                <span class="macro">ral::write_reg!</span>(<span class="ident">ral::usb</span>, <span class="ident">usb</span>, <span class="ident">ENDPTNAK</span>, <span class="ident">EPRN</span>: <span class="number">1</span> <span class="op">&lt;</span><span class="op">&lt;</span> <span class="self">self</span>.<span class="ident">address</span>.<span class="ident">index</span>())
+            UsbDirection::Out =&gt; {
+                <span class="macro">ral::write_reg!</span>(ral::usb, usb, ENDPTCOMPLETE, ERCE: <span class="number">1 </span>&lt;&lt; <span class="self">self</span>.address.index())
+            }
+        }
+    }
+
+    <span class="doccomment">/// Schedule a transfer of `size` bytes from the endpoint buffer
+    ///
+    /// Caller should check to see if there is an active transfer, or if the previous
+    /// transfer resulted in an error or halt.
+    </span><span class="kw">pub fn </span>schedule_transfer(<span class="kw-2">&amp;mut </span><span class="self">self</span>, usb: <span class="kw-2">&amp;</span>ral::usb::Instance, size: usize) {
+        <span class="self">self</span>.td.set_terminate();
+        <span class="self">self</span>.td.set_buffer(<span class="self">self</span>.buffer.as_ptr_mut(), size);
+        <span class="self">self</span>.td.set_interrupt_on_complete(<span class="bool-val">true</span>);
+        <span class="self">self</span>.td.set_active();
+        <span class="self">self</span>.td.clean_invalidate_dcache();
+
+        <span class="self">self</span>.qh.overlay_mut().set_next(<span class="self">self</span>.td);
+        <span class="self">self</span>.qh.overlay_mut().clear_status();
+        <span class="self">self</span>.qh.clean_invalidate_dcache();
+
+        <span class="kw">match </span><span class="self">self</span>.address.direction() {
+            UsbDirection::In =&gt; {
+                <span class="macro">ral::write_reg!</span>(ral::usb, usb, ENDPTPRIME, PETB: <span class="number">1 </span>&lt;&lt; <span class="self">self</span>.address.index())
+            }
+            UsbDirection::Out =&gt; {
+                <span class="macro">ral::write_reg!</span>(ral::usb, usb, ENDPTPRIME, PERB: <span class="number">1 </span>&lt;&lt; <span class="self">self</span>.address.index())
+            }
+        }
+        <span class="kw">while </span><span class="macro">ral::read_reg!</span>(ral::usb, usb, ENDPTPRIME) != <span class="number">0 </span>{}
+    }
+
+    <span class="doccomment">/// Stall or unstall the endpoint
+    </span><span class="kw">pub fn </span>set_stalled(<span class="kw-2">&amp;mut </span><span class="self">self</span>, usb: <span class="kw-2">&amp;</span>ral::usb::Instance, stall: bool) {
+        <span class="kw">let </span>endptctrl = endpoint_control::register(usb, <span class="self">self</span>.address.index());
+
+        <span class="kw">match </span><span class="self">self</span>.address.direction() {
+            UsbDirection::In =&gt; {
+                <span class="macro">ral::modify_reg!</span>(endpoint_control, <span class="kw-2">&amp;</span>endptctrl, ENDPTCTRL, TXS: stall <span class="kw">as </span>u32)
+            }
+            UsbDirection::Out =&gt; {
+                <span class="macro">ral::modify_reg!</span>(endpoint_control, <span class="kw-2">&amp;</span>endptctrl, ENDPTCTRL, RXS: stall <span class="kw">as </span>u32)
+            }
+        }
+    }
+
+    <span class="doccomment">/// Indicates if the endpoint is stalled
+    </span><span class="kw">pub fn </span>is_stalled(<span class="kw-2">&amp;</span><span class="self">self</span>, usb: <span class="kw-2">&amp;</span>ral::usb::Instance) -&gt; bool {
+        <span class="kw">let </span>endptctrl = endpoint_control::register(usb, <span class="self">self</span>.address.index());
+
+        <span class="kw">match </span><span class="self">self</span>.address.direction() {
+            UsbDirection::In =&gt; <span class="macro">ral::read_reg!</span>(endpoint_control, <span class="kw-2">&amp;</span>endptctrl, ENDPTCTRL, TXS == <span class="number">1</span>),
+            UsbDirection::Out =&gt; <span class="macro">ral::read_reg!</span>(endpoint_control, <span class="kw-2">&amp;</span>endptctrl, ENDPTCTRL, RXS == <span class="number">1</span>),
+        }
+    }
+
+    <span class="doccomment">/// Enable the endpoint
+    ///
+    /// This should be called only after the USB device has been configured.
+    </span><span class="kw">pub fn </span>enable(<span class="kw-2">&amp;mut </span><span class="self">self</span>, usb: <span class="kw-2">&amp;</span>ral::usb::Instance) {
+        <span class="comment">// EP0 is always enabled
+        </span><span class="kw">if </span><span class="self">self</span>.address.index() != <span class="number">0 </span>{
+            <span class="kw">let </span>endptctrl = endpoint_control::register(usb, <span class="self">self</span>.address.index());
+            <span class="kw">match </span><span class="self">self</span>.address.direction() {
+                UsbDirection::In =&gt; {
+                    <span class="macro">ral::modify_reg!</span>(endpoint_control, <span class="kw-2">&amp;</span>endptctrl, ENDPTCTRL, TXE: <span class="number">1</span>, TXR: <span class="number">1</span>, TXT: <span class="self">self</span>.kind <span class="kw">as </span>u32)
+                }
+                UsbDirection::Out =&gt; {
+                    <span class="macro">ral::modify_reg!</span>(endpoint_control, <span class="kw-2">&amp;</span>endptctrl, ENDPTCTRL, RXE: <span class="number">1</span>, RXR: <span class="number">1</span>, RXT: <span class="self">self</span>.kind <span class="kw">as </span>u32)
+                }
+            }
+        }
+    }
+
+    <span class="doccomment">/// Indicates if this endpoint is enabled
+    ///
+    /// Endpoint 0, the control endpoint, is always enabled.
+    </span><span class="kw">pub fn </span>is_enabled(<span class="kw-2">&amp;</span><span class="self">self</span>, usb: <span class="kw-2">&amp;</span>ral::usb::Instance) -&gt; bool {
+        <span class="kw">if </span><span class="self">self</span>.address.index() == <span class="number">0 </span>{
+            <span class="kw">return </span><span class="bool-val">true</span>;
+        }
+
+        <span class="kw">let </span>endptctrl = endpoint_control::register(usb, <span class="self">self</span>.address.index());
+        <span class="kw">match </span><span class="self">self</span>.address.direction() {
+            UsbDirection::In =&gt; <span class="macro">ral::read_reg!</span>(endpoint_control, <span class="kw-2">&amp;</span>endptctrl, ENDPTCTRL, TXE == <span class="number">1</span>),
+            UsbDirection::Out =&gt; <span class="macro">ral::read_reg!</span>(endpoint_control, <span class="kw-2">&amp;</span>endptctrl, ENDPTCTRL, RXE == <span class="number">1</span>),
+        }
+    }
+
+    <span class="doccomment">/// Clear the NACK bit for this endpoint
+    </span><span class="kw">pub fn </span>clear_nack(<span class="kw-2">&amp;mut </span><span class="self">self</span>, usb: <span class="kw-2">&amp;</span>ral::usb::Instance) {
+        <span class="kw">match </span><span class="self">self</span>.address.direction() {
+            UsbDirection::In =&gt; {
+                <span class="macro">ral::write_reg!</span>(ral::usb, usb, ENDPTNAK, EPTN: <span class="number">1 </span>&lt;&lt; <span class="self">self</span>.address.index())
+            }
+            UsbDirection::Out =&gt; {
+                <span class="macro">ral::write_reg!</span>(ral::usb, usb, ENDPTNAK, EPRN: <span class="number">1 </span>&lt;&lt; <span class="self">self</span>.address.index())
             }
         }
     }
 }
 </code></pre></div>
-</section><section id="search" class="content hidden"></section><div id="rustdoc-vars" data-root-path="../../../" data-current-crate="imxrt_usbd" data-search-index-js="../../../search-index.js" data-search-js="../../../search.js"></div>
-    <script src="../../../main.js"></script><script src="../../../source-script.js"></script><script src="../../../source-files.js"></script>
-</body></html>
+</section></div></main><div id="rustdoc-vars" data-root-path="../../../" data-current-crate="imxrt_usbd" data-themes="ayu,dark,light" data-resource-suffix="" data-rustdoc-version="1.65.0 (897e37553 2022-11-02)" ></div></body></html>

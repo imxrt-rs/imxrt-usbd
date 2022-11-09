@@ -1,102 +1,102 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `src&#x2F;lib.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>lib.rs - source</title><link rel="stylesheet" type="text/css" href="../../normalize.css"><link rel="stylesheet" type="text/css" href="../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../light.css"  id="themeStyle"><link rel="stylesheet" type="text/css" href="../../dark.css" disabled ><link rel="stylesheet" type="text/css" href="../../ayu.css" disabled ><script id="default-settings" ></script><script src="../../storage.js"></script><script src="../../crates.js"></script><noscript><link rel="stylesheet" href="../../noscript.css"></noscript><link rel="alternate icon" type="image/png" href="../../favicon-16x16.png"><link rel="alternate icon" type="image/png" href="../../favicon-32x32.png"><link rel="icon" type="image/svg+xml" href="../../favicon.svg"><style type="text/css">#crate-search{background-image:url("../../down-arrow.svg");}</style></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="sidebar-menu" role="button">&#9776;</div><a href='../../imxrt_usbd/index.html'><div class='logo-container rust-logo'><img src='../../rust-logo.png' alt='logo'></div></a></nav><div class="theme-picker"><button id="theme-picker" aria-label="Pick another theme!" aria-haspopup="menu" title="themes"><img width="18" height="18" alt="Pick another theme!" src="../../brush.svg"></button><div id="theme-choices" role="menu"></div></div><nav class="sub"><form class="search-form"><div class="search-container"><div><select id="crate-search"><option value="All crates">All crates</option></select><input class="search-input" name="search" disabled autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"></div><button type="button" id="help-button" title="help">?</button><a id="settings-menu" href="../../settings.html" title="settings"><img width="18" height="18" alt="Change settings" src="../../wheel.svg"></a></div></form></nav><section id="main" class="content"><div class="example-wrap"><pre class="line-numbers"><span id="1">  1</span>
-<span id="2">  2</span>
-<span id="3">  3</span>
-<span id="4">  4</span>
-<span id="5">  5</span>
-<span id="6">  6</span>
-<span id="7">  7</span>
-<span id="8">  8</span>
-<span id="9">  9</span>
-<span id="10"> 10</span>
-<span id="11"> 11</span>
-<span id="12"> 12</span>
-<span id="13"> 13</span>
-<span id="14"> 14</span>
-<span id="15"> 15</span>
-<span id="16"> 16</span>
-<span id="17"> 17</span>
-<span id="18"> 18</span>
-<span id="19"> 19</span>
-<span id="20"> 20</span>
-<span id="21"> 21</span>
-<span id="22"> 22</span>
-<span id="23"> 23</span>
-<span id="24"> 24</span>
-<span id="25"> 25</span>
-<span id="26"> 26</span>
-<span id="27"> 27</span>
-<span id="28"> 28</span>
-<span id="29"> 29</span>
-<span id="30"> 30</span>
-<span id="31"> 31</span>
-<span id="32"> 32</span>
-<span id="33"> 33</span>
-<span id="34"> 34</span>
-<span id="35"> 35</span>
-<span id="36"> 36</span>
-<span id="37"> 37</span>
-<span id="38"> 38</span>
-<span id="39"> 39</span>
-<span id="40"> 40</span>
-<span id="41"> 41</span>
-<span id="42"> 42</span>
-<span id="43"> 43</span>
-<span id="44"> 44</span>
-<span id="45"> 45</span>
-<span id="46"> 46</span>
-<span id="47"> 47</span>
-<span id="48"> 48</span>
-<span id="49"> 49</span>
-<span id="50"> 50</span>
-<span id="51"> 51</span>
-<span id="52"> 52</span>
-<span id="53"> 53</span>
-<span id="54"> 54</span>
-<span id="55"> 55</span>
-<span id="56"> 56</span>
-<span id="57"> 57</span>
-<span id="58"> 58</span>
-<span id="59"> 59</span>
-<span id="60"> 60</span>
-<span id="61"> 61</span>
-<span id="62"> 62</span>
-<span id="63"> 63</span>
-<span id="64"> 64</span>
-<span id="65"> 65</span>
-<span id="66"> 66</span>
-<span id="67"> 67</span>
-<span id="68"> 68</span>
-<span id="69"> 69</span>
-<span id="70"> 70</span>
-<span id="71"> 71</span>
-<span id="72"> 72</span>
-<span id="73"> 73</span>
-<span id="74"> 74</span>
-<span id="75"> 75</span>
-<span id="76"> 76</span>
-<span id="77"> 77</span>
-<span id="78"> 78</span>
-<span id="79"> 79</span>
-<span id="80"> 80</span>
-<span id="81"> 81</span>
-<span id="82"> 82</span>
-<span id="83"> 83</span>
-<span id="84"> 84</span>
-<span id="85"> 85</span>
-<span id="86"> 86</span>
-<span id="87"> 87</span>
-<span id="88"> 88</span>
-<span id="89"> 89</span>
-<span id="90"> 90</span>
-<span id="91"> 91</span>
-<span id="92"> 92</span>
-<span id="93"> 93</span>
-<span id="94"> 94</span>
-<span id="95"> 95</span>
-<span id="96"> 96</span>
-<span id="97"> 97</span>
-<span id="98"> 98</span>
-<span id="99"> 99</span>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `src/lib.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>lib.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceSerif4-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../FiraSans-Regular.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../FiraSans-Medium.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceCodePro-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceSerif4-Bold.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceCodePro-Semibold.ttf.woff2"><link rel="stylesheet" href="../../normalize.css"><link rel="stylesheet" href="../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" href="../../ayu.css" disabled><link rel="stylesheet" href="../../dark.css" disabled><link rel="stylesheet" href="../../light.css" id="themeStyle"><script id="default-settings" ></script><script src="../../storage.js"></script><script defer src="../../source-script.js"></script><script defer src="../../source-files.js"></script><script defer src="../../main.js"></script><noscript><link rel="stylesheet" href="../../noscript.css"></noscript><link rel="alternate icon" type="image/png" href="../../favicon-16x16.png"><link rel="alternate icon" type="image/png" href="../../favicon-32x32.png"><link rel="icon" type="image/svg+xml" href="../../favicon.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="mobile-topbar"><button class="sidebar-menu-toggle">&#9776;</button><a class="sidebar-logo" href="../../imxrt_usbd/index.html"><div class="logo-container"><img class="rust-logo" src="../../rust-logo.svg" alt="logo"></div></a><h2 class="location"></h2></nav><nav class="sidebar"><a class="sidebar-logo" href="../../imxrt_usbd/index.html"><div class="logo-container"><img class="rust-logo" src="../../rust-logo.svg" alt="logo"></div></a></nav><main><div class="width-limiter"><div class="sub-container"><a class="sub-logo-container" href="../../imxrt_usbd/index.html"><img class="rust-logo" src="../../rust-logo.svg" alt="logo"></a><nav class="sub"><form class="search-form"><div class="search-container"><span></span><input class="search-input" name="search" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><button type="button">?</button></div><div id="settings-menu" tabindex="-1"><a href="../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../wheel.svg"></a></div></div></form></nav></div><section id="main-content" class="content"><div class="example-wrap"><pre class="line-numbers"><span id="1">1</span>
+<span id="2">2</span>
+<span id="3">3</span>
+<span id="4">4</span>
+<span id="5">5</span>
+<span id="6">6</span>
+<span id="7">7</span>
+<span id="8">8</span>
+<span id="9">9</span>
+<span id="10">10</span>
+<span id="11">11</span>
+<span id="12">12</span>
+<span id="13">13</span>
+<span id="14">14</span>
+<span id="15">15</span>
+<span id="16">16</span>
+<span id="17">17</span>
+<span id="18">18</span>
+<span id="19">19</span>
+<span id="20">20</span>
+<span id="21">21</span>
+<span id="22">22</span>
+<span id="23">23</span>
+<span id="24">24</span>
+<span id="25">25</span>
+<span id="26">26</span>
+<span id="27">27</span>
+<span id="28">28</span>
+<span id="29">29</span>
+<span id="30">30</span>
+<span id="31">31</span>
+<span id="32">32</span>
+<span id="33">33</span>
+<span id="34">34</span>
+<span id="35">35</span>
+<span id="36">36</span>
+<span id="37">37</span>
+<span id="38">38</span>
+<span id="39">39</span>
+<span id="40">40</span>
+<span id="41">41</span>
+<span id="42">42</span>
+<span id="43">43</span>
+<span id="44">44</span>
+<span id="45">45</span>
+<span id="46">46</span>
+<span id="47">47</span>
+<span id="48">48</span>
+<span id="49">49</span>
+<span id="50">50</span>
+<span id="51">51</span>
+<span id="52">52</span>
+<span id="53">53</span>
+<span id="54">54</span>
+<span id="55">55</span>
+<span id="56">56</span>
+<span id="57">57</span>
+<span id="58">58</span>
+<span id="59">59</span>
+<span id="60">60</span>
+<span id="61">61</span>
+<span id="62">62</span>
+<span id="63">63</span>
+<span id="64">64</span>
+<span id="65">65</span>
+<span id="66">66</span>
+<span id="67">67</span>
+<span id="68">68</span>
+<span id="69">69</span>
+<span id="70">70</span>
+<span id="71">71</span>
+<span id="72">72</span>
+<span id="73">73</span>
+<span id="74">74</span>
+<span id="75">75</span>
+<span id="76">76</span>
+<span id="77">77</span>
+<span id="78">78</span>
+<span id="79">79</span>
+<span id="80">80</span>
+<span id="81">81</span>
+<span id="82">82</span>
+<span id="83">83</span>
+<span id="84">84</span>
+<span id="85">85</span>
+<span id="86">86</span>
+<span id="87">87</span>
+<span id="88">88</span>
+<span id="89">89</span>
+<span id="90">90</span>
+<span id="91">91</span>
+<span id="92">92</span>
+<span id="93">93</span>
+<span id="94">94</span>
+<span id="95">95</span>
+<span id="96">96</span>
+<span id="97">97</span>
+<span id="98">98</span>
+<span id="99">99</span>
 <span id="100">100</span>
 <span id="101">101</span>
 <span id="102">102</span>
@@ -141,150 +141,148 @@
 <span id="141">141</span>
 <span id="142">142</span>
 <span id="143">143</span>
-</pre><pre class="rust"><code><span class="doccomment">//! A USB driver for i.MX RT processors</span>
-<span class="doccomment">//!</span>
-<span class="doccomment">//! `imxrt-usbd` provides a [`usb-device`] USB bus implementation, allowing you</span>
-<span class="doccomment">//! to add USB device features to your embedded Rust program. See each module</span>
-<span class="doccomment">//! for usage and examples.</span>
-<span class="doccomment">//!</span>
-<span class="doccomment">//! To interface the library, you must define a safe implementation of [`Peripherals`].</span>
-<span class="doccomment">//! See the trait documentation for more information.</span>
-<span class="doccomment">//!</span>
-<span class="doccomment">//! # General guidance</span>
-<span class="doccomment">//!</span>
-<span class="doccomment">//! The driver does not configure any of the CCM or CCM_ANALOG registers. You are</span>
-<span class="doccomment">//! responsible for configuring these peripherals for proper USB functionality. See</span>
-<span class="doccomment">//! the `imxrt-usbd` hardware examples to see different ways of configuring PLLs and</span>
-<span class="doccomment">//! clocks.</span>
-<span class="doccomment">//!</span>
-<span class="doccomment">//! [`usb-device`]: https://crates.io/crates/usb-device</span>
+</pre><pre class="rust"><code><span class="doccomment">//! A USB driver for i.MX RT processors
+//!
+//! `imxrt-usbd` provides a [`usb-device`] USB bus implementation, allowing you
+//! to add USB device features to your embedded Rust program. See each module
+//! for usage and examples.
+//!
+//! To interface the library, you must define a safe implementation of [`Peripherals`].
+//! See the trait documentation for more information.
+//!
+//! # General guidance
+//!
+//! The driver does not configure any of the CCM or CCM_ANALOG registers. You are
+//! responsible for configuring these peripherals for proper USB functionality. See
+//! the `imxrt-usbd` hardware examples to see different ways of configuring PLLs and
+//! clocks.
+//!
+//! [`usb-device`]: https://crates.io/crates/usb-device
 
-<span class="attribute">#![<span class="ident">no_std</span>]</span>
+</span><span class="attribute">#![no_std]
 
-<span class="attribute">#[<span class="ident">macro_use</span>]</span>
-<span class="kw">mod</span> <span class="ident">log</span>;
+#[macro_use]
+</span><span class="kw">mod </span>log;
 
-<span class="kw">mod</span> <span class="ident">buffer</span>;
-<span class="kw">mod</span> <span class="ident">cache</span>;
-<span class="kw">mod</span> <span class="ident">qh</span>;
-<span class="kw">mod</span> <span class="ident">ral</span>;
-<span class="kw">mod</span> <span class="ident">td</span>;
-<span class="kw">mod</span> <span class="ident">vcell</span>;
+<span class="kw">mod </span>buffer;
+<span class="kw">mod </span>cache;
+<span class="kw">mod </span>qh;
+<span class="kw">mod </span>ral;
+<span class="kw">mod </span>td;
+<span class="kw">mod </span>vcell;
 
-<span class="kw">pub</span> <span class="kw">mod</span> <span class="ident">full_speed</span>;
-<span class="kw">pub</span> <span class="kw">mod</span> <span class="ident">gpt</span>;
+<span class="kw">pub mod </span>full_speed;
+<span class="kw">pub mod </span>gpt;
 
-<span class="doccomment">/// Eight endpoints, two directions</span>
-<span class="kw">const</span> <span class="ident">QH_COUNT</span>: <span class="ident">usize</span> <span class="op">=</span> <span class="number">8</span> <span class="op">*</span> <span class="number">2</span>;
+<span class="doccomment">/// Eight endpoints, two directions
+</span><span class="kw">const </span>QH_COUNT: usize = <span class="number">8 </span>* <span class="number">2</span>;
 
-<span class="doccomment">/// A type that owns all USB register blocks</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// An implementation of `Peripherals` is expected to own the USB1</span>
-<span class="doccomment">/// or USB2 registers. This includes</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// - USB core registers</span>
-<span class="doccomment">/// - USB PHY registers</span>
-<span class="doccomment">/// - USB non-core registers</span>
-<span class="doccomment">/// - USB analog registers</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// When an instance of `Peripherals` exists, you must make sure that</span>
-<span class="doccomment">/// nothing else, other than the owner of the `Peripherals` object,</span>
-<span class="doccomment">/// accesses those registers.</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// # Safety</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// `Peripherals` should only be implemented on a type that</span>
-<span class="doccomment">/// owns the various register blocks required for all USB</span>
-<span class="doccomment">/// operation. Incorrect usage, or failure to ensure exclusive</span>
-<span class="doccomment">/// ownership, could lead to data races and incorrect USB functionality.</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// By implementing this trait, you ensure that the [`Instance`]</span>
-<span class="doccomment">/// identifier is valid for your chip. Not all i.MX RT peripherals</span>
-<span class="doccomment">/// have a USB2 peripheral instance, so you must ensure that the</span>
-<span class="doccomment">/// implementation is correct for your chip.</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// # Example</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// A safe implementation of `Peripherals` that works with the</span>
-<span class="doccomment">/// `imxrt-ral` register access layer. Assume that `ral` is</span>
-<span class="doccomment">/// shorthand for `imxrt_ral`, like</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// ```</span>
-<span class="doccomment">/// use imxrt_ral as ral;</span>
-<span class="doccomment">/// ```</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// ```no_run</span>
-<span class="doccomment">/// # mod ral {</span>
-<span class="doccomment">/// #   use core::ops::Deref; pub struct Instance; impl Deref for Instance { type Target = u32; fn deref(&amp;self) -&gt; &amp;u32 { unsafe { &amp;*(0x402e0200 as *const u32)} } }</span>
-<span class="doccomment">/// #   pub fn take() -&gt; Result&lt;Instance, ()&gt; { Ok(Instance) }</span>
-<span class="doccomment">/// #   pub mod usb { pub use super::Instance; pub mod USB1 { pub use super::super::take; } }</span>
-<span class="doccomment">/// #   pub mod usbphy { pub use super::Instance; pub mod USBPHY1 { pub use super::super::take; } }</span>
-<span class="doccomment">/// #   pub mod usbnc { pub use super::Instance; pub mod USBNC1 { pub use super::super::take; } }</span>
-<span class="doccomment">/// #   pub mod usb_analog { pub use super::Instance; pub mod USB_ANALOG { pub use super::super::take; } }</span>
-<span class="doccomment">/// # }</span>
-<span class="doccomment">/// use ral::usb;</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// struct Peripherals {</span>
-<span class="doccomment">///     _usb: ral::usb::Instance,</span>
-<span class="doccomment">///     _phy: ral::usbphy::Instance,</span>
-<span class="doccomment">///     _nc: ral::usbnc::Instance,</span>
-<span class="doccomment">///     _analog: ral::usb_analog::Instance,</span>
-<span class="doccomment">/// }</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// impl Peripherals {</span>
-<span class="doccomment">///     /// Panics if the instances are already taken</span>
-<span class="doccomment">///     fn usb1() -&gt; Peripherals {</span>
-<span class="doccomment">///         Self {</span>
-<span class="doccomment">///             _usb: ral::usb::USB1::take().unwrap(),</span>
-<span class="doccomment">///             _phy: ral::usbphy::USBPHY1::take().unwrap(),</span>
-<span class="doccomment">///             _nc: ral::usbnc::USBNC1::take().unwrap(),</span>
-<span class="doccomment">///             _analog: ral::usb_analog::USB_ANALOG::take().unwrap(),</span>
-<span class="doccomment">///         }</span>
-<span class="doccomment">///     }</span>
-<span class="doccomment">/// }</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// // This implementation is safe, because a `Peripherals` object</span>
-<span class="doccomment">/// // owns the four imxrt-ral instances, which are</span>
-<span class="doccomment">/// // guaranteed to be singletons. Given this approach, no one else</span>
-<span class="doccomment">/// // can safely access the USB registers.</span>
-<span class="doccomment">/// unsafe impl imxrt_usbd::Peripherals for Peripherals {</span>
-<span class="doccomment">///     fn instance(&amp;self) -&gt; imxrt_usbd::Instance {</span>
-<span class="doccomment">///         imxrt_usbd::Instance::USB1</span>
-<span class="doccomment">///     }</span>
-<span class="doccomment">/// }</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// let peripherals = Peripherals::usb1();</span>
-<span class="doccomment">/// let bus = imxrt_usbd::full_speed::BusAdapter::new(</span>
-<span class="doccomment">///     peripherals,</span>
-<span class="doccomment">///     // Rest of setup...</span>
-<span class="doccomment">///     # unsafe { static mut M: [u8; 1] = [0; 1]; &amp;mut M }</span>
-<span class="doccomment">/// );</span>
-<span class="doccomment">/// ```</span>
-<span class="kw">pub</span> <span class="kw">unsafe</span> <span class="kw">trait</span> <span class="ident">Peripherals</span> {
-    <span class="doccomment">/// Returns the instance identifier for the core registers</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// **Warning**: some i.MX RT peripherals have only one USB peripheral,</span>
-    <span class="doccomment">/// USB1. The behavior is undefined if you return `Instance::USB2` on</span>
-    <span class="doccomment">/// one of these systems.</span>
-    <span class="kw">fn</span> <span class="ident">instance</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="ident">Instance</span>;
+<span class="doccomment">/// A type that owns all USB register blocks
+///
+/// An implementation of `Peripherals` is expected to own the USB1
+/// or USB2 registers. This includes
+///
+/// - USB core registers
+/// - USB PHY registers
+/// - USB non-core registers
+/// - USB analog registers
+///
+/// When an instance of `Peripherals` exists, you must make sure that
+/// nothing else, other than the owner of the `Peripherals` object,
+/// accesses those registers.
+///
+/// # Safety
+///
+/// `Peripherals` should only be implemented on a type that
+/// owns the various register blocks required for all USB
+/// operation. Incorrect usage, or failure to ensure exclusive
+/// ownership, could lead to data races and incorrect USB functionality.
+///
+/// By implementing this trait, you ensure that the [`Instance`]
+/// identifier is valid for your chip. Not all i.MX RT peripherals
+/// have a USB2 peripheral instance, so you must ensure that the
+/// implementation is correct for your chip.
+///
+/// # Example
+///
+/// A safe implementation of `Peripherals` that works with the
+/// `imxrt-ral` register access layer. Assume that `ral` is
+/// shorthand for `imxrt_ral`, like
+///
+/// ```
+/// use imxrt_ral as ral;
+/// ```
+///
+/// ```no_run
+/// # mod ral {
+/// #   use core::ops::Deref; pub struct Instance; impl Deref for Instance { type Target = u32; fn deref(&amp;self) -&gt; &amp;u32 { unsafe { &amp;*(0x402e0200 as *const u32)} } }
+/// #   pub fn take() -&gt; Result&lt;Instance, ()&gt; { Ok(Instance) }
+/// #   pub mod usb { pub use super::Instance; pub mod USB1 { pub use super::super::take; } }
+/// #   pub mod usbphy { pub use super::Instance; pub mod USBPHY1 { pub use super::super::take; } }
+/// #   pub mod usbnc { pub use super::Instance; pub mod USBNC1 { pub use super::super::take; } }
+/// #   pub mod usb_analog { pub use super::Instance; pub mod USB_ANALOG { pub use super::super::take; } }
+/// # }
+/// use ral::usb;
+///
+/// struct Peripherals {
+///     _usb: ral::usb::Instance,
+///     _phy: ral::usbphy::Instance,
+///     _nc: ral::usbnc::Instance,
+///     _analog: ral::usb_analog::Instance,
+/// }
+///
+/// impl Peripherals {
+///     /// Panics if the instances are already taken
+///     fn usb1() -&gt; Peripherals {
+///         Self {
+///             _usb: ral::usb::USB1::take().unwrap(),
+///             _phy: ral::usbphy::USBPHY1::take().unwrap(),
+///             _nc: ral::usbnc::USBNC1::take().unwrap(),
+///             _analog: ral::usb_analog::USB_ANALOG::take().unwrap(),
+///         }
+///     }
+/// }
+///
+/// // This implementation is safe, because a `Peripherals` object
+/// // owns the four imxrt-ral instances, which are
+/// // guaranteed to be singletons. Given this approach, no one else
+/// // can safely access the USB registers.
+/// unsafe impl imxrt_usbd::Peripherals for Peripherals {
+///     fn instance(&amp;self) -&gt; imxrt_usbd::Instance {
+///         imxrt_usbd::Instance::USB1
+///     }
+/// }
+///
+/// let peripherals = Peripherals::usb1();
+/// let bus = imxrt_usbd::full_speed::BusAdapter::new(
+///     peripherals,
+///     // Rest of setup...
+///     # unsafe { static mut M: [u8; 1] = [0; 1]; &amp;mut M }
+/// );
+/// ```
+</span><span class="kw">pub unsafe trait </span>Peripherals {
+    <span class="doccomment">/// Returns the instance identifier for the core registers
+    ///
+    /// **Warning**: some i.MX RT peripherals have only one USB peripheral,
+    /// USB1. The behavior is undefined if you return `Instance::USB2` on
+    /// one of these systems.
+    </span><span class="kw">fn </span>instance(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; Instance;
 }
 
-<span class="doccomment">/// USB instance identifiers</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// These are *not* USB standards or speeds. They indicate if this</span>
-<span class="doccomment">/// is the USB1 register instance, or the USB2 register instance.</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// Note that some i.MX RT processors only have one USB instance (USB1).</span>
-<span class="doccomment">/// On those systems, it is invalid to ever indicate the USB2 instance.</span>
-<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Debug</span>, <span class="ident">Clone</span>, <span class="ident">Copy</span>, <span class="ident">PartialEq</span>, <span class="ident">Eq</span>)]</span>
-<span class="attribute">#[<span class="ident">allow</span>(<span class="ident">clippy::upper_case_acronyms</span>)]</span> <span class="comment">// USB naming makes sense here</span>
-<span class="kw">pub</span> <span class="kw">enum</span> <span class="ident">Instance</span> {
-    <span class="doccomment">/// The first USB register instance</span>
-    <span class="ident">USB1</span>,
-    <span class="doccomment">/// The second USB register instance</span>
-    <span class="ident">USB2</span>,
+<span class="doccomment">/// USB instance identifiers
+///
+/// These are *not* USB standards or speeds. They indicate if this
+/// is the USB1 register instance, or the USB2 register instance.
+///
+/// Note that some i.MX RT processors only have one USB instance (USB1).
+/// On those systems, it is invalid to ever indicate the USB2 instance.
+</span><span class="attribute">#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[allow(clippy::upper_case_acronyms)] </span><span class="comment">// USB naming makes sense here
+</span><span class="kw">pub enum </span>Instance {
+    <span class="doccomment">/// The first USB register instance
+    </span>USB1,
+    <span class="doccomment">/// The second USB register instance
+    </span>USB2,
 }
 </code></pre></div>
-</section><section id="search" class="content hidden"></section><div id="rustdoc-vars" data-root-path="../../" data-current-crate="imxrt_usbd" data-search-index-js="../../search-index.js" data-search-js="../../search.js"></div>
-    <script src="../../main.js"></script><script src="../../source-script.js"></script><script src="../../source-files.js"></script>
-</body></html>
+</section></div></main><div id="rustdoc-vars" data-root-path="../../" data-current-crate="imxrt_usbd" data-themes="ayu,dark,light" data-resource-suffix="" data-rustdoc-version="1.65.0 (897e37553 2022-11-02)" ></div></body></html>

@@ -1,3 +1,4 @@
-var N = null;var sourcesIndex = {};
-sourcesIndex["imxrt_usbd"] = {"name":"","dirs":[{"name":"full_speed","files":["bus.rs","driver.rs","endpoint.rs","state.rs"]},{"name":"ral","files":["usb.rs","usbphy.rs"]}],"files":["buffer.rs","cache.rs","full_speed.rs","gpt.rs","lib.rs","log.rs","qh.rs","ral.rs","td.rs","vcell.rs"]};
+var sourcesIndex = JSON.parse('{\
+"imxrt_usbd":["",[["full_speed",[],["bus.rs","driver.rs","endpoint.rs","state.rs"]],["ral",[],["usb.rs","usbphy.rs"]]],["buffer.rs","cache.rs","full_speed.rs","gpt.rs","lib.rs","log.rs","qh.rs","ral.rs","td.rs","vcell.rs"]]\
+}');
 createSourceSidebar();

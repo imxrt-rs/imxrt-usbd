@@ -1,102 +1,102 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `src&#x2F;full_speed&#x2F;bus.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>bus.rs - source</title><link rel="stylesheet" type="text/css" href="../../../normalize.css"><link rel="stylesheet" type="text/css" href="../../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../../light.css"  id="themeStyle"><link rel="stylesheet" type="text/css" href="../../../dark.css" disabled ><link rel="stylesheet" type="text/css" href="../../../ayu.css" disabled ><script id="default-settings" ></script><script src="../../../storage.js"></script><script src="../../../crates.js"></script><noscript><link rel="stylesheet" href="../../../noscript.css"></noscript><link rel="alternate icon" type="image/png" href="../../../favicon-16x16.png"><link rel="alternate icon" type="image/png" href="../../../favicon-32x32.png"><link rel="icon" type="image/svg+xml" href="../../../favicon.svg"><style type="text/css">#crate-search{background-image:url("../../../down-arrow.svg");}</style></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="sidebar-menu" role="button">&#9776;</div><a href='../../../imxrt_usbd/index.html'><div class='logo-container rust-logo'><img src='../../../rust-logo.png' alt='logo'></div></a></nav><div class="theme-picker"><button id="theme-picker" aria-label="Pick another theme!" aria-haspopup="menu" title="themes"><img width="18" height="18" alt="Pick another theme!" src="../../../brush.svg"></button><div id="theme-choices" role="menu"></div></div><nav class="sub"><form class="search-form"><div class="search-container"><div><select id="crate-search"><option value="All crates">All crates</option></select><input class="search-input" name="search" disabled autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"></div><button type="button" id="help-button" title="help">?</button><a id="settings-menu" href="../../../settings.html" title="settings"><img width="18" height="18" alt="Change settings" src="../../../wheel.svg"></a></div></form></nav><section id="main" class="content"><div class="example-wrap"><pre class="line-numbers"><span id="1">  1</span>
-<span id="2">  2</span>
-<span id="3">  3</span>
-<span id="4">  4</span>
-<span id="5">  5</span>
-<span id="6">  6</span>
-<span id="7">  7</span>
-<span id="8">  8</span>
-<span id="9">  9</span>
-<span id="10"> 10</span>
-<span id="11"> 11</span>
-<span id="12"> 12</span>
-<span id="13"> 13</span>
-<span id="14"> 14</span>
-<span id="15"> 15</span>
-<span id="16"> 16</span>
-<span id="17"> 17</span>
-<span id="18"> 18</span>
-<span id="19"> 19</span>
-<span id="20"> 20</span>
-<span id="21"> 21</span>
-<span id="22"> 22</span>
-<span id="23"> 23</span>
-<span id="24"> 24</span>
-<span id="25"> 25</span>
-<span id="26"> 26</span>
-<span id="27"> 27</span>
-<span id="28"> 28</span>
-<span id="29"> 29</span>
-<span id="30"> 30</span>
-<span id="31"> 31</span>
-<span id="32"> 32</span>
-<span id="33"> 33</span>
-<span id="34"> 34</span>
-<span id="35"> 35</span>
-<span id="36"> 36</span>
-<span id="37"> 37</span>
-<span id="38"> 38</span>
-<span id="39"> 39</span>
-<span id="40"> 40</span>
-<span id="41"> 41</span>
-<span id="42"> 42</span>
-<span id="43"> 43</span>
-<span id="44"> 44</span>
-<span id="45"> 45</span>
-<span id="46"> 46</span>
-<span id="47"> 47</span>
-<span id="48"> 48</span>
-<span id="49"> 49</span>
-<span id="50"> 50</span>
-<span id="51"> 51</span>
-<span id="52"> 52</span>
-<span id="53"> 53</span>
-<span id="54"> 54</span>
-<span id="55"> 55</span>
-<span id="56"> 56</span>
-<span id="57"> 57</span>
-<span id="58"> 58</span>
-<span id="59"> 59</span>
-<span id="60"> 60</span>
-<span id="61"> 61</span>
-<span id="62"> 62</span>
-<span id="63"> 63</span>
-<span id="64"> 64</span>
-<span id="65"> 65</span>
-<span id="66"> 66</span>
-<span id="67"> 67</span>
-<span id="68"> 68</span>
-<span id="69"> 69</span>
-<span id="70"> 70</span>
-<span id="71"> 71</span>
-<span id="72"> 72</span>
-<span id="73"> 73</span>
-<span id="74"> 74</span>
-<span id="75"> 75</span>
-<span id="76"> 76</span>
-<span id="77"> 77</span>
-<span id="78"> 78</span>
-<span id="79"> 79</span>
-<span id="80"> 80</span>
-<span id="81"> 81</span>
-<span id="82"> 82</span>
-<span id="83"> 83</span>
-<span id="84"> 84</span>
-<span id="85"> 85</span>
-<span id="86"> 86</span>
-<span id="87"> 87</span>
-<span id="88"> 88</span>
-<span id="89"> 89</span>
-<span id="90"> 90</span>
-<span id="91"> 91</span>
-<span id="92"> 92</span>
-<span id="93"> 93</span>
-<span id="94"> 94</span>
-<span id="95"> 95</span>
-<span id="96"> 96</span>
-<span id="97"> 97</span>
-<span id="98"> 98</span>
-<span id="99"> 99</span>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `src/full_speed/bus.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>bus.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceSerif4-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../FiraSans-Regular.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../FiraSans-Medium.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceCodePro-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceSerif4-Bold.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceCodePro-Semibold.ttf.woff2"><link rel="stylesheet" href="../../../normalize.css"><link rel="stylesheet" href="../../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" href="../../../ayu.css" disabled><link rel="stylesheet" href="../../../dark.css" disabled><link rel="stylesheet" href="../../../light.css" id="themeStyle"><script id="default-settings" ></script><script src="../../../storage.js"></script><script defer src="../../../source-script.js"></script><script defer src="../../../source-files.js"></script><script defer src="../../../main.js"></script><noscript><link rel="stylesheet" href="../../../noscript.css"></noscript><link rel="alternate icon" type="image/png" href="../../../favicon-16x16.png"><link rel="alternate icon" type="image/png" href="../../../favicon-32x32.png"><link rel="icon" type="image/svg+xml" href="../../../favicon.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="mobile-topbar"><button class="sidebar-menu-toggle">&#9776;</button><a class="sidebar-logo" href="../../../imxrt_usbd/index.html"><div class="logo-container"><img class="rust-logo" src="../../../rust-logo.svg" alt="logo"></div></a><h2 class="location"></h2></nav><nav class="sidebar"><a class="sidebar-logo" href="../../../imxrt_usbd/index.html"><div class="logo-container"><img class="rust-logo" src="../../../rust-logo.svg" alt="logo"></div></a></nav><main><div class="width-limiter"><div class="sub-container"><a class="sub-logo-container" href="../../../imxrt_usbd/index.html"><img class="rust-logo" src="../../../rust-logo.svg" alt="logo"></a><nav class="sub"><form class="search-form"><div class="search-container"><span></span><input class="search-input" name="search" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><button type="button">?</button></div><div id="settings-menu" tabindex="-1"><a href="../../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../../wheel.svg"></a></div></div></form></nav></div><section id="main-content" class="content"><div class="example-wrap"><pre class="line-numbers"><span id="1">1</span>
+<span id="2">2</span>
+<span id="3">3</span>
+<span id="4">4</span>
+<span id="5">5</span>
+<span id="6">6</span>
+<span id="7">7</span>
+<span id="8">8</span>
+<span id="9">9</span>
+<span id="10">10</span>
+<span id="11">11</span>
+<span id="12">12</span>
+<span id="13">13</span>
+<span id="14">14</span>
+<span id="15">15</span>
+<span id="16">16</span>
+<span id="17">17</span>
+<span id="18">18</span>
+<span id="19">19</span>
+<span id="20">20</span>
+<span id="21">21</span>
+<span id="22">22</span>
+<span id="23">23</span>
+<span id="24">24</span>
+<span id="25">25</span>
+<span id="26">26</span>
+<span id="27">27</span>
+<span id="28">28</span>
+<span id="29">29</span>
+<span id="30">30</span>
+<span id="31">31</span>
+<span id="32">32</span>
+<span id="33">33</span>
+<span id="34">34</span>
+<span id="35">35</span>
+<span id="36">36</span>
+<span id="37">37</span>
+<span id="38">38</span>
+<span id="39">39</span>
+<span id="40">40</span>
+<span id="41">41</span>
+<span id="42">42</span>
+<span id="43">43</span>
+<span id="44">44</span>
+<span id="45">45</span>
+<span id="46">46</span>
+<span id="47">47</span>
+<span id="48">48</span>
+<span id="49">49</span>
+<span id="50">50</span>
+<span id="51">51</span>
+<span id="52">52</span>
+<span id="53">53</span>
+<span id="54">54</span>
+<span id="55">55</span>
+<span id="56">56</span>
+<span id="57">57</span>
+<span id="58">58</span>
+<span id="59">59</span>
+<span id="60">60</span>
+<span id="61">61</span>
+<span id="62">62</span>
+<span id="63">63</span>
+<span id="64">64</span>
+<span id="65">65</span>
+<span id="66">66</span>
+<span id="67">67</span>
+<span id="68">68</span>
+<span id="69">69</span>
+<span id="70">70</span>
+<span id="71">71</span>
+<span id="72">72</span>
+<span id="73">73</span>
+<span id="74">74</span>
+<span id="75">75</span>
+<span id="76">76</span>
+<span id="77">77</span>
+<span id="78">78</span>
+<span id="79">79</span>
+<span id="80">80</span>
+<span id="81">81</span>
+<span id="82">82</span>
+<span id="83">83</span>
+<span id="84">84</span>
+<span id="85">85</span>
+<span id="86">86</span>
+<span id="87">87</span>
+<span id="88">88</span>
+<span id="89">89</span>
+<span id="90">90</span>
+<span id="91">91</span>
+<span id="92">92</span>
+<span id="93">93</span>
+<span id="94">94</span>
+<span id="95">95</span>
+<span id="96">96</span>
+<span id="97">97</span>
+<span id="98">98</span>
+<span id="99">99</span>
 <span id="100">100</span>
 <span id="101">101</span>
 <span id="102">102</span>
@@ -300,309 +300,315 @@
 <span id="300">300</span>
 <span id="301">301</span>
 <span id="302">302</span>
-</pre><pre class="rust"><code><span class="doccomment">//! USB bus implementation</span>
-<span class="doccomment">//!</span>
-<span class="doccomment">//! The bus</span>
-<span class="doccomment">//!</span>
-<span class="doccomment">//! - initializes the USB driver</span>
-<span class="doccomment">//! - adapts the USB driver to meet the `usb-device` `Sync` requirements</span>
-<span class="doccomment">//! - dispatches reads and writes to the proper endpoints</span>
-<span class="doccomment">//! - exposes the i.MX RT-specific API to the user (`configure`, `set_interrupts`)</span>
-<span class="doccomment">//!</span>
-<span class="doccomment">//! Most of the interesting behavior happens in the driver.</span>
+<span id="303">303</span>
+<span id="304">304</span>
+<span id="305">305</span>
+<span id="306">306</span>
+</pre><pre class="rust"><code><span class="doccomment">//! USB bus implementation
+//!
+//! The bus
+//!
+//! - initializes the USB driver
+//! - adapts the USB driver to meet the `usb-device` `Sync` requirements
+//! - dispatches reads and writes to the proper endpoints
+//! - exposes the i.MX RT-specific API to the user (`configure`, `set_interrupts`)
+//!
+//! Most of the interesting behavior happens in the driver.
 
-<span class="kw">use</span> <span class="ident"><span class="kw">super</span>::driver::FullSpeed</span>;
-<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::gpt</span>;
-<span class="kw">use</span> <span class="ident">core::cell::RefCell</span>;
-<span class="kw">use</span> <span class="ident">cortex_m::interrupt</span>::{<span class="self">self</span>, <span class="ident">Mutex</span>};
-<span class="kw">use</span> <span class="ident">usb_device</span>::{
-    <span class="ident">bus</span>::{<span class="ident">PollResult</span>, <span class="ident">UsbBus</span>},
-    <span class="ident">endpoint</span>::{<span class="ident">EndpointAddress</span>, <span class="ident">EndpointType</span>},
-    <span class="ident">UsbDirection</span>,
+</span><span class="kw">use </span><span class="kw">super</span>::driver::FullSpeed;
+<span class="kw">use </span><span class="kw">crate</span>::gpt;
+<span class="kw">use </span>core::cell::RefCell;
+<span class="kw">use </span>cortex_m::interrupt::{<span class="self">self</span>, Mutex};
+<span class="kw">use </span>usb_device::{
+    bus::{PollResult, UsbBus},
+    endpoint::{EndpointAddress, EndpointType},
+    UsbDirection,
 };
 
-<span class="doccomment">/// A `UsbBus` implementation</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// The `BusAdapter` adapts the RAL instances, and exposes a `UsbBus` implementation.</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// # Requirements</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// The driver assumes that you&#39;ve prepared all USB clocks (CCM clock gates, CCM analog PLLs).</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// Before polling for USB class traffic, you must call [`configure()`](BusAdapter::configure())</span>
-<span class="doccomment">/// *after* your device has been configured. This can be accomplished by polling the USB</span>
-<span class="doccomment">/// device and checking its state until it&#39;s been configured. Once configured, use `UsbDevice::bus()`</span>
-<span class="doccomment">/// to access the i.MX RT `BusAdapter`, and call `configure()`. You should only do this once.</span>
-<span class="doccomment">/// After that, you may poll for class traffic.</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// # Example</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// This example shows you how to create a `BusAdapter`, build a simple USB device, and</span>
-<span class="doccomment">/// prepare the device for class traffic.</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// Note that this example does not demonstrate USB class allocation or polling. See</span>
-<span class="doccomment">/// your USB class&#39; documentation for details. This example also skips the clock initialization.</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// ```no_run</span>
-<span class="doccomment">/// use imxrt_usbd::full_speed::BusAdapter;</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// # struct Ps; use imxrt_usbd::Instance as Inst;</span>
-<span class="doccomment">/// # unsafe impl imxrt_usbd::Peripherals for Ps { fn instance(&amp;self) -&gt; Inst { panic!() } }</span>
-<span class="doccomment">/// static mut ENDPOINT_MEMORY: [u8; 1024] = [0; 1024];</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// // TODO initialize clocks...</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// let my_usb_peripherals = // Your Peripherals instance...</span>
-<span class="doccomment">/// #   Ps;</span>
-<span class="doccomment">/// let bus_adapter = BusAdapter::new(</span>
-<span class="doccomment">///     my_usb_peripherals,</span>
-<span class="doccomment">///     unsafe { &amp;mut ENDPOINT_MEMORY }</span>
-<span class="doccomment">/// );</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// // Create the USB device...</span>
-<span class="doccomment">/// use usb_device::prelude::*;</span>
-<span class="doccomment">/// let bus_allocator = usb_device::bus::UsbBusAllocator::new(bus_adapter);</span>
-<span class="doccomment">/// let mut device = UsbDeviceBuilder::new(&amp;bus_allocator, UsbVidPid(0x5824, 0x27dd))</span>
-<span class="doccomment">///     .product(&quot;imxrt-usbd&quot;)</span>
-<span class="doccomment">///     // Other builder methods...</span>
-<span class="doccomment">///     .build();</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// // Poll until configured...</span>
-<span class="doccomment">/// loop {</span>
-<span class="doccomment">///     if device.poll(&amp;mut []) {</span>
-<span class="doccomment">///         let state = device.state();</span>
-<span class="doccomment">///         if state == usb_device::device::UsbDeviceState::Configured {</span>
-<span class="doccomment">///             break;</span>
-<span class="doccomment">///         }</span>
-<span class="doccomment">///     }</span>
-<span class="doccomment">/// }</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// // Configure the bus</span>
-<span class="doccomment">/// device.bus().configure();</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// // Ready for class traffic!</span>
-<span class="doccomment">/// ```</span>
-<span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">BusAdapter</span> {
-    <span class="ident">usb</span>: <span class="ident">Mutex</span><span class="op">&lt;</span><span class="ident">RefCell</span><span class="op">&lt;</span><span class="ident">FullSpeed</span><span class="op">&gt;</span><span class="op">&gt;</span>,
+<span class="doccomment">/// A `UsbBus` implementation
+///
+/// The `BusAdapter` adapts the RAL instances, and exposes a `UsbBus` implementation.
+///
+/// # Requirements
+///
+/// The driver assumes that you&#39;ve prepared all USB clocks (CCM clock gates, CCM analog PLLs).
+///
+/// Before polling for USB class traffic, you must call [`configure()`](BusAdapter::configure())
+/// *after* your device has been configured. This can be accomplished by polling the USB
+/// device and checking its state until it&#39;s been configured. Once configured, use `UsbDevice::bus()`
+/// to access the i.MX RT `BusAdapter`, and call `configure()`. You should only do this once.
+/// After that, you may poll for class traffic.
+///
+/// # Example
+///
+/// This example shows you how to create a `BusAdapter`, build a simple USB device, and
+/// prepare the device for class traffic.
+///
+/// Note that this example does not demonstrate USB class allocation or polling. See
+/// your USB class&#39; documentation for details. This example also skips the clock initialization.
+///
+/// ```no_run
+/// use imxrt_usbd::full_speed::BusAdapter;
+///
+/// # struct Ps; use imxrt_usbd::Instance as Inst;
+/// # unsafe impl imxrt_usbd::Peripherals for Ps { fn instance(&amp;self) -&gt; Inst { panic!() } }
+/// static mut ENDPOINT_MEMORY: [u8; 1024] = [0; 1024];
+///
+/// // TODO initialize clocks...
+///
+/// let my_usb_peripherals = // Your Peripherals instance...
+/// #   Ps;
+/// let bus_adapter = BusAdapter::new(
+///     my_usb_peripherals,
+///     unsafe { &amp;mut ENDPOINT_MEMORY }
+/// );
+///
+/// // Create the USB device...
+/// use usb_device::prelude::*;
+/// let bus_allocator = usb_device::bus::UsbBusAllocator::new(bus_adapter);
+/// let mut device = UsbDeviceBuilder::new(&amp;bus_allocator, UsbVidPid(0x5824, 0x27dd))
+///     .product(&quot;imxrt-usbd&quot;)
+///     // Other builder methods...
+///     .build();
+///
+/// // Poll until configured...
+/// loop {
+///     if device.poll(&amp;mut []) {
+///         let state = device.state();
+///         if state == usb_device::device::UsbDeviceState::Configured {
+///             break;
+///         }
+///     }
+/// }
+///
+/// // Configure the bus
+/// device.bus().configure();
+///
+/// // Ready for class traffic!
+/// ```
+</span><span class="kw">pub struct </span>BusAdapter {
+    usb: Mutex&lt;RefCell&lt;FullSpeed&gt;&gt;,
 }
 
-<span class="kw">impl</span> <span class="ident">BusAdapter</span> {
-    <span class="doccomment">/// Create a USB bus adapter</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// When this function returns, the `BusAdapter` has initialized the PHY and USB core peripherals.</span>
-    <span class="doccomment">/// The adapter expects to own these two peripherals, along with the other peripherals required</span>
-    <span class="doccomment">/// by the [`Peripherals`](crate::Peripherals) safety contract.</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// You must also provide a region of memory that will used for endpoint I/O. The</span>
-    <span class="doccomment">/// memory region will be partitioned for the endpoints, based on their requirements.</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// You must ensure that no one else is using the endpoint memory!</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">new</span><span class="op">&lt;</span><span class="ident">P</span>: <span class="ident"><span class="kw">crate</span>::Peripherals</span><span class="op">&gt;</span>(<span class="ident">peripherals</span>: <span class="ident">P</span>, <span class="ident">buffer</span>: <span class="kw-2">&amp;</span><span class="lifetime">&#39;static</span> <span class="kw-2">mut</span> [<span class="ident">u8</span>]) -&gt; <span class="self">Self</span> {
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">usb</span> <span class="op">=</span> <span class="ident">FullSpeed::new</span>(<span class="ident">peripherals</span>);
+<span class="kw">impl </span>BusAdapter {
+    <span class="doccomment">/// Create a USB bus adapter
+    ///
+    /// When this function returns, the `BusAdapter` has initialized the PHY and USB core peripherals.
+    /// The adapter expects to own these two peripherals, along with the other peripherals required
+    /// by the [`Peripherals`](crate::Peripherals) safety contract.
+    ///
+    /// You must also provide a region of memory that will used for endpoint I/O. The
+    /// memory region will be partitioned for the endpoints, based on their requirements.
+    ///
+    /// You must ensure that no one else is using the endpoint memory!
+    </span><span class="kw">pub fn </span>new&lt;P: <span class="kw">crate</span>::Peripherals&gt;(peripherals: P, buffer: <span class="kw-2">&amp;</span><span class="lifetime">&#39;static </span><span class="kw-2">mut </span>[u8]) -&gt; <span class="self">Self </span>{
+        <span class="kw">let </span><span class="kw-2">mut </span>usb = FullSpeed::new(peripherals);
 
-        <span class="ident">usb</span>.<span class="ident">initialize</span>();
-        <span class="ident">usb</span>.<span class="ident">set_endpoint_memory</span>(<span class="ident">buffer</span>);
+        usb.initialize();
+        usb.set_endpoint_memory(buffer);
 
-        <span class="ident">BusAdapter</span> {
-            <span class="ident">usb</span>: <span class="ident">Mutex::new</span>(<span class="ident">RefCell::new</span>(<span class="ident">usb</span>)),
+        BusAdapter {
+            usb: Mutex::new(RefCell::new(usb)),
         }
     }
 
-    <span class="doccomment">/// Enable (`true`) or disable (`false`) interrupts for this USB peripheral</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// The interrupt causes are implementation specific. To handle the interrupt,</span>
-    <span class="doccomment">/// call [`poll()`](BusAdapter::poll).</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">set_interrupts</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">interrupts</span>: <span class="ident">bool</span>) {
-        <span class="self">self</span>.<span class="ident">with_usb_mut</span>(<span class="op">|</span><span class="ident">usb</span><span class="op">|</span> <span class="ident">usb</span>.<span class="ident">set_interrupts</span>(<span class="ident">interrupts</span>));
+    <span class="doccomment">/// Enable (`true`) or disable (`false`) interrupts for this USB peripheral
+    ///
+    /// The interrupt causes are implementation specific. To handle the interrupt,
+    /// call [`poll()`](BusAdapter::poll).
+    </span><span class="kw">pub fn </span>set_interrupts(<span class="kw-2">&amp;</span><span class="self">self</span>, interrupts: bool) {
+        <span class="self">self</span>.with_usb_mut(|usb| usb.set_interrupts(interrupts));
     }
 
-    <span class="doccomment">/// Interrupt-safe, immutable access to the USB peripheral</span>
-    <span class="kw">fn</span> <span class="ident">with_usb</span><span class="op">&lt;</span><span class="ident">R</span><span class="op">&gt;</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">func</span>: <span class="kw">impl</span> <span class="ident">FnOnce</span>(<span class="kw-2">&amp;</span><span class="ident">FullSpeed</span>) -&gt; <span class="ident">R</span>) -&gt; <span class="ident">R</span> {
-        <span class="ident">interrupt::free</span>(<span class="op">|</span><span class="ident">cs</span><span class="op">|</span> {
-            <span class="kw">let</span> <span class="ident">usb</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">usb</span>.<span class="ident">borrow</span>(<span class="ident">cs</span>);
-            <span class="kw">let</span> <span class="ident">usb</span> <span class="op">=</span> <span class="ident">usb</span>.<span class="ident">borrow</span>();
-            <span class="ident">func</span>(<span class="kw-2">&amp;</span><span class="kw-2">*</span><span class="ident">usb</span>)
+    <span class="doccomment">/// Interrupt-safe, immutable access to the USB peripheral
+    </span><span class="kw">fn </span>with_usb&lt;R&gt;(<span class="kw-2">&amp;</span><span class="self">self</span>, func: <span class="kw">impl </span>FnOnce(<span class="kw-2">&amp;</span>FullSpeed) -&gt; R) -&gt; R {
+        interrupt::free(|cs| {
+            <span class="kw">let </span>usb = <span class="self">self</span>.usb.borrow(cs);
+            <span class="kw">let </span>usb = usb.borrow();
+            func(<span class="kw-2">&amp;</span>usb)
         })
     }
 
-    <span class="doccomment">/// Interrupt-safe, mutable access to the USB peripheral</span>
-    <span class="kw">fn</span> <span class="ident">with_usb_mut</span><span class="op">&lt;</span><span class="ident">R</span><span class="op">&gt;</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">func</span>: <span class="kw">impl</span> <span class="ident">FnOnce</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">FullSpeed</span>) -&gt; <span class="ident">R</span>) -&gt; <span class="ident">R</span> {
-        <span class="ident">interrupt::free</span>(<span class="op">|</span><span class="ident">cs</span><span class="op">|</span> {
-            <span class="kw">let</span> <span class="ident">usb</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">usb</span>.<span class="ident">borrow</span>(<span class="ident">cs</span>);
-            <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">usb</span> <span class="op">=</span> <span class="ident">usb</span>.<span class="ident">borrow_mut</span>();
-            <span class="ident">func</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="kw-2">*</span><span class="ident">usb</span>)
+    <span class="doccomment">/// Interrupt-safe, mutable access to the USB peripheral
+    </span><span class="kw">fn </span>with_usb_mut&lt;R&gt;(<span class="kw-2">&amp;</span><span class="self">self</span>, func: <span class="kw">impl </span>FnOnce(<span class="kw-2">&amp;mut </span>FullSpeed) -&gt; R) -&gt; R {
+        interrupt::free(|cs| {
+            <span class="kw">let </span>usb = <span class="self">self</span>.usb.borrow(cs);
+            <span class="kw">let </span><span class="kw-2">mut </span>usb = usb.borrow_mut();
+            func(<span class="kw-2">&amp;mut </span>usb)
         })
     }
 
-    <span class="doccomment">/// Apply device configurations, and perform other post-configuration actions</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// You must invoke this once, and only after your device has been configured. If</span>
-    <span class="doccomment">/// the device is reset and reconfigured, you must invoke `configure()` again. See</span>
-    <span class="doccomment">/// the top-level example for how this could be achieved.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">configure</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) {
-        <span class="self">self</span>.<span class="ident">with_usb_mut</span>(<span class="op">|</span><span class="ident">usb</span><span class="op">|</span> {
-            <span class="ident">usb</span>.<span class="ident">on_configured</span>();
+    <span class="doccomment">/// Apply device configurations, and perform other post-configuration actions
+    ///
+    /// You must invoke this once, and only after your device has been configured. If
+    /// the device is reset and reconfigured, you must invoke `configure()` again. See
+    /// the top-level example for how this could be achieved.
+    </span><span class="kw">pub fn </span>configure(<span class="kw-2">&amp;</span><span class="self">self</span>) {
+        <span class="self">self</span>.with_usb_mut(|usb| {
+            usb.on_configured();
             <span class="macro">debug!</span>(<span class="string">&quot;CONFIGURED&quot;</span>);
         });
     }
 
-    <span class="doccomment">/// Acquire one of the GPT timer instances.</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// `instance` identifies which GPT instance you&#39;re accessing.</span>
-    <span class="doccomment">/// `gpt` requires a critical section to guarantee a single</span>
-    <span class="doccomment">/// mutable access to a USB GPT. See `cortex_m::interrupt::free`</span>
-    <span class="doccomment">/// for more information.</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// # Panics</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// Panics if the GPT instance is already borrowed. This could happen</span>
-    <span class="doccomment">/// if you call `borrow_gpt` again within the `func` callback.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">borrow_gpt</span><span class="op">&lt;</span><span class="ident">R</span><span class="op">&gt;</span>(
+    <span class="doccomment">/// Acquire one of the GPT timer instances.
+    ///
+    /// `instance` identifies which GPT instance you&#39;re accessing.
+    /// `gpt` requires a critical section to guarantee a single
+    /// mutable access to a USB GPT. See `cortex_m::interrupt::free`
+    /// for more information.
+    ///
+    /// # Panics
+    ///
+    /// Panics if the GPT instance is already borrowed. This could happen
+    /// if you call `borrow_gpt` again within the `func` callback.
+    </span><span class="kw">pub fn </span>borrow_gpt&lt;R&gt;(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
-        <span class="ident">cs</span>: <span class="kw-2">&amp;</span><span class="ident">cortex_m::interrupt::CriticalSection</span>,
-        <span class="ident">instance</span>: <span class="ident">gpt::Instance</span>,
-        <span class="ident">func</span>: <span class="kw">impl</span> <span class="ident">FnOnce</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">gpt::Gpt</span>) -&gt; <span class="ident">R</span>,
-    ) -&gt; <span class="ident">R</span> {
-        <span class="kw">let</span> <span class="ident">usb</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">usb</span>.<span class="ident">borrow</span>(<span class="ident">cs</span>);
-        <span class="ident">usb</span>.<span class="ident">borrow_mut</span>().<span class="ident">gpt_mut</span>(<span class="ident">instance</span>, <span class="ident">func</span>)
+        cs: <span class="kw-2">&amp;</span>cortex_m::interrupt::CriticalSection,
+        instance: gpt::Instance,
+        func: <span class="kw">impl </span>FnOnce(<span class="kw-2">&amp;mut </span>gpt::Gpt) -&gt; R,
+    ) -&gt; R {
+        <span class="kw">let </span>usb = <span class="self">self</span>.usb.borrow(cs);
+        usb.borrow_mut().gpt_mut(instance, func)
     }
 }
 
-<span class="kw">impl</span> <span class="ident">UsbBus</span> <span class="kw">for</span> <span class="ident">BusAdapter</span> {
-    <span class="doccomment">/// The USB hardware can guarantee that we set the status before we receive</span>
-    <span class="doccomment">/// the status, and we&#39;re taking advantage of that. We expect this flag to</span>
-    <span class="doccomment">/// result in a call to set_address before the status happens. This means</span>
-    <span class="doccomment">/// that we can meet the timing requirements without help from software.</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// It&#39;s not a quirk; it&#39;s a feature :)</span>
-    <span class="kw">const</span> <span class="ident">QUIRK_SET_ADDRESS_BEFORE_STATUS</span>: <span class="ident">bool</span> <span class="op">=</span> <span class="bool-val">true</span>;
+<span class="kw">impl </span>UsbBus <span class="kw">for </span>BusAdapter {
+    <span class="doccomment">/// The USB hardware can guarantee that we set the status before we receive
+    /// the status, and we&#39;re taking advantage of that. We expect this flag to
+    /// result in a call to set_address before the status happens. This means
+    /// that we can meet the timing requirements without help from software.
+    ///
+    /// It&#39;s not a quirk; it&#39;s a feature :)
+    </span><span class="kw">const </span>QUIRK_SET_ADDRESS_BEFORE_STATUS: bool = <span class="bool-val">true</span>;
 
-    <span class="kw">fn</span> <span class="ident">alloc_ep</span>(
-        <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>,
-        <span class="ident">ep_dir</span>: <span class="ident">UsbDirection</span>,
-        <span class="ident">ep_addr</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">EndpointAddress</span><span class="op">&gt;</span>,
-        <span class="ident">ep_type</span>: <span class="ident">EndpointType</span>,
-        <span class="ident">max_packet_size</span>: <span class="ident">u16</span>,
-        <span class="ident">_interval</span>: <span class="ident">u8</span>,
-    ) -&gt; <span class="ident">usb_device::Result</span><span class="op">&lt;</span><span class="ident">EndpointAddress</span><span class="op">&gt;</span> {
-        <span class="self">self</span>.<span class="ident">with_usb_mut</span>(<span class="op">|</span><span class="ident">usb</span><span class="op">|</span> {
-            <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Some</span>(<span class="ident">addr</span>) <span class="op">=</span> <span class="ident">ep_addr</span> {
-                <span class="kw">if</span> <span class="ident">usb</span>.<span class="ident">is_allocated</span>(<span class="ident">addr</span>) {
-                    <span class="kw">return</span> <span class="prelude-val">Err</span>(<span class="ident">usb_device::UsbError::InvalidEndpoint</span>);
+    <span class="kw">fn </span>alloc_ep(
+        <span class="kw-2">&amp;mut </span><span class="self">self</span>,
+        ep_dir: UsbDirection,
+        ep_addr: <span class="prelude-ty">Option</span>&lt;EndpointAddress&gt;,
+        ep_type: EndpointType,
+        max_packet_size: u16,
+        _interval: u8,
+    ) -&gt; usb_device::Result&lt;EndpointAddress&gt; {
+        <span class="self">self</span>.with_usb_mut(|usb| {
+            <span class="kw">if let </span><span class="prelude-val">Some</span>(addr) = ep_addr {
+                <span class="kw">if </span>usb.is_allocated(addr) {
+                    <span class="kw">return </span><span class="prelude-val">Err</span>(usb_device::UsbError::InvalidEndpoint);
                 }
-                <span class="kw">let</span> <span class="ident">buffer</span> <span class="op">=</span> <span class="ident">usb</span>
-                    .<span class="ident">allocate_buffer</span>(<span class="ident">max_packet_size</span> <span class="kw">as</span> <span class="ident">usize</span>)
-                    .<span class="ident">ok_or</span>(<span class="ident">usb_device::UsbError::EndpointMemoryOverflow</span>)<span class="question-mark">?</span>;
-                <span class="ident">usb</span>.<span class="ident">allocate_ep</span>(<span class="ident">addr</span>, <span class="ident">buffer</span>, <span class="ident">ep_type</span>);
-                <span class="prelude-val">Ok</span>(<span class="ident">addr</span>)
-            } <span class="kw">else</span> {
-                <span class="kw">for</span> <span class="ident">idx</span> <span class="kw">in</span> <span class="number">1</span>..<span class="number">8</span> {
-                    <span class="kw">let</span> <span class="ident">addr</span> <span class="op">=</span> <span class="ident">EndpointAddress::from_parts</span>(<span class="ident">idx</span>, <span class="ident">ep_dir</span>);
-                    <span class="kw">if</span> <span class="ident">usb</span>.<span class="ident">is_allocated</span>(<span class="ident">addr</span>) {
+                <span class="kw">let </span>buffer = usb
+                    .allocate_buffer(max_packet_size <span class="kw">as </span>usize)
+                    .ok_or(usb_device::UsbError::EndpointMemoryOverflow)<span class="question-mark">?</span>;
+                usb.allocate_ep(addr, buffer, ep_type);
+                <span class="prelude-val">Ok</span>(addr)
+            } <span class="kw">else </span>{
+                <span class="kw">for </span>idx <span class="kw">in </span><span class="number">1</span>..<span class="number">8 </span>{
+                    <span class="kw">let </span>addr = EndpointAddress::from_parts(idx, ep_dir);
+                    <span class="kw">if </span>usb.is_allocated(addr) {
                         <span class="kw">continue</span>;
                     }
-                    <span class="kw">let</span> <span class="ident">buffer</span> <span class="op">=</span> <span class="ident">usb</span>
-                        .<span class="ident">allocate_buffer</span>(<span class="ident">max_packet_size</span> <span class="kw">as</span> <span class="ident">usize</span>)
-                        .<span class="ident">ok_or</span>(<span class="ident">usb_device::UsbError::EndpointMemoryOverflow</span>)<span class="question-mark">?</span>;
-                    <span class="ident">usb</span>.<span class="ident">allocate_ep</span>(<span class="ident">addr</span>, <span class="ident">buffer</span>, <span class="ident">ep_type</span>);
-                    <span class="kw">return</span> <span class="prelude-val">Ok</span>(<span class="ident">addr</span>);
+                    <span class="kw">let </span>buffer = usb
+                        .allocate_buffer(max_packet_size <span class="kw">as </span>usize)
+                        .ok_or(usb_device::UsbError::EndpointMemoryOverflow)<span class="question-mark">?</span>;
+                    usb.allocate_ep(addr, buffer, ep_type);
+                    <span class="kw">return </span><span class="prelude-val">Ok</span>(addr);
                 }
-                <span class="prelude-val">Err</span>(<span class="ident">usb_device::UsbError::EndpointOverflow</span>)
+                <span class="prelude-val">Err</span>(usb_device::UsbError::EndpointOverflow)
             }
         })
     }
 
-    <span class="kw">fn</span> <span class="ident">set_device_address</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">addr</span>: <span class="ident">u8</span>) {
-        <span class="self">self</span>.<span class="ident">with_usb_mut</span>(<span class="op">|</span><span class="ident">usb</span><span class="op">|</span> {
-            <span class="ident">usb</span>.<span class="ident">set_address</span>(<span class="ident">addr</span>);
+    <span class="kw">fn </span>set_device_address(<span class="kw-2">&amp;</span><span class="self">self</span>, addr: u8) {
+        <span class="self">self</span>.with_usb_mut(|usb| {
+            usb.set_address(addr);
         });
     }
 
-    <span class="kw">fn</span> <span class="ident">enable</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>) {
-        <span class="self">self</span>.<span class="ident">with_usb_mut</span>(<span class="op">|</span><span class="ident">usb</span><span class="op">|</span> <span class="ident">usb</span>.<span class="ident">attach</span>());
+    <span class="kw">fn </span>enable(<span class="kw-2">&amp;mut </span><span class="self">self</span>) {
+        <span class="self">self</span>.with_usb_mut(|usb| usb.attach());
     }
 
-    <span class="kw">fn</span> <span class="ident">reset</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) {
-        <span class="self">self</span>.<span class="ident">with_usb_mut</span>(<span class="op">|</span><span class="ident">usb</span><span class="op">|</span> {
-            <span class="ident">usb</span>.<span class="ident">bus_reset</span>();
+    <span class="kw">fn </span>reset(<span class="kw-2">&amp;</span><span class="self">self</span>) {
+        <span class="self">self</span>.with_usb_mut(|usb| {
+            usb.bus_reset();
         });
     }
 
-    <span class="kw">fn</span> <span class="ident">write</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">ep_addr</span>: <span class="ident">EndpointAddress</span>, <span class="ident">buf</span>: <span class="kw-2">&amp;</span>[<span class="ident">u8</span>]) -&gt; <span class="ident">usb_device::Result</span><span class="op">&lt;</span><span class="ident">usize</span><span class="op">&gt;</span> {
-        <span class="self">self</span>.<span class="ident">with_usb_mut</span>(<span class="op">|</span><span class="ident">usb</span><span class="op">|</span> {
-            <span class="kw">if</span> <span class="op">!</span><span class="ident">usb</span>.<span class="ident">is_allocated</span>(<span class="ident">ep_addr</span>) {
-                <span class="kw">return</span> <span class="prelude-val">Err</span>(<span class="ident">usb_device::UsbError::InvalidEndpoint</span>);
+    <span class="kw">fn </span>write(<span class="kw-2">&amp;</span><span class="self">self</span>, ep_addr: EndpointAddress, buf: <span class="kw-2">&amp;</span>[u8]) -&gt; usb_device::Result&lt;usize&gt; {
+        <span class="self">self</span>.with_usb_mut(|usb| {
+            <span class="kw">if </span>!usb.is_allocated(ep_addr) {
+                <span class="kw">return </span><span class="prelude-val">Err</span>(usb_device::UsbError::InvalidEndpoint);
             }
 
-            <span class="kw">let</span> <span class="ident">written</span> <span class="op">=</span> <span class="kw">if</span> <span class="ident">ep_addr</span>.<span class="ident">index</span>() <span class="op">==</span> <span class="number">0</span> {
-                <span class="ident">usb</span>.<span class="ident">ctrl0_write</span>(<span class="ident">buf</span>)
-            } <span class="kw">else</span> {
-                <span class="ident">usb</span>.<span class="ident">ep_write</span>(<span class="ident">buf</span>, <span class="ident">ep_addr</span>)
+            <span class="comment">// Keep map_err if warn! is compiled out.
+            </span><span class="attribute">#[allow(clippy::map_identity)]
+            </span><span class="kw">let </span>written = <span class="kw">if </span>ep_addr.index() == <span class="number">0 </span>{
+                usb.ctrl0_write(buf)
+            } <span class="kw">else </span>{
+                usb.ep_write(buf, ep_addr)
             }
-            .<span class="ident">map_err</span>(<span class="op">|</span><span class="ident">status</span><span class="op">|</span> {
+            .map_err(|status| {
                 <span class="macro">warn!</span>(
                     <span class="string">&quot;EP{} {:?} STATUS {:?}&quot;</span>,
-                    <span class="ident">ep_addr</span>.<span class="ident">index</span>(),
-                    <span class="ident">ep_addr</span>.<span class="ident">direction</span>(),
-                    <span class="ident">status</span>
+                    ep_addr.index(),
+                    ep_addr.direction(),
+                    status
                 );
-                <span class="ident">status</span>
+                status
             })<span class="question-mark">?</span>;
 
-            <span class="prelude-val">Ok</span>(<span class="ident">written</span>)
+            <span class="prelude-val">Ok</span>(written)
         })
     }
 
-    <span class="kw">fn</span> <span class="ident">read</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">ep_addr</span>: <span class="ident">EndpointAddress</span>, <span class="ident">buf</span>: <span class="kw-2">&amp;</span><span class="kw-2">mut</span> [<span class="ident">u8</span>]) -&gt; <span class="ident">usb_device::Result</span><span class="op">&lt;</span><span class="ident">usize</span><span class="op">&gt;</span> {
-        <span class="self">self</span>.<span class="ident">with_usb_mut</span>(<span class="op">|</span><span class="ident">usb</span><span class="op">|</span> {
-            <span class="kw">if</span> <span class="op">!</span><span class="ident">usb</span>.<span class="ident">is_allocated</span>(<span class="ident">ep_addr</span>) {
-                <span class="kw">return</span> <span class="prelude-val">Err</span>(<span class="ident">usb_device::UsbError::InvalidEndpoint</span>);
+    <span class="kw">fn </span>read(<span class="kw-2">&amp;</span><span class="self">self</span>, ep_addr: EndpointAddress, buf: <span class="kw-2">&amp;mut </span>[u8]) -&gt; usb_device::Result&lt;usize&gt; {
+        <span class="self">self</span>.with_usb_mut(|usb| {
+            <span class="kw">if </span>!usb.is_allocated(ep_addr) {
+                <span class="kw">return </span><span class="prelude-val">Err</span>(usb_device::UsbError::InvalidEndpoint);
             }
 
-            <span class="kw">let</span> <span class="ident">read</span> <span class="op">=</span> <span class="kw">if</span> <span class="ident">ep_addr</span>.<span class="ident">index</span>() <span class="op">==</span> <span class="number">0</span> {
-                <span class="ident">usb</span>.<span class="ident">ctrl0_read</span>(<span class="ident">buf</span>)
-            } <span class="kw">else</span> {
-                <span class="ident">usb</span>.<span class="ident">ep_read</span>(<span class="ident">buf</span>, <span class="ident">ep_addr</span>)
+            <span class="comment">// Keep map_err if warn! is compiled out.
+            </span><span class="attribute">#[allow(clippy::map_identity)]
+            </span><span class="kw">let </span>read = <span class="kw">if </span>ep_addr.index() == <span class="number">0 </span>{
+                usb.ctrl0_read(buf)
+            } <span class="kw">else </span>{
+                usb.ep_read(buf, ep_addr)
             }
-            .<span class="ident">map_err</span>(<span class="op">|</span><span class="ident">status</span><span class="op">|</span> {
+            .map_err(|status| {
                 <span class="macro">warn!</span>(
                     <span class="string">&quot;EP{} {:?} STATUS {:?}&quot;</span>,
-                    <span class="ident">ep_addr</span>.<span class="ident">index</span>(),
-                    <span class="ident">ep_addr</span>.<span class="ident">direction</span>(),
-                    <span class="ident">status</span>
+                    ep_addr.index(),
+                    ep_addr.direction(),
+                    status
                 );
-                <span class="ident">status</span>
+                status
             })<span class="question-mark">?</span>;
 
-            <span class="prelude-val">Ok</span>(<span class="ident">read</span>)
+            <span class="prelude-val">Ok</span>(read)
         })
     }
 
-    <span class="kw">fn</span> <span class="ident">set_stalled</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">ep_addr</span>: <span class="ident">EndpointAddress</span>, <span class="ident">stalled</span>: <span class="ident">bool</span>) {
-        <span class="self">self</span>.<span class="ident">with_usb_mut</span>(<span class="op">|</span><span class="ident">usb</span><span class="op">|</span> {
-            <span class="kw">if</span> <span class="ident">usb</span>.<span class="ident">is_allocated</span>(<span class="ident">ep_addr</span>) {
-                <span class="ident">usb</span>.<span class="ident">ep_stall</span>(<span class="ident">stalled</span>, <span class="ident">ep_addr</span>);
+    <span class="kw">fn </span>set_stalled(<span class="kw-2">&amp;</span><span class="self">self</span>, ep_addr: EndpointAddress, stalled: bool) {
+        <span class="self">self</span>.with_usb_mut(|usb| {
+            <span class="kw">if </span>usb.is_allocated(ep_addr) {
+                usb.ep_stall(stalled, ep_addr);
             }
         });
     }
 
-    <span class="kw">fn</span> <span class="ident">is_stalled</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">ep_addr</span>: <span class="ident">EndpointAddress</span>) -&gt; <span class="ident">bool</span> {
-        <span class="self">self</span>.<span class="ident">with_usb</span>(<span class="op">|</span><span class="ident">usb</span><span class="op">|</span> <span class="ident">usb</span>.<span class="ident">is_ep_stalled</span>(<span class="ident">ep_addr</span>))
+    <span class="kw">fn </span>is_stalled(<span class="kw-2">&amp;</span><span class="self">self</span>, ep_addr: EndpointAddress) -&gt; bool {
+        <span class="self">self</span>.with_usb(|usb| usb.is_ep_stalled(ep_addr))
     }
 
-    <span class="kw">fn</span> <span class="ident">suspend</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) {
-        <span class="comment">// TODO</span>
-    }
+    <span class="kw">fn </span>suspend(<span class="kw-2">&amp;</span><span class="self">self</span>) {
+        <span class="comment">// TODO
+    </span>}
 
-    <span class="kw">fn</span> <span class="ident">resume</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) {
-        <span class="comment">// TODO</span>
-    }
+    <span class="kw">fn </span>resume(<span class="kw-2">&amp;</span><span class="self">self</span>) {
+        <span class="comment">// TODO
+    </span>}
 
-    <span class="kw">fn</span> <span class="ident">poll</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="ident">PollResult</span> {
-        <span class="self">self</span>.<span class="ident">with_usb_mut</span>(<span class="op">|</span><span class="ident">usb</span><span class="op">|</span> <span class="ident">usb</span>.<span class="ident">poll</span>())
+    <span class="kw">fn </span>poll(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; PollResult {
+        <span class="self">self</span>.with_usb_mut(|usb| usb.poll())
     }
 }
 </code></pre></div>
-</section><section id="search" class="content hidden"></section><div id="rustdoc-vars" data-root-path="../../../" data-current-crate="imxrt_usbd" data-search-index-js="../../../search-index.js" data-search-js="../../../search.js"></div>
-    <script src="../../../main.js"></script><script src="../../../source-script.js"></script><script src="../../../source-files.js"></script>
-</body></html>
+</section></div></main><div id="rustdoc-vars" data-root-path="../../../" data-current-crate="imxrt_usbd" data-themes="ayu,dark,light" data-resource-suffix="" data-rustdoc-version="1.65.0 (897e37553 2022-11-02)" ></div></body></html>

@@ -1,102 +1,102 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `src&#x2F;td.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>td.rs - source</title><link rel="stylesheet" type="text/css" href="../../normalize.css"><link rel="stylesheet" type="text/css" href="../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../light.css"  id="themeStyle"><link rel="stylesheet" type="text/css" href="../../dark.css" disabled ><link rel="stylesheet" type="text/css" href="../../ayu.css" disabled ><script id="default-settings" ></script><script src="../../storage.js"></script><script src="../../crates.js"></script><noscript><link rel="stylesheet" href="../../noscript.css"></noscript><link rel="alternate icon" type="image/png" href="../../favicon-16x16.png"><link rel="alternate icon" type="image/png" href="../../favicon-32x32.png"><link rel="icon" type="image/svg+xml" href="../../favicon.svg"><style type="text/css">#crate-search{background-image:url("../../down-arrow.svg");}</style></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="sidebar-menu" role="button">&#9776;</div><a href='../../imxrt_usbd/index.html'><div class='logo-container rust-logo'><img src='../../rust-logo.png' alt='logo'></div></a></nav><div class="theme-picker"><button id="theme-picker" aria-label="Pick another theme!" aria-haspopup="menu" title="themes"><img width="18" height="18" alt="Pick another theme!" src="../../brush.svg"></button><div id="theme-choices" role="menu"></div></div><nav class="sub"><form class="search-form"><div class="search-container"><div><select id="crate-search"><option value="All crates">All crates</option></select><input class="search-input" name="search" disabled autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"></div><button type="button" id="help-button" title="help">?</button><a id="settings-menu" href="../../settings.html" title="settings"><img width="18" height="18" alt="Change settings" src="../../wheel.svg"></a></div></form></nav><section id="main" class="content"><div class="example-wrap"><pre class="line-numbers"><span id="1">  1</span>
-<span id="2">  2</span>
-<span id="3">  3</span>
-<span id="4">  4</span>
-<span id="5">  5</span>
-<span id="6">  6</span>
-<span id="7">  7</span>
-<span id="8">  8</span>
-<span id="9">  9</span>
-<span id="10"> 10</span>
-<span id="11"> 11</span>
-<span id="12"> 12</span>
-<span id="13"> 13</span>
-<span id="14"> 14</span>
-<span id="15"> 15</span>
-<span id="16"> 16</span>
-<span id="17"> 17</span>
-<span id="18"> 18</span>
-<span id="19"> 19</span>
-<span id="20"> 20</span>
-<span id="21"> 21</span>
-<span id="22"> 22</span>
-<span id="23"> 23</span>
-<span id="24"> 24</span>
-<span id="25"> 25</span>
-<span id="26"> 26</span>
-<span id="27"> 27</span>
-<span id="28"> 28</span>
-<span id="29"> 29</span>
-<span id="30"> 30</span>
-<span id="31"> 31</span>
-<span id="32"> 32</span>
-<span id="33"> 33</span>
-<span id="34"> 34</span>
-<span id="35"> 35</span>
-<span id="36"> 36</span>
-<span id="37"> 37</span>
-<span id="38"> 38</span>
-<span id="39"> 39</span>
-<span id="40"> 40</span>
-<span id="41"> 41</span>
-<span id="42"> 42</span>
-<span id="43"> 43</span>
-<span id="44"> 44</span>
-<span id="45"> 45</span>
-<span id="46"> 46</span>
-<span id="47"> 47</span>
-<span id="48"> 48</span>
-<span id="49"> 49</span>
-<span id="50"> 50</span>
-<span id="51"> 51</span>
-<span id="52"> 52</span>
-<span id="53"> 53</span>
-<span id="54"> 54</span>
-<span id="55"> 55</span>
-<span id="56"> 56</span>
-<span id="57"> 57</span>
-<span id="58"> 58</span>
-<span id="59"> 59</span>
-<span id="60"> 60</span>
-<span id="61"> 61</span>
-<span id="62"> 62</span>
-<span id="63"> 63</span>
-<span id="64"> 64</span>
-<span id="65"> 65</span>
-<span id="66"> 66</span>
-<span id="67"> 67</span>
-<span id="68"> 68</span>
-<span id="69"> 69</span>
-<span id="70"> 70</span>
-<span id="71"> 71</span>
-<span id="72"> 72</span>
-<span id="73"> 73</span>
-<span id="74"> 74</span>
-<span id="75"> 75</span>
-<span id="76"> 76</span>
-<span id="77"> 77</span>
-<span id="78"> 78</span>
-<span id="79"> 79</span>
-<span id="80"> 80</span>
-<span id="81"> 81</span>
-<span id="82"> 82</span>
-<span id="83"> 83</span>
-<span id="84"> 84</span>
-<span id="85"> 85</span>
-<span id="86"> 86</span>
-<span id="87"> 87</span>
-<span id="88"> 88</span>
-<span id="89"> 89</span>
-<span id="90"> 90</span>
-<span id="91"> 91</span>
-<span id="92"> 92</span>
-<span id="93"> 93</span>
-<span id="94"> 94</span>
-<span id="95"> 95</span>
-<span id="96"> 96</span>
-<span id="97"> 97</span>
-<span id="98"> 98</span>
-<span id="99"> 99</span>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `src/td.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>td.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceSerif4-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../FiraSans-Regular.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../FiraSans-Medium.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceCodePro-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceSerif4-Bold.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceCodePro-Semibold.ttf.woff2"><link rel="stylesheet" href="../../normalize.css"><link rel="stylesheet" href="../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" href="../../ayu.css" disabled><link rel="stylesheet" href="../../dark.css" disabled><link rel="stylesheet" href="../../light.css" id="themeStyle"><script id="default-settings" ></script><script src="../../storage.js"></script><script defer src="../../source-script.js"></script><script defer src="../../source-files.js"></script><script defer src="../../main.js"></script><noscript><link rel="stylesheet" href="../../noscript.css"></noscript><link rel="alternate icon" type="image/png" href="../../favicon-16x16.png"><link rel="alternate icon" type="image/png" href="../../favicon-32x32.png"><link rel="icon" type="image/svg+xml" href="../../favicon.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="mobile-topbar"><button class="sidebar-menu-toggle">&#9776;</button><a class="sidebar-logo" href="../../imxrt_usbd/index.html"><div class="logo-container"><img class="rust-logo" src="../../rust-logo.svg" alt="logo"></div></a><h2 class="location"></h2></nav><nav class="sidebar"><a class="sidebar-logo" href="../../imxrt_usbd/index.html"><div class="logo-container"><img class="rust-logo" src="../../rust-logo.svg" alt="logo"></div></a></nav><main><div class="width-limiter"><div class="sub-container"><a class="sub-logo-container" href="../../imxrt_usbd/index.html"><img class="rust-logo" src="../../rust-logo.svg" alt="logo"></a><nav class="sub"><form class="search-form"><div class="search-container"><span></span><input class="search-input" name="search" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><button type="button">?</button></div><div id="settings-menu" tabindex="-1"><a href="../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../wheel.svg"></a></div></div></form></nav></div><section id="main-content" class="content"><div class="example-wrap"><pre class="line-numbers"><span id="1">1</span>
+<span id="2">2</span>
+<span id="3">3</span>
+<span id="4">4</span>
+<span id="5">5</span>
+<span id="6">6</span>
+<span id="7">7</span>
+<span id="8">8</span>
+<span id="9">9</span>
+<span id="10">10</span>
+<span id="11">11</span>
+<span id="12">12</span>
+<span id="13">13</span>
+<span id="14">14</span>
+<span id="15">15</span>
+<span id="16">16</span>
+<span id="17">17</span>
+<span id="18">18</span>
+<span id="19">19</span>
+<span id="20">20</span>
+<span id="21">21</span>
+<span id="22">22</span>
+<span id="23">23</span>
+<span id="24">24</span>
+<span id="25">25</span>
+<span id="26">26</span>
+<span id="27">27</span>
+<span id="28">28</span>
+<span id="29">29</span>
+<span id="30">30</span>
+<span id="31">31</span>
+<span id="32">32</span>
+<span id="33">33</span>
+<span id="34">34</span>
+<span id="35">35</span>
+<span id="36">36</span>
+<span id="37">37</span>
+<span id="38">38</span>
+<span id="39">39</span>
+<span id="40">40</span>
+<span id="41">41</span>
+<span id="42">42</span>
+<span id="43">43</span>
+<span id="44">44</span>
+<span id="45">45</span>
+<span id="46">46</span>
+<span id="47">47</span>
+<span id="48">48</span>
+<span id="49">49</span>
+<span id="50">50</span>
+<span id="51">51</span>
+<span id="52">52</span>
+<span id="53">53</span>
+<span id="54">54</span>
+<span id="55">55</span>
+<span id="56">56</span>
+<span id="57">57</span>
+<span id="58">58</span>
+<span id="59">59</span>
+<span id="60">60</span>
+<span id="61">61</span>
+<span id="62">62</span>
+<span id="63">63</span>
+<span id="64">64</span>
+<span id="65">65</span>
+<span id="66">66</span>
+<span id="67">67</span>
+<span id="68">68</span>
+<span id="69">69</span>
+<span id="70">70</span>
+<span id="71">71</span>
+<span id="72">72</span>
+<span id="73">73</span>
+<span id="74">74</span>
+<span id="75">75</span>
+<span id="76">76</span>
+<span id="77">77</span>
+<span id="78">78</span>
+<span id="79">79</span>
+<span id="80">80</span>
+<span id="81">81</span>
+<span id="82">82</span>
+<span id="83">83</span>
+<span id="84">84</span>
+<span id="85">85</span>
+<span id="86">86</span>
+<span id="87">87</span>
+<span id="88">88</span>
+<span id="89">89</span>
+<span id="90">90</span>
+<span id="91">91</span>
+<span id="92">92</span>
+<span id="93">93</span>
+<span id="94">94</span>
+<span id="95">95</span>
+<span id="96">96</span>
+<span id="97">97</span>
+<span id="98">98</span>
+<span id="99">99</span>
 <span id="100">100</span>
 <span id="101">101</span>
 <span id="102">102</span>
@@ -204,213 +204,211 @@
 <span id="204">204</span>
 <span id="205">205</span>
 <span id="206">206</span>
-</pre><pre class="rust"><code><span class="doccomment">//! Endpoint Transfer Descriptors (TD)</span>
-<span class="doccomment">//!</span>
-<span class="doccomment">//! The module implements a RAL-compatible interface for working</span>
-<span class="doccomment">//! with transfer descriptors.</span>
+</pre><pre class="rust"><code><span class="doccomment">//! Endpoint Transfer Descriptors (TD)
+//!
+//! The module implements a RAL-compatible interface for working
+//! with transfer descriptors.
 
-<span class="attribute">#![<span class="ident">allow</span>(<span class="ident">non_snake_case</span>, <span class="ident">non_upper_case_globals</span>)]</span>
+</span><span class="attribute">#![allow(non_snake_case, non_upper_case_globals)]
 
-<span class="kw">use</span> <span class="kw">crate</span>::{<span class="ident">ral</span>, <span class="ident">vcell::VCell</span>};
+</span><span class="kw">use crate</span>::{ral, vcell::VCell};
 
-<span class="attribute">#[<span class="ident">repr</span>(<span class="ident">C</span>)]</span>
-<span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">Td</span> {
-    <span class="ident">NEXT</span>: <span class="ident">VCell</span><span class="op">&lt;</span><span class="ident">u32</span><span class="op">&gt;</span>,
-    <span class="ident">TOKEN</span>: <span class="ident">VCell</span><span class="op">&lt;</span><span class="ident">u32</span><span class="op">&gt;</span>,
-    <span class="ident">BUFFER_POINTERS</span>: [<span class="ident">VCell</span><span class="op">&lt;</span><span class="ident">u32</span><span class="op">&gt;</span>; <span class="number">5</span>],
-    <span class="comment">// Reserved memory for other information</span>
-    <span class="ident">last_transfer_size</span>: <span class="ident">usize</span>,
+<span class="attribute">#[repr(C)]
+</span><span class="kw">pub struct </span>Td {
+    NEXT: VCell&lt;u32&gt;,
+    TOKEN: VCell&lt;u32&gt;,
+    BUFFER_POINTERS: [VCell&lt;u32&gt;; <span class="number">5</span>],
+    <span class="comment">// Reserved memory for other information
+    </span>last_transfer_size: usize,
 }
 
-<span class="kw">impl</span> <span class="ident">Td</span> {
-    <span class="kw">pub</span> <span class="kw">const</span> <span class="kw">fn</span> <span class="ident">new</span>() -&gt; <span class="self">Self</span> {
-        <span class="ident">Td</span> {
-            <span class="ident">NEXT</span>: <span class="ident">VCell::new</span>(<span class="number">0</span>),
-            <span class="ident">TOKEN</span>: <span class="ident">VCell::new</span>(<span class="number">0</span>),
-            <span class="ident">BUFFER_POINTERS</span>: [
-                <span class="ident">VCell::new</span>(<span class="number">0</span>),
-                <span class="ident">VCell::new</span>(<span class="number">0</span>),
-                <span class="ident">VCell::new</span>(<span class="number">0</span>),
-                <span class="ident">VCell::new</span>(<span class="number">0</span>),
-                <span class="ident">VCell::new</span>(<span class="number">0</span>),
+<span class="kw">impl </span>Td {
+    <span class="kw">pub const fn </span>new() -&gt; <span class="self">Self </span>{
+        Td {
+            NEXT: VCell::new(<span class="number">0</span>),
+            TOKEN: VCell::new(<span class="number">0</span>),
+            BUFFER_POINTERS: [
+                VCell::new(<span class="number">0</span>),
+                VCell::new(<span class="number">0</span>),
+                VCell::new(<span class="number">0</span>),
+                VCell::new(<span class="number">0</span>),
+                VCell::new(<span class="number">0</span>),
             ],
-            <span class="ident">last_transfer_size</span>: <span class="number">0</span>,
+            last_transfer_size: <span class="number">0</span>,
         }
     }
 
-    <span class="doccomment">/// Prepare a transfer to / from the memory described by `ptr` and `size`</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// Specifieds `size` as the total bytes expected to transfer. This may not</span>
-    <span class="doccomment">/// be what&#39;s fully transferred; check `bytes_transferred` after the transfer</span>
-    <span class="doccomment">/// completes.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">set_buffer</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>, <span class="ident">ptr</span>: <span class="kw-2">*</span><span class="kw-2">mut</span> <span class="ident">u8</span>, <span class="ident">size</span>: <span class="ident">usize</span>) {
-        <span class="macro">ral::modify_reg!</span>(<span class="ident"><span class="kw">crate</span>::td</span>, <span class="self">self</span>, <span class="ident">TOKEN</span>, <span class="ident">TOTAL_BYTES</span>: <span class="ident">size</span> <span class="kw">as</span> <span class="ident">u32</span>);
-        <span class="self">self</span>.<span class="ident">last_transfer_size</span> <span class="op">=</span> <span class="ident">size</span>;
+    <span class="doccomment">/// Prepare a transfer to / from the memory described by `ptr` and `size`
+    ///
+    /// Specifieds `size` as the total bytes expected to transfer. This may not
+    /// be what&#39;s fully transferred; check `bytes_transferred` after the transfer
+    /// completes.
+    </span><span class="kw">pub fn </span>set_buffer(<span class="kw-2">&amp;mut </span><span class="self">self</span>, ptr: <span class="kw-2">*mut </span>u8, size: usize) {
+        <span class="macro">ral::modify_reg!</span>(<span class="kw">crate</span>::td, <span class="self">self</span>, TOKEN, TOTAL_BYTES: size <span class="kw">as </span>u32);
+        <span class="self">self</span>.last_transfer_size = size;
 
-        <span class="kw">if</span> <span class="ident">size</span> <span class="op">!</span><span class="op">=</span> <span class="number">0</span> {
-            <span class="kw">const</span> <span class="ident">PTR_ALIGNMENT</span>: <span class="ident">u32</span> <span class="op">=</span> <span class="number">4096</span>;
-            <span class="kw">const</span> <span class="ident">PTR_MASK</span>: <span class="ident">u32</span> <span class="op">=</span> <span class="op">!</span>(<span class="ident">PTR_ALIGNMENT</span> <span class="op">-</span> <span class="number">1</span>);
+        <span class="kw">if </span>size != <span class="number">0 </span>{
+            <span class="kw">const </span>PTR_ALIGNMENT: u32 = <span class="number">4096</span>;
+            <span class="kw">const </span>PTR_MASK: u32 = !(PTR_ALIGNMENT - <span class="number">1</span>);
 
-            <span class="self">self</span>.<span class="ident">BUFFER_POINTERS</span>[<span class="number">0</span>].<span class="ident">write</span>(<span class="ident">ptr</span> <span class="kw">as</span> <span class="ident">u32</span>);
-            <span class="kw">for</span> <span class="ident">idx</span> <span class="kw">in</span> <span class="number">1</span>..<span class="self">self</span>.<span class="ident">BUFFER_POINTERS</span>.<span class="ident">len</span>() {
-                <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">ptr</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">BUFFER_POINTERS</span>[<span class="ident">idx</span> <span class="op">-</span> <span class="number">1</span>].<span class="ident">read</span>();
-                <span class="ident">ptr</span> <span class="op">&amp;=</span> <span class="ident">PTR_MASK</span>;
-                <span class="ident">ptr</span> <span class="op">+</span><span class="op">=</span> <span class="ident">PTR_ALIGNMENT</span>;
-                <span class="self">self</span>.<span class="ident">BUFFER_POINTERS</span>[<span class="ident">idx</span>].<span class="ident">write</span>(<span class="ident">ptr</span>);
+            <span class="self">self</span>.BUFFER_POINTERS[<span class="number">0</span>].write(ptr <span class="kw">as </span>u32);
+            <span class="kw">for </span>idx <span class="kw">in </span><span class="number">1</span>..<span class="self">self</span>.BUFFER_POINTERS.len() {
+                <span class="kw">let </span><span class="kw-2">mut </span>ptr = <span class="self">self</span>.BUFFER_POINTERS[idx - <span class="number">1</span>].read();
+                ptr &amp;= PTR_MASK;
+                ptr += PTR_ALIGNMENT;
+                <span class="self">self</span>.BUFFER_POINTERS[idx].write(ptr);
             }
-        } <span class="kw">else</span> {
-            <span class="kw">for</span> <span class="ident">buffer_pointer</span> <span class="kw">in</span> <span class="self">self</span>.<span class="ident">BUFFER_POINTERS</span>.<span class="ident">iter_mut</span>() {
-                <span class="ident">buffer_pointer</span>.<span class="ident">write</span>(<span class="number">0</span>);
+        } <span class="kw">else </span>{
+            <span class="kw">for </span>buffer_pointer <span class="kw">in </span><span class="self">self</span>.BUFFER_POINTERS.iter_mut() {
+                buffer_pointer.write(<span class="number">0</span>);
             }
         }
     }
 
-    <span class="doccomment">/// Returns the number of bytes transferred in the previous transfer</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">bytes_transferred</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="ident">usize</span> {
-        <span class="kw">let</span> <span class="ident">total_bytes</span> <span class="op">=</span> <span class="macro">ral::read_reg!</span>(<span class="ident"><span class="kw">crate</span>::td</span>, <span class="self">self</span>, <span class="ident">TOKEN</span>, <span class="ident">TOTAL_BYTES</span>) <span class="kw">as</span> <span class="ident">usize</span>;
-        <span class="self">self</span>.<span class="ident">last_transfer_size</span> <span class="op">-</span> <span class="ident">total_bytes</span>
+    <span class="doccomment">/// Returns the number of bytes transferred in the previous transfer
+    </span><span class="kw">pub fn </span>bytes_transferred(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; usize {
+        <span class="kw">let </span>total_bytes = <span class="macro">ral::read_reg!</span>(<span class="kw">crate</span>::td, <span class="self">self</span>, TOKEN, TOTAL_BYTES) <span class="kw">as </span>usize;
+        <span class="self">self</span>.last_transfer_size - total_bytes
     }
 
-    <span class="doccomment">/// Read the status of the current / previous transfer</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">status</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="ident">Status</span> {
-        <span class="kw">let</span> <span class="ident">status</span> <span class="op">=</span> <span class="macro">ral::read_reg!</span>(<span class="ident"><span class="kw">crate</span>::td</span>, <span class="self">self</span>, <span class="ident">TOKEN</span>, <span class="ident">STATUS</span>);
-        <span class="ident">Status::from_bits_truncate</span>(<span class="ident">status</span>)
+    <span class="doccomment">/// Read the status of the current / previous transfer
+    </span><span class="kw">pub fn </span>status(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; Status {
+        <span class="kw">let </span>status = <span class="macro">ral::read_reg!</span>(<span class="kw">crate</span>::td, <span class="self">self</span>, TOKEN, STATUS);
+        Status::from_bits_truncate(status)
     }
 
-    <span class="doccomment">/// Clear all status flags in this transfer descriptor</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">clear_status</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>) {
-        <span class="macro">ral::modify_reg!</span>(<span class="ident"><span class="kw">crate</span>::td</span>, <span class="self">self</span>, <span class="ident">TOKEN</span>, <span class="ident">STATUS</span>: <span class="number">0</span>);
+    <span class="doccomment">/// Clear all status flags in this transfer descriptor
+    </span><span class="kw">pub fn </span>clear_status(<span class="kw-2">&amp;mut </span><span class="self">self</span>) {
+        <span class="macro">ral::modify_reg!</span>(<span class="kw">crate</span>::td, <span class="self">self</span>, TOKEN, STATUS: <span class="number">0</span>);
     }
 
-    <span class="doccomment">/// Set the terminate bit to indicate that this TD points to an invalid</span>
-    <span class="doccomment">/// next TD</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">set_terminate</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>) {
-        <span class="macro">ral::write_reg!</span>(<span class="ident"><span class="kw">crate</span>::td</span>, <span class="self">self</span>, <span class="ident">NEXT</span>, <span class="number">1</span>);
+    <span class="doccomment">/// Set the terminate bit to indicate that this TD points to an invalid
+    /// next TD
+    </span><span class="kw">pub fn </span>set_terminate(<span class="kw-2">&amp;mut </span><span class="self">self</span>) {
+        <span class="macro">ral::write_reg!</span>(<span class="kw">crate</span>::td, <span class="self">self</span>, NEXT, <span class="number">1</span>);
     }
 
-    <span class="doccomment">/// Set the next TD pointed at by this TD</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">set_next</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>, <span class="ident">next</span>: <span class="kw-2">*</span><span class="kw">const</span> <span class="ident">Td</span>) {
-        <span class="macro">ral::write_reg!</span>(<span class="ident"><span class="kw">crate</span>::td</span>, <span class="self">self</span>, <span class="ident">NEXT</span>, <span class="ident">next</span> <span class="kw">as</span> <span class="ident">u32</span>);
+    <span class="doccomment">/// Set the next TD pointed at by this TD
+    </span><span class="kw">pub fn </span>set_next(<span class="kw-2">&amp;mut </span><span class="self">self</span>, next: <span class="kw-2">*const </span>Td) {
+        <span class="macro">ral::write_reg!</span>(<span class="kw">crate</span>::td, <span class="self">self</span>, NEXT, next <span class="kw">as </span>u32);
     }
 
-    <span class="doccomment">/// Set the active flag</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">set_active</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>) {
-        <span class="macro">ral::modify_reg!</span>(<span class="ident"><span class="kw">crate</span>::td</span>, <span class="self">self</span>, <span class="ident">TOKEN</span>, <span class="ident">STATUS</span>: <span class="ident">ACTIVE</span>);
+    <span class="doccomment">/// Set the active flag
+    </span><span class="kw">pub fn </span>set_active(<span class="kw-2">&amp;mut </span><span class="self">self</span>) {
+        <span class="macro">ral::modify_reg!</span>(<span class="kw">crate</span>::td, <span class="self">self</span>, TOKEN, STATUS: ACTIVE);
     }
 
-    <span class="doccomment">/// Specify if transfer completion should be indicated as a</span>
-    <span class="doccomment">/// USB interrupt (irrespective of an actual ISR run)</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">set_interrupt_on_complete</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>, <span class="ident">ioc</span>: <span class="ident">bool</span>) {
-        <span class="macro">ral::modify_reg!</span>(<span class="ident"><span class="kw">crate</span>::td</span>, <span class="self">self</span>, <span class="ident">TOKEN</span>, <span class="ident">IOC</span>: <span class="ident">ioc</span> <span class="kw">as</span> <span class="ident">u32</span>);
+    <span class="doccomment">/// Specify if transfer completion should be indicated as a
+    /// USB interrupt (irrespective of an actual ISR run)
+    </span><span class="kw">pub fn </span>set_interrupt_on_complete(<span class="kw-2">&amp;mut </span><span class="self">self</span>, ioc: bool) {
+        <span class="macro">ral::modify_reg!</span>(<span class="kw">crate</span>::td, <span class="self">self</span>, TOKEN, IOC: ioc <span class="kw">as </span>u32);
     }
 
-    <span class="doccomment">/// Clean and invalidate this TD from DCache</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">clean_invalidate_dcache</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) {
-        <span class="ident"><span class="kw">crate</span>::cache::clean_invalidate_dcache_by_address</span>(
-            <span class="kw-2">&amp;</span><span class="self">self</span> <span class="kw">as</span> <span class="kw-2">*</span><span class="kw">const</span> <span class="kw">_</span> <span class="kw">as</span> <span class="ident">usize</span>,
-            <span class="ident">core::mem::size_of_val</span>(<span class="self">self</span>),
+    <span class="doccomment">/// Clean and invalidate this TD from DCache
+    </span><span class="kw">pub fn </span>clean_invalidate_dcache(<span class="kw-2">&amp;</span><span class="self">self</span>) {
+        <span class="kw">crate</span>::cache::clean_invalidate_dcache_by_address(
+            <span class="kw-2">&amp;</span><span class="self">self </span><span class="kw">as </span><span class="kw-2">*const </span><span class="kw">_ as </span>usize,
+            core::mem::size_of_val(<span class="self">self</span>),
         );
     }
 }
 
-<span class="macro">bitflags::bitflags!</span> {
-    <span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">Status</span> : <span class="ident">u32</span> {
-        <span class="kw">const</span> <span class="ident">ACTIVE</span> <span class="op">=</span> <span class="ident">TOKEN::STATUS::RW::ACTIVE</span>;
-        <span class="kw">const</span> <span class="ident">HALTED</span> <span class="op">=</span> <span class="ident">TOKEN::STATUS::RW::HALTED</span>;
-        <span class="kw">const</span> <span class="ident">DATA_BUS_ERROR</span> <span class="op">=</span> <span class="ident">TOKEN::STATUS::RW::DATA_BUS_ERROR</span>;
-        <span class="kw">const</span> <span class="ident">TRANSACTION_ERROR</span> <span class="op">=</span> <span class="ident">TOKEN::STATUS::RW::TRANSACTION_ERROR</span>;
+<span class="macro">bitflags::bitflags! </span>{
+    <span class="kw">pub struct </span>Status : u32 {
+        <span class="kw">const </span>ACTIVE = TOKEN::STATUS::RW::ACTIVE;
+        <span class="kw">const </span>HALTED = TOKEN::STATUS::RW::HALTED;
+        <span class="kw">const </span>DATA_BUFFER_ERROR = TOKEN::STATUS::RW::DATA_BUFFER_ERROR;
+        <span class="kw">const </span>TRANSACTION_ERROR = TOKEN::STATUS::RW::TRANSACTION_ERROR;
     }
 }
 
-<span class="kw">mod</span> <span class="ident">TOKEN</span> {
-    <span class="kw">pub</span> <span class="kw">mod</span> <span class="ident">STATUS</span> {
-        <span class="kw">pub</span> <span class="kw">const</span> <span class="ident">offset</span>: <span class="ident">u32</span> <span class="op">=</span> <span class="number">0</span>;
-        <span class="kw">pub</span> <span class="kw">const</span> <span class="ident">mask</span>: <span class="ident">u32</span> <span class="op">=</span> <span class="number">0xFF</span> <span class="op">&lt;</span><span class="op">&lt;</span> <span class="ident">offset</span>;
-        <span class="kw">pub</span> <span class="kw">mod</span> <span class="ident">RW</span> {
-            <span class="kw">pub</span> <span class="kw">const</span> <span class="ident">ACTIVE</span>: <span class="ident">u32</span> <span class="op">=</span> <span class="number">1</span> <span class="op">&lt;</span><span class="op">&lt;</span> <span class="number">7</span>;
-            <span class="kw">pub</span> <span class="kw">const</span> <span class="ident">HALTED</span>: <span class="ident">u32</span> <span class="op">=</span> <span class="number">1</span> <span class="op">&lt;</span><span class="op">&lt;</span> <span class="number">6</span>;
-            <span class="kw">pub</span> <span class="kw">const</span> <span class="ident">DATA_BUS_ERROR</span>: <span class="ident">u32</span> <span class="op">=</span> <span class="number">1</span> <span class="op">&lt;</span><span class="op">&lt;</span> <span class="number">5</span>;
-            <span class="kw">pub</span> <span class="kw">const</span> <span class="ident">TRANSACTION_ERROR</span>: <span class="ident">u32</span> <span class="op">=</span> <span class="number">1</span> <span class="op">&lt;</span><span class="op">&lt;</span> <span class="number">3</span>;
+<span class="kw">mod </span>TOKEN {
+    <span class="kw">pub mod </span>STATUS {
+        <span class="kw">pub const </span>offset: u32 = <span class="number">0</span>;
+        <span class="kw">pub const </span>mask: u32 = <span class="number">0xFF </span>&lt;&lt; offset;
+        <span class="kw">pub mod </span>RW {
+            <span class="kw">pub const </span>ACTIVE: u32 = <span class="number">1 </span>&lt;&lt; <span class="number">7</span>;
+            <span class="kw">pub const </span>HALTED: u32 = <span class="number">1 </span>&lt;&lt; <span class="number">6</span>;
+            <span class="kw">pub const </span>DATA_BUFFER_ERROR: u32 = <span class="number">1 </span>&lt;&lt; <span class="number">5</span>;
+            <span class="kw">pub const </span>TRANSACTION_ERROR: u32 = <span class="number">1 </span>&lt;&lt; <span class="number">3</span>;
         }
-        <span class="kw">pub</span> <span class="kw">mod</span> <span class="ident">R</span> {}
-        <span class="kw">pub</span> <span class="kw">mod</span> <span class="ident">W</span> {}
+        <span class="kw">pub mod </span>R {}
+        <span class="kw">pub mod </span>W {}
     }
-    <span class="kw">pub</span> <span class="kw">mod</span> <span class="ident">IOC</span> {
-        <span class="kw">pub</span> <span class="kw">const</span> <span class="ident">offset</span>: <span class="ident">u32</span> <span class="op">=</span> <span class="number">15</span>;
-        <span class="kw">pub</span> <span class="kw">const</span> <span class="ident">mask</span>: <span class="ident">u32</span> <span class="op">=</span> <span class="number">1</span> <span class="op">&lt;</span><span class="op">&lt;</span> <span class="ident">offset</span>;
-        <span class="kw">pub</span> <span class="kw">mod</span> <span class="ident">RW</span> {}
-        <span class="kw">pub</span> <span class="kw">mod</span> <span class="ident">R</span> {}
-        <span class="kw">pub</span> <span class="kw">mod</span> <span class="ident">W</span> {}
+    <span class="kw">pub mod </span>IOC {
+        <span class="kw">pub const </span>offset: u32 = <span class="number">15</span>;
+        <span class="kw">pub const </span>mask: u32 = <span class="number">1 </span>&lt;&lt; offset;
+        <span class="kw">pub mod </span>RW {}
+        <span class="kw">pub mod </span>R {}
+        <span class="kw">pub mod </span>W {}
     }
-    <span class="kw">pub</span> <span class="kw">mod</span> <span class="ident">TOTAL_BYTES</span> {
-        <span class="kw">pub</span> <span class="kw">const</span> <span class="ident">offset</span>: <span class="ident">u32</span> <span class="op">=</span> <span class="number">16</span>;
-        <span class="kw">pub</span> <span class="kw">const</span> <span class="ident">mask</span>: <span class="ident">u32</span> <span class="op">=</span> <span class="number">0x7FFF</span> <span class="op">&lt;</span><span class="op">&lt;</span> <span class="ident">offset</span>;
-        <span class="kw">pub</span> <span class="kw">mod</span> <span class="ident">RW</span> {}
-        <span class="kw">pub</span> <span class="kw">mod</span> <span class="ident">R</span> {}
-        <span class="kw">pub</span> <span class="kw">mod</span> <span class="ident">W</span> {}
+    <span class="kw">pub mod </span>TOTAL_BYTES {
+        <span class="kw">pub const </span>offset: u32 = <span class="number">16</span>;
+        <span class="kw">pub const </span>mask: u32 = <span class="number">0x7FFF </span>&lt;&lt; offset;
+        <span class="kw">pub mod </span>RW {}
+        <span class="kw">pub mod </span>R {}
+        <span class="kw">pub mod </span>W {}
     }
 }
 
-<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">test</span>)]</span>
-<span class="kw">mod</span> <span class="ident">test</span> {
-    <span class="kw">use</span> <span class="ident"><span class="kw">super</span>::Td</span>;
-    <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::ral</span>;
+<span class="attribute">#[cfg(test)]
+</span><span class="kw">mod </span>test {
+    <span class="kw">use </span><span class="kw">super</span>::Td;
+    <span class="kw">use </span><span class="kw">crate</span>::ral;
 
-    <span class="attribute">#[<span class="ident">test</span>]</span>
-    <span class="kw">fn</span> <span class="ident">terminate</span>() {
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">td</span> <span class="op">=</span> <span class="ident">Td::new</span>();
-        <span class="ident">td</span>.<span class="ident">set_terminate</span>();
-        <span class="macro">assert_eq!</span>(<span class="ident">td</span>.<span class="ident">NEXT</span>.<span class="ident">read</span>(), <span class="number">1</span>);
+    <span class="attribute">#[test]
+    </span><span class="kw">fn </span>terminate() {
+        <span class="kw">let </span><span class="kw-2">mut </span>td = Td::new();
+        td.set_terminate();
+        <span class="macro">assert_eq!</span>(td.NEXT.read(), <span class="number">1</span>);
     }
 
-    <span class="attribute">#[<span class="ident">test</span>]</span>
-    <span class="kw">fn</span> <span class="ident">next</span>() {
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">td</span> <span class="op">=</span> <span class="ident">Td::new</span>();
-        <span class="ident">td</span>.<span class="ident">set_terminate</span>();
+    <span class="attribute">#[test]
+    </span><span class="kw">fn </span>next() {
+        <span class="kw">let </span><span class="kw-2">mut </span>td = Td::new();
+        td.set_terminate();
 
-        <span class="kw">let</span> <span class="ident">other</span> <span class="op">=</span> <span class="ident">u32::max_value</span>() <span class="op">&amp;</span> <span class="op">!</span>(<span class="number">31</span>);
-        <span class="ident">td</span>.<span class="ident">set_next</span>(<span class="ident">other</span> <span class="kw">as</span> <span class="kw-2">*</span><span class="kw">const</span> <span class="kw">_</span>);
-        <span class="macro">assert_eq!</span>(<span class="ident">td</span>.<span class="ident">NEXT</span>.<span class="ident">read</span>(), <span class="ident">other</span>);
+        <span class="kw">let </span>other = u32::max_value() &amp; !(<span class="number">31</span>);
+        td.set_next(other <span class="kw">as </span><span class="kw-2">*const </span><span class="kw">_</span>);
+        <span class="macro">assert_eq!</span>(td.NEXT.read(), other);
     }
 
-    <span class="attribute">#[<span class="ident">test</span>]</span>
-    <span class="kw">fn</span> <span class="ident">status</span>() {
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">td</span> <span class="op">=</span> <span class="ident">Td::new</span>();
-        <span class="macro">ral::write_reg!</span>(<span class="kw">super</span>, <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">td</span>, <span class="ident">TOKEN</span>, <span class="ident">STATUS</span>: <span class="ident">u32::max_value</span>());
-        <span class="macro">assert_eq!</span>(<span class="ident">td</span>.<span class="ident">TOKEN</span>.<span class="ident">read</span>(), <span class="number">0b11111111</span>);
+    <span class="attribute">#[test]
+    </span><span class="kw">fn </span>status() {
+        <span class="kw">let </span><span class="kw-2">mut </span>td = Td::new();
+        <span class="macro">ral::write_reg!</span>(<span class="kw">super</span>, <span class="kw-2">&amp;mut </span>td, TOKEN, STATUS: u32::max_value());
+        <span class="macro">assert_eq!</span>(td.TOKEN.read(), <span class="number">0b11111111</span>);
     }
 
-    <span class="attribute">#[<span class="ident">test</span>]</span>
-    <span class="kw">fn</span> <span class="ident">ioc</span>() {
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">td</span> <span class="op">=</span> <span class="ident">Td::new</span>();
-        <span class="macro">ral::write_reg!</span>(<span class="kw">super</span>, <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">td</span>, <span class="ident">TOKEN</span>, <span class="ident">IOC</span>: <span class="ident">u32::max_value</span>());
-        <span class="macro">assert_eq!</span>(<span class="ident">td</span>.<span class="ident">TOKEN</span>.<span class="ident">read</span>(), <span class="number">1</span> <span class="op">&lt;</span><span class="op">&lt;</span> <span class="number">15</span>);
+    <span class="attribute">#[test]
+    </span><span class="kw">fn </span>ioc() {
+        <span class="kw">let </span><span class="kw-2">mut </span>td = Td::new();
+        <span class="macro">ral::write_reg!</span>(<span class="kw">super</span>, <span class="kw-2">&amp;mut </span>td, TOKEN, IOC: u32::max_value());
+        <span class="macro">assert_eq!</span>(td.TOKEN.read(), <span class="number">1 </span>&lt;&lt; <span class="number">15</span>);
     }
 
-    <span class="attribute">#[<span class="ident">test</span>]</span>
-    <span class="kw">fn</span> <span class="ident">total_bytes</span>() {
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">td</span> <span class="op">=</span> <span class="ident">Td::new</span>();
-        <span class="macro">ral::write_reg!</span>(<span class="kw">super</span>, <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">td</span>, <span class="ident">TOKEN</span>, <span class="ident">TOTAL_BYTES</span>: <span class="ident">u32::max_value</span>());
-        <span class="macro">assert_eq!</span>(<span class="ident">td</span>.<span class="ident">TOKEN</span>.<span class="ident">read</span>(), <span class="number">0x7FFF</span> <span class="op">&lt;</span><span class="op">&lt;</span> <span class="number">16</span>);
+    <span class="attribute">#[test]
+    </span><span class="kw">fn </span>total_bytes() {
+        <span class="kw">let </span><span class="kw-2">mut </span>td = Td::new();
+        <span class="macro">ral::write_reg!</span>(<span class="kw">super</span>, <span class="kw-2">&amp;mut </span>td, TOKEN, TOTAL_BYTES: u32::max_value());
+        <span class="macro">assert_eq!</span>(td.TOKEN.read(), <span class="number">0x7FFF </span>&lt;&lt; <span class="number">16</span>);
     }
 
-    <span class="attribute">#[<span class="ident">test</span>]</span>
-    <span class="kw">fn</span> <span class="ident">set_buffer</span>() {
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">td</span> <span class="op">=</span> <span class="ident">Td::new</span>();
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">buffer</span> <span class="op">=</span> [<span class="number">0</span>; <span class="number">32</span>];
-        <span class="ident">td</span>.<span class="ident">set_buffer</span>(<span class="ident">buffer</span>.<span class="ident">as_mut_ptr</span>(), <span class="ident">buffer</span>.<span class="ident">len</span>());
-        <span class="macro">assert_eq!</span>(<span class="ident">td</span>.<span class="ident">NEXT</span>.<span class="ident">read</span>(), <span class="number">0</span>);
-        <span class="macro">assert_eq!</span>(<span class="ident">td</span>.<span class="ident">TOKEN</span>.<span class="ident">read</span>(), (<span class="number">32</span> <span class="op">&lt;</span><span class="op">&lt;</span> <span class="number">16</span>));
-        <span class="macro">assert!</span>(<span class="ident">td</span>.<span class="ident">status</span>().<span class="ident">is_empty</span>());
-        <span class="kw">for</span> <span class="ident">buffer_pointer</span> <span class="kw">in</span> <span class="ident">td</span>.<span class="ident">BUFFER_POINTERS</span>.<span class="ident">iter</span>() {
-            <span class="macro">assert!</span>(<span class="ident">buffer_pointer</span>.<span class="ident">read</span>() <span class="op">!</span><span class="op">=</span> <span class="number">0</span>);
+    <span class="attribute">#[test]
+    </span><span class="kw">fn </span>set_buffer() {
+        <span class="kw">let </span><span class="kw-2">mut </span>td = Td::new();
+        <span class="kw">let </span><span class="kw-2">mut </span>buffer = [<span class="number">0</span>; <span class="number">32</span>];
+        td.set_buffer(buffer.as_mut_ptr(), buffer.len());
+        <span class="macro">assert_eq!</span>(td.NEXT.read(), <span class="number">0</span>);
+        <span class="macro">assert_eq!</span>(td.TOKEN.read(), (<span class="number">32 </span>&lt;&lt; <span class="number">16</span>));
+        <span class="macro">assert!</span>(td.status().is_empty());
+        <span class="kw">for </span>buffer_pointer <span class="kw">in </span>td.BUFFER_POINTERS.iter() {
+            <span class="macro">assert!</span>(buffer_pointer.read() != <span class="number">0</span>);
         }
     }
 }
 
-<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">target_arch</span> <span class="op">=</span> <span class="string">&quot;arm&quot;</span>)]</span>
-<span class="kw">const</span> <span class="kw">_</span>: [(); <span class="number">1</span>] <span class="op">=</span> [(); (<span class="ident">core::mem::size_of</span>::<span class="op">&lt;</span><span class="ident">Td</span><span class="op">&gt;</span>() <span class="op">==</span> <span class="number">32</span>) <span class="kw">as</span> <span class="ident">usize</span>];
+<span class="attribute">#[cfg(target_arch = <span class="string">&quot;arm&quot;</span>)]
+</span><span class="kw">const _</span>: [(); <span class="number">1</span>] = [(); (core::mem::size_of::&lt;Td&gt;() == <span class="number">32</span>) <span class="kw">as </span>usize];
 </code></pre></div>
-</section><section id="search" class="content hidden"></section><div id="rustdoc-vars" data-root-path="../../" data-current-crate="imxrt_usbd" data-search-index-js="../../search-index.js" data-search-js="../../search.js"></div>
-    <script src="../../main.js"></script><script src="../../source-script.js"></script><script src="../../source-files.js"></script>
-</body></html>
+</section></div></main><div id="rustdoc-vars" data-root-path="../../" data-current-crate="imxrt_usbd" data-themes="ayu,dark,light" data-resource-suffix="" data-rustdoc-version="1.65.0 (897e37553 2022-11-02)" ></div></body></html>
