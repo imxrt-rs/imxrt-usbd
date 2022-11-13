@@ -3,11 +3,11 @@
 GPTs through your USB driver.</p>
 <h2 id="example"><a href="#example">Example</a></h2>
 <p>This example shows how to access a GPT through the
-<a href="../full_speed/struct.BusAdapter.html"><code>full_speed::BusAdapter</code></a> API. The example skips
+<a href="../struct.BusAdapter.html"><code>BusAdapter</code></a> API. The example skips
 the bus adapter and USB device setup in order to focus on the GPT API. See the bus
 adapter documentation for more information.</p>
 
-<div class="example-wrap"><pre class="rust rust-example-rendered"><code><span class="kw">use </span>imxrt_usbd::full_speed::BusAdapter;
+<div class="example-wrap"><pre class="rust rust-example-rendered"><code><span class="kw">use </span>imxrt_usbd::BusAdapter;
 <span class="kw">use </span>imxrt_usbd::gpt;
 
 

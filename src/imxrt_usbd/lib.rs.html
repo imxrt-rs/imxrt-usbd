@@ -141,6 +141,10 @@
 <span id="141">141</span>
 <span id="142">142</span>
 <span id="143">143</span>
+<span id="144">144</span>
+<span id="145">145</span>
+<span id="146">146</span>
+<span id="147">147</span>
 </pre><pre class="rust"><code><span class="doccomment">//! A USB driver for i.MX RT processors
 //!
 //! `imxrt-usbd` provides a [`usb-device`] USB bus implementation, allowing you
@@ -165,13 +169,17 @@
 </span><span class="kw">mod </span>log;
 
 <span class="kw">mod </span>buffer;
+<span class="kw">mod </span>bus;
 <span class="kw">mod </span>cache;
+<span class="kw">mod </span>driver;
+<span class="kw">mod </span>endpoint;
 <span class="kw">mod </span>qh;
 <span class="kw">mod </span>ral;
+<span class="kw">mod </span>state;
 <span class="kw">mod </span>td;
 <span class="kw">mod </span>vcell;
 
-<span class="kw">pub mod </span>full_speed;
+<span class="kw">pub use </span>bus::{BusAdapter, Speed};
 <span class="kw">pub mod </span>gpt;
 
 <span class="doccomment">/// Eight endpoints, two directions
@@ -254,7 +262,7 @@
 /// }
 ///
 /// let peripherals = Peripherals::usb1();
-/// let bus = imxrt_usbd::full_speed::BusAdapter::new(
+/// let bus = imxrt_usbd::BusAdapter::new(
 ///     peripherals,
 ///     // Rest of setup...
 ///     # unsafe { static mut M: [u8; 1] = [0; 1]; &amp;mut M }

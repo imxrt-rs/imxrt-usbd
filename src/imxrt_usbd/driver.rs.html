@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `src/full_speed/driver.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>driver.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceSerif4-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../FiraSans-Regular.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../FiraSans-Medium.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceCodePro-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceSerif4-Bold.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceCodePro-Semibold.ttf.woff2"><link rel="stylesheet" href="../../../normalize.css"><link rel="stylesheet" href="../../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" href="../../../ayu.css" disabled><link rel="stylesheet" href="../../../dark.css" disabled><link rel="stylesheet" href="../../../light.css" id="themeStyle"><script id="default-settings" ></script><script src="../../../storage.js"></script><script defer src="../../../source-script.js"></script><script defer src="../../../source-files.js"></script><script defer src="../../../main.js"></script><noscript><link rel="stylesheet" href="../../../noscript.css"></noscript><link rel="alternate icon" type="image/png" href="../../../favicon-16x16.png"><link rel="alternate icon" type="image/png" href="../../../favicon-32x32.png"><link rel="icon" type="image/svg+xml" href="../../../favicon.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="mobile-topbar"><button class="sidebar-menu-toggle">&#9776;</button><a class="sidebar-logo" href="../../../imxrt_usbd/index.html"><div class="logo-container"><img class="rust-logo" src="../../../rust-logo.svg" alt="logo"></div></a><h2 class="location"></h2></nav><nav class="sidebar"><a class="sidebar-logo" href="../../../imxrt_usbd/index.html"><div class="logo-container"><img class="rust-logo" src="../../../rust-logo.svg" alt="logo"></div></a></nav><main><div class="width-limiter"><div class="sub-container"><a class="sub-logo-container" href="../../../imxrt_usbd/index.html"><img class="rust-logo" src="../../../rust-logo.svg" alt="logo"></a><nav class="sub"><form class="search-form"><div class="search-container"><span></span><input class="search-input" name="search" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><button type="button">?</button></div><div id="settings-menu" tabindex="-1"><a href="../../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../../wheel.svg"></a></div></div></form></nav></div><section id="main-content" class="content"><div class="example-wrap"><pre class="line-numbers"><span id="1">1</span>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `src/driver.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>driver.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceSerif4-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../FiraSans-Regular.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../FiraSans-Medium.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceCodePro-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceSerif4-Bold.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceCodePro-Semibold.ttf.woff2"><link rel="stylesheet" href="../../normalize.css"><link rel="stylesheet" href="../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" href="../../ayu.css" disabled><link rel="stylesheet" href="../../dark.css" disabled><link rel="stylesheet" href="../../light.css" id="themeStyle"><script id="default-settings" ></script><script src="../../storage.js"></script><script defer src="../../source-script.js"></script><script defer src="../../source-files.js"></script><script defer src="../../main.js"></script><noscript><link rel="stylesheet" href="../../noscript.css"></noscript><link rel="alternate icon" type="image/png" href="../../favicon-16x16.png"><link rel="alternate icon" type="image/png" href="../../favicon-32x32.png"><link rel="icon" type="image/svg+xml" href="../../favicon.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="mobile-topbar"><button class="sidebar-menu-toggle">&#9776;</button><a class="sidebar-logo" href="../../imxrt_usbd/index.html"><div class="logo-container"><img class="rust-logo" src="../../rust-logo.svg" alt="logo"></div></a><h2 class="location"></h2></nav><nav class="sidebar"><a class="sidebar-logo" href="../../imxrt_usbd/index.html"><div class="logo-container"><img class="rust-logo" src="../../rust-logo.svg" alt="logo"></div></a></nav><main><div class="width-limiter"><div class="sub-container"><a class="sub-logo-container" href="../../imxrt_usbd/index.html"><img class="rust-logo" src="../../rust-logo.svg" alt="logo"></a><nav class="sub"><form class="search-form"><div class="search-container"><span></span><input class="search-input" name="search" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><button type="button">?</button></div><div id="settings-menu" tabindex="-1"><a href="../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../wheel.svg"></a></div></div></form></nav></div><section id="main-content" class="content"><div class="example-wrap"><pre class="line-numbers"><span id="1">1</span>
 <span id="2">2</span>
 <span id="3">3</span>
 <span id="4">4</span>
@@ -448,13 +448,52 @@
 <span id="448">448</span>
 <span id="449">449</span>
 <span id="450">450</span>
-</pre><pre class="rust"><code><span class="doccomment">//! Internal USB full-speed driver
+<span id="451">451</span>
+<span id="452">452</span>
+<span id="453">453</span>
+<span id="454">454</span>
+<span id="455">455</span>
+<span id="456">456</span>
+<span id="457">457</span>
+<span id="458">458</span>
+<span id="459">459</span>
+<span id="460">460</span>
+<span id="461">461</span>
+<span id="462">462</span>
+<span id="463">463</span>
+<span id="464">464</span>
+<span id="465">465</span>
+<span id="466">466</span>
+<span id="467">467</span>
+<span id="468">468</span>
+<span id="469">469</span>
+<span id="470">470</span>
+<span id="471">471</span>
+<span id="472">472</span>
+<span id="473">473</span>
+<span id="474">474</span>
+<span id="475">475</span>
+<span id="476">476</span>
+<span id="477">477</span>
+<span id="478">478</span>
+<span id="479">479</span>
+<span id="480">480</span>
+<span id="481">481</span>
+<span id="482">482</span>
+<span id="483">483</span>
+<span id="484">484</span>
+<span id="485">485</span>
+<span id="486">486</span>
+<span id="487">487</span>
+<span id="488">488</span>
+<span id="489">489</span>
+<span id="490">490</span>
+<span id="491">491</span>
+</pre><pre class="rust"><code><span class="doccomment">//! Internal USB driver
 //!
 //! The goal is to keep this somewhat agnostic from the usb-device
-//! bus behaviors, so that it could be used separately.
-//!
-//! The full-speed driver forces a full speed data rate. See the
-//! notes in the `initialize()` implementation.
+//! bus behaviors, so that it could be used separately. However, it&#39;s
+//! not yet exposed in the package&#39;s API.
 
 </span><span class="kw">use super</span>::{endpoint::Endpoint, state};
 <span class="kw">use crate</span>::{buffer, gpt, qh, ral, td, QH_COUNT};
@@ -480,14 +519,34 @@
 <span class="doccomment">/// Slice all non-zero endpoints...
 </span><span class="kw">const </span>NON_ZERO_EPS: core::ops::RangeFrom&lt;usize&gt; = <span class="number">2</span>..;
 
-<span class="doccomment">/// A full-speed USB driver
+<span class="doccomment">/// USB low / full / high speed setting.
+</span><span class="attribute">#[derive(Clone, Copy, PartialEq, Eq, Debug)]
+</span><span class="kw">pub enum </span>Speed {
+    <span class="doccomment">/// Throttle to low / full speeds.
+    ///
+    /// If a host is capable of high-speed, this will prevent
+    /// the device from enumerating as a high-speed device.
+    </span>LowFull,
+    <span class="doccomment">/// High speed.
+    ///
+    /// A high-speed device can still interface a low / full
+    /// speed host, so use this setting for the most flexibility.
+    </span>High,
+}
+
+<span class="kw">impl </span>Default <span class="kw">for </span>Speed {
+    <span class="kw">fn </span>default() -&gt; <span class="self">Self </span>{
+        Speed::High
+    }
+}
+
+<span class="doccomment">/// A USB driver
 ///
-/// `FullSpeed` itself doesn&#39;t provide much of an API. After you allocate a `FullSpeed` with [`new()`](FullSpeed::new),
-/// you must
+/// After you allocate a `Driver` with [`new()`](Driver::new), you must
 ///
-/// - call [`initialize()`](FullSpeed::initialize) once
+/// - call [`initialize()`](Driver::initialize) once
 /// - supply endpoint memory with [`set_endpoint_memory()`](USB::set_endpoint_memory)
-</span><span class="kw">pub struct </span>FullSpeed {
+</span><span class="kw">pub struct </span>Driver {
     <span class="doccomment">/// Endpoints, indexed by `index()`
     ///
     /// None: not allocated
@@ -512,8 +571,8 @@
     </span>ep_out: u16,
 }
 
-<span class="kw">impl </span>FullSpeed {
-    <span class="doccomment">/// Create a new `FullSpeed` driver
+<span class="kw">impl </span>Driver {
+    <span class="doccomment">/// Create a new `Driver`
     ///
     /// Creation does nothing except for assign static memory to the driver.
     /// After creating the driver, call [`initialize()`](USB::initialize).
@@ -525,7 +584,7 @@
         <span class="kw">unsafe </span>{
             <span class="kw">let </span>qhs = state::steal_qhs(<span class="kw-2">&amp;</span>usb);
             <span class="kw">let </span>tds = state::steal_tds(<span class="kw-2">&amp;</span>usb);
-            FullSpeed {
+            Driver {
                 endpoints: EP_INIT,
                 usb,
                 phy,
@@ -542,7 +601,7 @@
     /// This memory will be shared across all endpoints. you should size it
     /// to support all the endpoints that might be allocated by your USB classes.
     ///
-    /// After this call, `FullSpeed` assumes that it&#39;s the sole owner of `buffer`.
+    /// After this call, `Driver` assumes that it&#39;s the sole owner of `buffer`.
     /// You assume the `unsafe`ty to make that true.
     </span><span class="kw">pub fn </span>set_endpoint_memory(<span class="kw-2">&amp;mut </span><span class="self">self</span>, buffer: <span class="kw-2">&amp;</span><span class="lifetime">&#39;static </span><span class="kw-2">mut </span>[u8]) {
         <span class="self">self</span>.buffer_allocator = buffer::Allocator::new(buffer);
@@ -554,7 +613,7 @@
     ///
     /// You **must** call this once, before creating the complete USB
     /// bus.
-    </span><span class="kw">pub fn </span>initialize(<span class="kw-2">&amp;mut </span><span class="self">self</span>) {
+    </span><span class="kw">pub fn </span>initialize(<span class="kw-2">&amp;mut </span><span class="self">self</span>, speed: Speed) {
         <span class="macro">ral::write_reg!</span>(ral::usbphy, <span class="self">self</span>.phy, CTRL_SET, SFTRST: <span class="number">1</span>);
         <span class="macro">ral::write_reg!</span>(ral::usbphy, <span class="self">self</span>.phy, CTRL_CLR, SFTRST: <span class="number">1</span>);
         <span class="macro">ral::write_reg!</span>(ral::usbphy, <span class="self">self</span>.phy, CTRL_CLR, CLKGATE: <span class="number">1</span>);
@@ -567,17 +626,41 @@
         </span><span class="macro">ral::write_reg!</span>(ral::usb, <span class="self">self</span>.usb, USBCMD, ITC: <span class="number">0</span>);
 
         <span class="macro">ral::write_reg!</span>(ral::usb, <span class="self">self</span>.usb, USBMODE, CM: CM_2, SLOM: <span class="number">1</span>);
-
-        <span class="comment">// This forces the bus to run at full speed, not high speed. Specifically,
-        // it disables the chirp. If you&#39;re interested in playing with a high-speed
-        // USB driver, you&#39;ll want to remove this line, or clear PFSC.
-        </span><span class="macro">ral::modify_reg!</span>(ral::usb, <span class="self">self</span>.usb, PORTSC1, PFSC: <span class="number">1</span>);
+        <span class="macro">ral::modify_reg!</span>(ral::usb, <span class="self">self</span>.usb, PORTSC1, PFSC: (speed == Speed::LowFull) <span class="kw">as </span>u32);
 
         <span class="macro">ral::modify_reg!</span>(ral::usb, <span class="self">self</span>.usb, USBSTS, |usbsts| usbsts);
         <span class="comment">// Disable interrupts by default
         </span><span class="macro">ral::write_reg!</span>(ral::usb, <span class="self">self</span>.usb, USBINTR, <span class="number">0</span>);
 
         state::assign_endptlistaddr(<span class="kw-2">&amp;</span><span class="self">self</span>.usb);
+
+        <span class="comment">// Turn off ZLT for each endpoint. Software (usb-device and associated drivers)
+        // are expected to sent ZLPs as necessary. This setting can be overridden on an
+        // endpoint-by-endpoint basis before endpoint allocation.
+        </span><span class="self">self</span>.qhs.iter_mut().for_each(|qh| {
+            <span class="kw">if let </span><span class="prelude-val">Some</span>(qh) = qh {
+                qh.set_zero_length_termination(<span class="bool-val">false</span>);
+            }
+        });
+    }
+
+    <span class="doccomment">/// Enable zero-length termination (ZLT) for the given endpoint
+    ///
+    /// When ZLT is enabled, software does not need to send a zero-length packet
+    /// to terminate a transfer where the number of bytes equals the max packet size.
+    /// The hardware will send this zero-length packet itself. By default, ZLT is off,
+    /// and software is expected to send these packets. Enable this if you&#39;re confident
+    /// that your (third-party) device / USB class isn&#39;t already sending these packets.
+    ///
+    /// # Panics
+    ///
+    /// `enable_zlt` must be called before the endpoint is allocated. If the endpoint is
+    /// already allocated, this call panics.
+    </span><span class="kw">pub fn </span>enable_zlt(<span class="kw-2">&amp;mut </span><span class="self">self</span>, ep_addr: EndpointAddress) {
+        <span class="kw">let </span>qh = <span class="self">self</span>.qhs[index(ep_addr)]
+            .as_mut()
+            .expect(<span class="string">&quot;Endpoint is already allocated&quot;</span>);
+        qh.set_zero_length_termination(<span class="bool-val">true</span>);
     }
 
     <span class="doccomment">/// Enable (`true`) or disable (`false`) USB interrupts
@@ -800,7 +883,6 @@
 
         <span class="kw">let </span>max_packet_size = buffer.len();
         qh.set_max_packet_len(max_packet_size);
-        qh.set_zero_length_termination(<span class="bool-val">false</span>);
         qh.set_interrupt_on_setup(
             EndpointType::Control == kind &amp;&amp; addr.direction() == UsbDirection::Out,
         );
@@ -899,4 +981,4 @@
     }
 }
 </code></pre></div>
-</section></div></main><div id="rustdoc-vars" data-root-path="../../../" data-current-crate="imxrt_usbd" data-themes="ayu,dark,light" data-resource-suffix="" data-rustdoc-version="1.65.0 (897e37553 2022-11-02)" ></div></body></html>
+</section></div></main><div id="rustdoc-vars" data-root-path="../../" data-current-crate="imxrt_usbd" data-themes="ayu,dark,light" data-resource-suffix="" data-rustdoc-version="1.65.0 (897e37553 2022-11-02)" ></div></body></html>

@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `src/full_speed/bus.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>bus.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceSerif4-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../FiraSans-Regular.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../FiraSans-Medium.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceCodePro-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceSerif4-Bold.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceCodePro-Semibold.ttf.woff2"><link rel="stylesheet" href="../../../normalize.css"><link rel="stylesheet" href="../../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" href="../../../ayu.css" disabled><link rel="stylesheet" href="../../../dark.css" disabled><link rel="stylesheet" href="../../../light.css" id="themeStyle"><script id="default-settings" ></script><script src="../../../storage.js"></script><script defer src="../../../source-script.js"></script><script defer src="../../../source-files.js"></script><script defer src="../../../main.js"></script><noscript><link rel="stylesheet" href="../../../noscript.css"></noscript><link rel="alternate icon" type="image/png" href="../../../favicon-16x16.png"><link rel="alternate icon" type="image/png" href="../../../favicon-32x32.png"><link rel="icon" type="image/svg+xml" href="../../../favicon.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="mobile-topbar"><button class="sidebar-menu-toggle">&#9776;</button><a class="sidebar-logo" href="../../../imxrt_usbd/index.html"><div class="logo-container"><img class="rust-logo" src="../../../rust-logo.svg" alt="logo"></div></a><h2 class="location"></h2></nav><nav class="sidebar"><a class="sidebar-logo" href="../../../imxrt_usbd/index.html"><div class="logo-container"><img class="rust-logo" src="../../../rust-logo.svg" alt="logo"></div></a></nav><main><div class="width-limiter"><div class="sub-container"><a class="sub-logo-container" href="../../../imxrt_usbd/index.html"><img class="rust-logo" src="../../../rust-logo.svg" alt="logo"></a><nav class="sub"><form class="search-form"><div class="search-container"><span></span><input class="search-input" name="search" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><button type="button">?</button></div><div id="settings-menu" tabindex="-1"><a href="../../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../../wheel.svg"></a></div></div></form></nav></div><section id="main-content" class="content"><div class="example-wrap"><pre class="line-numbers"><span id="1">1</span>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `src/bus.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>bus.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceSerif4-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../FiraSans-Regular.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../FiraSans-Medium.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceCodePro-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceSerif4-Bold.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceCodePro-Semibold.ttf.woff2"><link rel="stylesheet" href="../../normalize.css"><link rel="stylesheet" href="../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" href="../../ayu.css" disabled><link rel="stylesheet" href="../../dark.css" disabled><link rel="stylesheet" href="../../light.css" id="themeStyle"><script id="default-settings" ></script><script src="../../storage.js"></script><script defer src="../../source-script.js"></script><script defer src="../../source-files.js"></script><script defer src="../../main.js"></script><noscript><link rel="stylesheet" href="../../noscript.css"></noscript><link rel="alternate icon" type="image/png" href="../../favicon-16x16.png"><link rel="alternate icon" type="image/png" href="../../favicon-32x32.png"><link rel="icon" type="image/svg+xml" href="../../favicon.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="mobile-topbar"><button class="sidebar-menu-toggle">&#9776;</button><a class="sidebar-logo" href="../../imxrt_usbd/index.html"><div class="logo-container"><img class="rust-logo" src="../../rust-logo.svg" alt="logo"></div></a><h2 class="location"></h2></nav><nav class="sidebar"><a class="sidebar-logo" href="../../imxrt_usbd/index.html"><div class="logo-container"><img class="rust-logo" src="../../rust-logo.svg" alt="logo"></div></a></nav><main><div class="width-limiter"><div class="sub-container"><a class="sub-logo-container" href="../../imxrt_usbd/index.html"><img class="rust-logo" src="../../rust-logo.svg" alt="logo"></a><nav class="sub"><form class="search-form"><div class="search-container"><span></span><input class="search-input" name="search" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><button type="button">?</button></div><div id="settings-menu" tabindex="-1"><a href="../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../wheel.svg"></a></div></div></form></nav></div><section id="main-content" class="content"><div class="example-wrap"><pre class="line-numbers"><span id="1">1</span>
 <span id="2">2</span>
 <span id="3">3</span>
 <span id="4">4</span>
@@ -304,6 +304,116 @@
 <span id="304">304</span>
 <span id="305">305</span>
 <span id="306">306</span>
+<span id="307">307</span>
+<span id="308">308</span>
+<span id="309">309</span>
+<span id="310">310</span>
+<span id="311">311</span>
+<span id="312">312</span>
+<span id="313">313</span>
+<span id="314">314</span>
+<span id="315">315</span>
+<span id="316">316</span>
+<span id="317">317</span>
+<span id="318">318</span>
+<span id="319">319</span>
+<span id="320">320</span>
+<span id="321">321</span>
+<span id="322">322</span>
+<span id="323">323</span>
+<span id="324">324</span>
+<span id="325">325</span>
+<span id="326">326</span>
+<span id="327">327</span>
+<span id="328">328</span>
+<span id="329">329</span>
+<span id="330">330</span>
+<span id="331">331</span>
+<span id="332">332</span>
+<span id="333">333</span>
+<span id="334">334</span>
+<span id="335">335</span>
+<span id="336">336</span>
+<span id="337">337</span>
+<span id="338">338</span>
+<span id="339">339</span>
+<span id="340">340</span>
+<span id="341">341</span>
+<span id="342">342</span>
+<span id="343">343</span>
+<span id="344">344</span>
+<span id="345">345</span>
+<span id="346">346</span>
+<span id="347">347</span>
+<span id="348">348</span>
+<span id="349">349</span>
+<span id="350">350</span>
+<span id="351">351</span>
+<span id="352">352</span>
+<span id="353">353</span>
+<span id="354">354</span>
+<span id="355">355</span>
+<span id="356">356</span>
+<span id="357">357</span>
+<span id="358">358</span>
+<span id="359">359</span>
+<span id="360">360</span>
+<span id="361">361</span>
+<span id="362">362</span>
+<span id="363">363</span>
+<span id="364">364</span>
+<span id="365">365</span>
+<span id="366">366</span>
+<span id="367">367</span>
+<span id="368">368</span>
+<span id="369">369</span>
+<span id="370">370</span>
+<span id="371">371</span>
+<span id="372">372</span>
+<span id="373">373</span>
+<span id="374">374</span>
+<span id="375">375</span>
+<span id="376">376</span>
+<span id="377">377</span>
+<span id="378">378</span>
+<span id="379">379</span>
+<span id="380">380</span>
+<span id="381">381</span>
+<span id="382">382</span>
+<span id="383">383</span>
+<span id="384">384</span>
+<span id="385">385</span>
+<span id="386">386</span>
+<span id="387">387</span>
+<span id="388">388</span>
+<span id="389">389</span>
+<span id="390">390</span>
+<span id="391">391</span>
+<span id="392">392</span>
+<span id="393">393</span>
+<span id="394">394</span>
+<span id="395">395</span>
+<span id="396">396</span>
+<span id="397">397</span>
+<span id="398">398</span>
+<span id="399">399</span>
+<span id="400">400</span>
+<span id="401">401</span>
+<span id="402">402</span>
+<span id="403">403</span>
+<span id="404">404</span>
+<span id="405">405</span>
+<span id="406">406</span>
+<span id="407">407</span>
+<span id="408">408</span>
+<span id="409">409</span>
+<span id="410">410</span>
+<span id="411">411</span>
+<span id="412">412</span>
+<span id="413">413</span>
+<span id="414">414</span>
+<span id="415">415</span>
+<span id="416">416</span>
 </pre><pre class="rust"><code><span class="doccomment">//! USB bus implementation
 //!
 //! The bus
@@ -315,7 +425,7 @@
 //!
 //! Most of the interesting behavior happens in the driver.
 
-</span><span class="kw">use </span><span class="kw">super</span>::driver::FullSpeed;
+</span><span class="kw">use </span><span class="kw">super</span>::driver::Driver;
 <span class="kw">use </span><span class="kw">crate</span>::gpt;
 <span class="kw">use </span>core::cell::RefCell;
 <span class="kw">use </span>cortex_m::interrupt::{<span class="self">self</span>, Mutex};
@@ -325,9 +435,11 @@
     UsbDirection,
 };
 
-<span class="doccomment">/// A `UsbBus` implementation
+<span class="kw">pub use </span><span class="kw">super</span>::driver::Speed;
+
+<span class="doccomment">/// A full- and high-speed `UsbBus` implementation
 ///
-/// The `BusAdapter` adapts the RAL instances, and exposes a `UsbBus` implementation.
+/// The `BusAdapter` adapts the USB peripheral instances, and exposes a `UsbBus` implementation.
 ///
 /// # Requirements
 ///
@@ -348,7 +460,7 @@
 /// your USB class&#39; documentation for details. This example also skips the clock initialization.
 ///
 /// ```no_run
-/// use imxrt_usbd::full_speed::BusAdapter;
+/// use imxrt_usbd::BusAdapter;
 ///
 /// # struct Ps; use imxrt_usbd::Instance as Inst;
 /// # unsafe impl imxrt_usbd::Peripherals for Ps { fn instance(&amp;self) -&gt; Inst { panic!() } }
@@ -386,12 +498,46 @@
 ///
 /// // Ready for class traffic!
 /// ```
+///
+/// # Design
+///
+/// This section talks about the driver design. It assumes that
+/// you&#39;re familiar with the details of the i.MX RT USB peripheral. If you
+/// just want to use the driver, you can skip this section.
+///
+/// ## Packets and transfers
+///
+/// All i.MX RT USB drivers manage queue heads (QH), and transfer
+/// descriptors (TD). For the driver, each (QH) is assigned
+/// only one (TD) to perform I/O. We then assume each TD describes a single
+/// packet. This is simple to implement, but it means that the
+/// driver can only have one packet in flight per endpoint. You&#39;re expected
+/// to quickly respond to `poll()` outputs, and schedule the next transfer
+/// in the time required for devices. This becomes more important as you
+/// increase driver speeds.
+///
+/// The hardware can zero-length terminate (ZLT) packets as needed if you
+/// call [`enable_zlt`](BusAdapter::enable_zlt). By default, this feature is
+/// off, because most `usb-device` classes / devices take care to send zero-length
+/// packets, and enabling this feature could interfere with the class / device
+/// behaviors.
 </span><span class="kw">pub struct </span>BusAdapter {
-    usb: Mutex&lt;RefCell&lt;FullSpeed&gt;&gt;,
+    usb: Mutex&lt;RefCell&lt;Driver&gt;&gt;,
+    cs: <span class="prelude-ty">Option</span>&lt;cortex_m::interrupt::CriticalSection&gt;,
 }
 
 <span class="kw">impl </span>BusAdapter {
-    <span class="doccomment">/// Create a USB bus adapter
+    <span class="doccomment">/// Create a high-speed USB bus adapter
+    ///
+    /// This is equivalent to [`BusAdapter::with_speed`] when supplying [`Speed::High`]. See
+    /// the `with_speed` documentation for more information.
+    </span><span class="kw">pub fn </span>new&lt;P: <span class="kw">crate</span>::Peripherals&gt;(peripherals: P, buffer: <span class="kw-2">&amp;</span><span class="lifetime">&#39;static </span><span class="kw-2">mut </span>[u8]) -&gt; <span class="self">Self </span>{
+        <span class="self">Self</span>::with_speed(peripherals, buffer, Speed::High)
+    }
+
+    <span class="doccomment">/// Create a USB bus adapter with the given speed
+    ///
+    /// Specify [`Speed::LowFull`] to throttle the USB data rate.
     ///
     /// When this function returns, the `BusAdapter` has initialized the PHY and USB core peripherals.
     /// The adapter expects to own these two peripherals, along with the other peripherals required
@@ -401,17 +547,53 @@
     /// memory region will be partitioned for the endpoints, based on their requirements.
     ///
     /// You must ensure that no one else is using the endpoint memory!
-    </span><span class="kw">pub fn </span>new&lt;P: <span class="kw">crate</span>::Peripherals&gt;(peripherals: P, buffer: <span class="kw-2">&amp;</span><span class="lifetime">&#39;static </span><span class="kw-2">mut </span>[u8]) -&gt; <span class="self">Self </span>{
-        <span class="kw">let </span><span class="kw-2">mut </span>usb = FullSpeed::new(peripherals);
+    </span><span class="kw">pub fn </span>with_speed&lt;P: <span class="kw">crate</span>::Peripherals&gt;(
+        peripherals: P,
+        buffer: <span class="kw-2">&amp;</span><span class="lifetime">&#39;static </span><span class="kw-2">mut </span>[u8],
+        speed: Speed,
+    ) -&gt; <span class="self">Self </span>{
+        <span class="self">Self</span>::init(peripherals, buffer, speed, <span class="prelude-val">None</span>)
+    }
 
-        usb.initialize();
+    <span class="doccomment">/// Create a USB bus adapter that never takes a critical section
+    ///
+    /// See [`BusAdapter::with_speed`] for general information.
+    ///
+    /// # Safety
+    ///
+    /// The returned object fakes its `Sync` safety. Specifically, the object
+    /// will not take critical sections in its `&amp;[mut] self` methods to ensure safe
+    /// access. By using this object, you must manually hold the guarantees of
+    /// `Sync` without the compiler&#39;s help.
+    </span><span class="kw">pub unsafe fn </span>without_critical_sections&lt;P: <span class="kw">crate</span>::Peripherals&gt;(
+        peripherals: P,
+        buffer: <span class="kw-2">&amp;</span><span class="lifetime">&#39;static </span><span class="kw-2">mut </span>[u8],
+        speed: Speed,
+    ) -&gt; <span class="self">Self </span>{
+        <span class="self">Self</span>::init(
+            peripherals,
+            buffer,
+            speed,
+            <span class="prelude-val">Some</span>(cortex_m::interrupt::CriticalSection::new()),
+        )
+    }
+
+    <span class="kw">fn </span>init&lt;P: <span class="kw">crate</span>::Peripherals&gt;(
+        peripherals: P,
+        buffer: <span class="kw-2">&amp;</span><span class="lifetime">&#39;static </span><span class="kw-2">mut </span>[u8],
+        speed: Speed,
+        cs: <span class="prelude-ty">Option</span>&lt;cortex_m::interrupt::CriticalSection&gt;,
+    ) -&gt; <span class="self">Self </span>{
+        <span class="kw">let </span><span class="kw-2">mut </span>usb = Driver::new(peripherals);
+
+        usb.initialize(speed);
         usb.set_endpoint_memory(buffer);
 
         BusAdapter {
             usb: Mutex::new(RefCell::new(usb)),
+            cs,
         }
     }
-
     <span class="doccomment">/// Enable (`true`) or disable (`false`) interrupts for this USB peripheral
     ///
     /// The interrupt causes are implementation specific. To handle the interrupt,
@@ -420,22 +602,48 @@
         <span class="self">self</span>.with_usb_mut(|usb| usb.set_interrupts(interrupts));
     }
 
-    <span class="doccomment">/// Interrupt-safe, immutable access to the USB peripheral
-    </span><span class="kw">fn </span>with_usb&lt;R&gt;(<span class="kw-2">&amp;</span><span class="self">self</span>, func: <span class="kw">impl </span>FnOnce(<span class="kw-2">&amp;</span>FullSpeed) -&gt; R) -&gt; R {
-        interrupt::free(|cs| {
+    <span class="doccomment">/// Enable zero-length termination (ZLT) for the given endpoint
+    ///
+    /// When ZLT is enabled, software does not need to send a zero-length packet
+    /// to terminate a transfer where the number of bytes equals the max packet size.
+    /// The hardware will send this zero-length packet itself. By default, ZLT is off,
+    /// and software is expected to send these packets. Enable this if you&#39;re confident
+    /// that your (third-party) device / USB class isn&#39;t already sending these packets.
+    ///
+    /// # Panics
+    ///
+    /// `enable_zlt` must be called before the endpoint is allocated. If the endpoint is
+    /// already allocated, this call panics.
+    </span><span class="kw">pub fn </span>enable_zlt(<span class="kw-2">&amp;</span><span class="self">self</span>, ep_addr: EndpointAddress) {
+        <span class="self">self</span>.with_usb_mut(|usb| usb.enable_zlt(ep_addr));
+    }
+
+    <span class="doccomment">/// Immutable access to the USB peripheral
+    </span><span class="kw">fn </span>with_usb&lt;R&gt;(<span class="kw-2">&amp;</span><span class="self">self</span>, func: <span class="kw">impl </span>FnOnce(<span class="kw-2">&amp;</span>Driver) -&gt; R) -&gt; R {
+        <span class="kw">let </span>with_cs = |cs: <span class="kw-2">&amp;</span><span class="lifetime">&#39;_ </span><span class="kw">_</span>| {
             <span class="kw">let </span>usb = <span class="self">self</span>.usb.borrow(cs);
             <span class="kw">let </span>usb = usb.borrow();
             func(<span class="kw-2">&amp;</span>usb)
-        })
+        };
+        <span class="kw">if let </span><span class="prelude-val">Some</span>(cs) = <span class="kw-2">&amp;</span><span class="self">self</span>.cs {
+            with_cs(cs)
+        } <span class="kw">else </span>{
+            interrupt::free(with_cs)
+        }
     }
 
-    <span class="doccomment">/// Interrupt-safe, mutable access to the USB peripheral
-    </span><span class="kw">fn </span>with_usb_mut&lt;R&gt;(<span class="kw-2">&amp;</span><span class="self">self</span>, func: <span class="kw">impl </span>FnOnce(<span class="kw-2">&amp;mut </span>FullSpeed) -&gt; R) -&gt; R {
-        interrupt::free(|cs| {
+    <span class="doccomment">/// Mutable access to the USB peripheral
+    </span><span class="kw">fn </span>with_usb_mut&lt;R&gt;(<span class="kw-2">&amp;</span><span class="self">self</span>, func: <span class="kw">impl </span>FnOnce(<span class="kw-2">&amp;mut </span>Driver) -&gt; R) -&gt; R {
+        <span class="kw">let </span>with_cs = |cs: <span class="kw-2">&amp;</span><span class="lifetime">&#39;_ </span><span class="kw">_</span>| {
             <span class="kw">let </span>usb = <span class="self">self</span>.usb.borrow(cs);
             <span class="kw">let </span><span class="kw-2">mut </span>usb = usb.borrow_mut();
             func(<span class="kw-2">&amp;mut </span>usb)
-        })
+        };
+        <span class="kw">if let </span><span class="prelude-val">Some</span>(cs) = <span class="kw-2">&amp;</span><span class="self">self</span>.cs {
+            with_cs(cs)
+        } <span class="kw">else </span>{
+            interrupt::free(with_cs)
+        }
     }
 
     <span class="doccomment">/// Apply device configurations, and perform other post-configuration actions
@@ -469,6 +677,18 @@
     ) -&gt; R {
         <span class="kw">let </span>usb = <span class="self">self</span>.usb.borrow(cs);
         usb.borrow_mut().gpt_mut(instance, func)
+    }
+
+    <span class="doccomment">/// Acquire one of the GPT timer instances.
+    ///
+    /// `instance` identifies which GPT instance you&#39;re accessing.
+    ///
+    /// # Panics
+    ///
+    /// Panics if the GPT instance is already borrowed. This could happen
+    /// if you call `borrow_gpt` again within the `func` callback.
+    </span><span class="kw">pub fn </span>gpt_mut&lt;R&gt;(<span class="kw-2">&amp;</span><span class="self">self</span>, instance: gpt::Instance, func: <span class="kw">impl </span>FnOnce(<span class="kw-2">&amp;mut </span>gpt::Gpt) -&gt; R) -&gt; R {
+        <span class="self">self</span>.with_usb_mut(|usb| usb.gpt_mut(instance, func))
     }
 }
 
@@ -611,4 +831,4 @@
     }
 }
 </code></pre></div>
-</section></div></main><div id="rustdoc-vars" data-root-path="../../../" data-current-crate="imxrt_usbd" data-themes="ayu,dark,light" data-resource-suffix="" data-rustdoc-version="1.65.0 (897e37553 2022-11-02)" ></div></body></html>
+</section></div></main><div id="rustdoc-vars" data-root-path="../../" data-current-crate="imxrt_usbd" data-themes="ayu,dark,light" data-resource-suffix="" data-rustdoc-version="1.65.0 (897e37553 2022-11-02)" ></div></body></html>
