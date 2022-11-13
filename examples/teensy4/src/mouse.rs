@@ -34,6 +34,7 @@ fn main() -> ! {
         usbd_hid::hid_class::HIDClass::new(&bus, usbd_hid::descriptor::MouseReport::desc(), 10);
     let mut device = UsbDeviceBuilder::new(&bus, UsbVidPid(0x5824, 0x27dd))
         .product("imxrt-usbd")
+        .max_packet_size_0(64)
         .build();
 
     gpt1.set_enable(true);

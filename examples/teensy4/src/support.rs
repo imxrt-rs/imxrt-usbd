@@ -6,20 +6,31 @@ pub use bsp::hal;
 pub use hal::ral;
 pub use teensy4_bsp as bsp;
 
+const SPEED: imxrt_usbd::Speed = {
+    #[cfg(feature = "high-speed")]
+    {
+        imxrt_usbd::Speed::High
+    }
+    #[cfg(not(feature = "high-speed"))]
+    {
+        imxrt_usbd::Speed::LowFull
+    }
+};
+
 /// Allocates a `BusAdapter`
 ///
 /// # Panics
 ///
 /// Panics if any of the `imxrt-ral` USB instances are already
 /// taken.
-pub fn new_bus_adapter() -> imxrt_usbd::full_speed::BusAdapter {
+pub fn new_bus_adapter() -> imxrt_usbd::BusAdapter {
     // If we're here, we have exclusive access to ENDPOINT_MEMORY
     static mut ENDPOINT_MEMORY: [u8; 4096] = [0; 4096];
 
     unsafe {
         // Safety: With proper scoping and checks for singleton access, we ensure the memory is
         // only available to a single caller.
-        imxrt_usbd::full_speed::BusAdapter::new(UsbPeripherals::usb1(), &mut ENDPOINT_MEMORY)
+        imxrt_usbd::BusAdapter::with_speed(UsbPeripherals::usb1(), &mut ENDPOINT_MEMORY, SPEED)
     }
 }
 

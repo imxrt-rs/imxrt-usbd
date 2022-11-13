@@ -68,8 +68,8 @@ fn main() -> ! {
 }
 
 /// The endless loop when interrupts are enabled.
-fn example_interrupt(led: teensy4_bsp::LED, bus_adapter: imxrt_usbd::full_speed::BusAdapter) -> ! {
-    static mut BUS_ADAPTER: Option<imxrt_usbd::full_speed::BusAdapter> = None;
+fn example_interrupt(led: teensy4_bsp::LED, bus_adapter: imxrt_usbd::BusAdapter) -> ! {
+    static mut BUS_ADAPTER: Option<imxrt_usbd::BusAdapter> = None;
     static mut LED: Option<teensy4_bsp::LED> = None;
 
     cortex_m::interrupt::free(|cs| unsafe {
@@ -106,10 +106,7 @@ fn example_interrupt(led: teensy4_bsp::LED, bus_adapter: imxrt_usbd::full_speed:
 
 /// The endless loop when interrupts are disabled, and we're polling the
 /// GPT timer for completion.
-fn example_polling(
-    mut led: teensy4_bsp::LED,
-    bus_adapter: imxrt_usbd::full_speed::BusAdapter,
-) -> ! {
+fn example_polling(mut led: teensy4_bsp::LED, bus_adapter: imxrt_usbd::BusAdapter) -> ! {
     // Note: running loop in a critical section. A real
     // system shouldn't do this.
     cortex_m::interrupt::free(|cs| {
