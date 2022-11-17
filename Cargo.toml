@@ -3,7 +3,7 @@ name = "imxrt-usbd"
 version = "0.1.0"
 authors = ["Ian McIntyre <ianpmcintyre@gmail.com>"]
 repository = "https://github.com/imxrt-rs/imxrt-usbd"
-edition = "2018"
+edition.workspace = true
 license = "MIT OR Apache-2.0"
 keywords = ["imxrt", "nxp", "embedded", "usb"]
 categories = ["embedded", "no-std"]
@@ -33,3 +33,11 @@ __log = ["log"]
 
 [package.metadata.docs.rs]
 default-target = "thumbv7em-none-eabihf"
+
+[workspace]
+members = [
+    "examples/teensy4"
+]
+
+[workspace.package]
+edition = "2021"
