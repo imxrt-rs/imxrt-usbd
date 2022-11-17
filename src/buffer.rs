@@ -17,6 +17,17 @@ unsafe impl Send for crate::buffer::Allocator {}
 impl Allocator {
     /// Create a memory allocator that allocates block from static, mutable memory.
     pub fn new(buffer: &'static mut [u8]) -> Self {
+        // Safety: buffer is static.
+        unsafe { Self::from_buffer(buffer) }
+    }
+
+    /// Create an allocator for a non-static buffer.
+    ///
+    /// # Safety
+    ///
+    /// Caller must make sure that no buffers allocated from this object
+    /// exceed the lifetime of `buffer`.
+    pub(crate) unsafe fn from_buffer(buffer: &mut [u8]) -> Self {
         let start = buffer.as_mut_ptr();
         let ptr = unsafe { start.add(buffer.len()) };
         Allocator { start, ptr }

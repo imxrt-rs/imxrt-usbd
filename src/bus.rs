@@ -49,6 +49,7 @@ pub use super::driver::Speed;
 /// # struct Ps; use imxrt_usbd::Instance as Inst;
 /// # unsafe impl imxrt_usbd::Peripherals for Ps { fn instance(&self) -> Inst { panic!() } }
 /// static mut ENDPOINT_MEMORY: [u8; 1024] = [0; 1024];
+/// static EP_STATE: imxrt_usbd::EndpointState = imxrt_usbd::EndpointState::max_endpoints();
 ///
 /// // TODO initialize clocks...
 ///
@@ -56,7 +57,8 @@ pub use super::driver::Speed;
 /// #   Ps;
 /// let bus_adapter = BusAdapter::new(
 ///     my_usb_peripherals,
-///     unsafe { &mut ENDPOINT_MEMORY }
+///     unsafe { &mut ENDPOINT_MEMORY },
+///     &EP_STATE,
 /// );
 ///
 /// // Create the USB device...
@@ -115,8 +117,16 @@ impl BusAdapter {
     ///
     /// This is equivalent to [`BusAdapter::with_speed`] when supplying [`Speed::High`]. See
     /// the `with_speed` documentation for more information.
-    pub fn new<P: crate::Peripherals>(peripherals: P, buffer: &'static mut [u8]) -> Self {
-        Self::with_speed(peripherals, buffer, Speed::High)
+    ///
+    /// # Panics
+    ///
+    /// Panics if `state` has already been associated with another USB bus.
+    pub fn new<P: crate::Peripherals, const EP_COUNT: usize>(
+        peripherals: P,
+        buffer: &'static mut [u8],
+        state: &'static crate::state::EndpointState<EP_COUNT>,
+    ) -> Self {
+        Self::with_speed(peripherals, buffer, state, Speed::High)
     }
 
     /// Create a USB bus adapter with the given speed
@@ -131,12 +141,17 @@ impl BusAdapter {
     /// memory region will be partitioned for the endpoints, based on their requirements.
     ///
     /// You must ensure that no one else is using the endpoint memory!
-    pub fn with_speed<P: crate::Peripherals>(
+    ///
+    /// # Panics
+    ///
+    /// Panics if `state` has already been associated with another USB bus.
+    pub fn with_speed<P: crate::Peripherals, const EP_COUNT: usize>(
         peripherals: P,
         buffer: &'static mut [u8],
+        state: &'static crate::state::EndpointState<EP_COUNT>,
         speed: Speed,
     ) -> Self {
-        Self::init(peripherals, buffer, speed, None)
+        Self::init(peripherals, buffer, state, speed, None)
     }
 
     /// Create a USB bus adapter that never takes a critical section
@@ -149,26 +164,33 @@ impl BusAdapter {
     /// will not take critical sections in its `&[mut] self` methods to ensure safe
     /// access. By using this object, you must manually hold the guarantees of
     /// `Sync` without the compiler's help.
-    pub unsafe fn without_critical_sections<P: crate::Peripherals>(
+    ///
+    /// # Panics
+    ///
+    /// Panics if `state` has already been associated with another USB bus.
+    pub unsafe fn without_critical_sections<P: crate::Peripherals, const EP_COUNT: usize>(
         peripherals: P,
         buffer: &'static mut [u8],
+        state: &'static crate::state::EndpointState<EP_COUNT>,
         speed: Speed,
     ) -> Self {
         Self::init(
             peripherals,
             buffer,
+            state,
             speed,
             Some(cortex_m::interrupt::CriticalSection::new()),
         )
     }
 
-    fn init<P: crate::Peripherals>(
+    fn init<P: crate::Peripherals, const EP_COUNT: usize>(
         peripherals: P,
         buffer: &'static mut [u8],
+        state: &'static crate::state::EndpointState<EP_COUNT>,
         speed: Speed,
         cs: Option<cortex_m::interrupt::CriticalSection>,
     ) -> Self {
-        let mut usb = Driver::new(peripherals);
+        let mut usb = Driver::new(peripherals, state);
 
         usb.initialize(speed);
         usb.set_endpoint_memory(buffer);
@@ -194,10 +216,7 @@ impl BusAdapter {
     /// and software is expected to send these packets. Enable this if you're confident
     /// that your (third-party) device / USB class isn't already sending these packets.
     ///
-    /// # Panics
-    ///
-    /// `enable_zlt` must be called before the endpoint is allocated. If the endpoint is
-    /// already allocated, this call panics.
+    /// This call does nothing if the endpoint isn't allocated.
     pub fn enable_zlt(&self, ep_addr: EndpointAddress) {
         self.with_usb_mut(|usb| usb.enable_zlt(ep_addr));
     }

@@ -34,9 +34,7 @@ mod vcell;
 
 pub use bus::{BusAdapter, Speed};
 pub mod gpt;
-
-/// Eight endpoints, two directions
-const QH_COUNT: usize = 8 * 2;
+pub use state::{EndpointState, MAX_ENDPOINTS};
 
 /// A type that owns all USB register blocks
 ///
@@ -118,7 +116,8 @@ const QH_COUNT: usize = 8 * 2;
 /// let bus = imxrt_usbd::BusAdapter::new(
 ///     peripherals,
 ///     // Rest of setup...
-///     # unsafe { static mut M: [u8; 1] = [0; 1]; &mut M }
+///     # unsafe { static mut M: [u8; 1] = [0; 1]; &mut M },
+///     # { static EP_STATE: imxrt_usbd::EndpointState = imxrt_usbd::EndpointState::max_endpoints(); &EP_STATE }
 /// );
 /// ```
 pub unsafe trait Peripherals {

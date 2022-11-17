@@ -51,6 +51,16 @@ impl Endpoint {
         buffer: Buffer,
         kind: EndpointType,
     ) -> Self {
+        let max_packet_size = buffer.len();
+        qh.set_zero_length_termination(false);
+        qh.set_max_packet_len(max_packet_size);
+        qh.set_interrupt_on_setup(
+            EndpointType::Control == kind && address.direction() == UsbDirection::Out,
+        );
+
+        td.set_terminate();
+        td.clear_status();
+
         Endpoint {
             address,
             qh,
@@ -58,6 +68,11 @@ impl Endpoint {
             buffer,
             kind,
         }
+    }
+
+    /// Enable ZLT for the given endpoint.
+    pub fn enable_zlt(&mut self) {
+        self.qh.set_zero_length_termination(true);
     }
 
     /// Indicates if the transfer descriptor is active

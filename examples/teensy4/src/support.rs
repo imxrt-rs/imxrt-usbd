@@ -26,11 +26,17 @@ const SPEED: imxrt_usbd::Speed = {
 pub fn new_bus_adapter() -> imxrt_usbd::BusAdapter {
     // If we're here, we have exclusive access to ENDPOINT_MEMORY
     static mut ENDPOINT_MEMORY: [u8; 4096] = [0; 4096];
+    static EP_STATE: imxrt_usbd::EndpointState = imxrt_usbd::EndpointState::max_endpoints();
 
     unsafe {
         // Safety: With proper scoping and checks for singleton access, we ensure the memory is
         // only available to a single caller.
-        imxrt_usbd::BusAdapter::with_speed(UsbPeripherals::usb1(), &mut ENDPOINT_MEMORY, SPEED)
+        imxrt_usbd::BusAdapter::with_speed(
+            UsbPeripherals::usb1(),
+            &mut ENDPOINT_MEMORY,
+            &EP_STATE,
+            SPEED,
+        )
     }
 }
 
