@@ -63,15 +63,10 @@ pub use state::{EndpointState, MAX_ENDPOINTS};
 /// # Example
 ///
 /// A safe implementation of `Peripherals` that works with the
-/// `imxrt-ral` register access layer. Assume that `ral` is
-/// shorthand for `imxrt_ral`, like
-///
-/// ```
-/// use imxrt_ral as ral;
-/// ```
+/// `imxrt-ral` register access layer.
 ///
 /// ```no_run
-/// # mod ral {
+/// # mod imxrt_ral {
 /// #   pub struct RegisterBlock;
 /// #   use core::ops::Deref; pub struct Instance; impl Deref for Instance { type Target = RegisterBlock; fn deref(&self) -> &RegisterBlock { unsafe { &*(0x402e0200 as *const RegisterBlock)} } }
 /// #   pub fn take() -> Result<Instance, ()> { Ok(Instance) }
@@ -80,6 +75,7 @@ pub use state::{EndpointState, MAX_ENDPOINTS};
 /// #   pub mod usbnc { pub use super::Instance; pub mod USBNC1 { pub use super::super::take; } }
 /// #   pub mod usb_analog { pub use super::Instance; pub mod USB_ANALOG { pub use super::super::take; } }
 /// # }
+/// use imxrt_ral as ral;
 /// use ral::usb;
 ///
 /// struct Peripherals {

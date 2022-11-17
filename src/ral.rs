@@ -3,7 +3,7 @@
 pub mod usb;
 pub mod usbphy;
 
-pub use imxrt_ral::{modify_reg, read_reg, write_reg, RORegister, RWRegister};
+pub use ral_registers::{modify_reg, read_reg, write_reg, RORegister, RWRegister};
 
 use crate::Peripherals;
 
