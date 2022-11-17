@@ -32,6 +32,7 @@ mod state;
 mod td;
 mod vcell;
 
+pub use buffer::EndpointMemory;
 pub use bus::{BusAdapter, Speed};
 pub mod gpt;
 pub use state::{EndpointState, MAX_ENDPOINTS};
@@ -116,7 +117,7 @@ pub use state::{EndpointState, MAX_ENDPOINTS};
 /// let bus = imxrt_usbd::BusAdapter::new(
 ///     peripherals,
 ///     // Rest of setup...
-///     # unsafe { static mut M: [u8; 1] = [0; 1]; &mut M },
+///     # { static EP_MEMORY: imxrt_usbd::EndpointMemory<1> = imxrt_usbd::EndpointMemory::new(); &EP_MEMORY },
 ///     # { static EP_STATE: imxrt_usbd::EndpointState = imxrt_usbd::EndpointState::max_endpoints(); &EP_STATE }
 /// );
 /// ```

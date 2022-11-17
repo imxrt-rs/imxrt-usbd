@@ -91,10 +91,11 @@ impl Driver {
     ///
     /// # Panics
     ///
-    /// Panics if the endpoint state has already been assigned to another USB
+    /// Panics if the endpoint bufer or state has already been assigned to another USB
     /// driver.
-    pub fn new<P: crate::Peripherals, const EP_COUNT: usize>(
+    pub fn new<P: crate::Peripherals, const SIZE: usize, const EP_COUNT: usize>(
         peripherals: P,
+        buffer: &'static crate::buffer::EndpointMemory<SIZE>,
         state: &'static crate::state::EndpointState<EP_COUNT>,
     ) -> Self {
         // Safety: taking static memory. Assumes that the provided
@@ -105,21 +106,12 @@ impl Driver {
         Driver {
             usb,
             phy,
-            buffer_allocator: buffer::Allocator::empty(),
+            buffer_allocator: buffer
+                .allocator()
+                .expect("Endpoint memory already assigned"),
             ep_allocator,
             ep_out: 0,
         }
-    }
-
-    /// Set the region of memory that can be used for endpoint I/O
-    ///
-    /// This memory will be shared across all endpoints. you should size it
-    /// to support all the endpoints that might be allocated by your USB classes.
-    ///
-    /// After this call, `Driver` assumes that it's the sole owner of `buffer`.
-    /// You assume the `unsafe`ty to make that true.
-    pub fn set_endpoint_memory(&mut self, buffer: &'static mut [u8]) {
-        self.buffer_allocator = buffer::Allocator::new(buffer);
     }
 
     /// Initialize the USB physical layer, and the USB core registers

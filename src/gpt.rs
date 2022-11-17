@@ -16,7 +16,7 @@
 //!
 //! # struct Ps; use imxrt_usbd::Instance as Inst;
 //! # unsafe impl imxrt_usbd::Peripherals for Ps { fn instance(&self) -> Inst { panic!() } }
-//! # static mut ENDPOINT_MEMORY: [u8; 1024] = [0; 1024];
+//! # static EP_MEMORY: imxrt_usbd::EndpointMemory<1024> = imxrt_usbd::EndpointMemory::new();
 //! # static EP_STATE: imxrt_usbd::EndpointState = imxrt_usbd::EndpointState::max_endpoints();
 //!
 //! # let my_usb_peripherals = // Your Peripherals instance...
@@ -24,7 +24,7 @@
 //! let bus_adapter = BusAdapter::new(
 //!     // ...
 //! #    my_usb_peripherals,
-//! #    unsafe { &mut ENDPOINT_MEMORY },
+//! #    &EP_MEMORY,
 //! #    &EP_STATE,
 //! );
 //!

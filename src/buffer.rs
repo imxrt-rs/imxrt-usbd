@@ -4,6 +4,54 @@
 //! `Buffer`s from a single, large byte collection. `Buffer`s support
 //! bulk, volatile reads and writes.
 
+use core::{
+    cell::UnsafeCell,
+    sync::atomic::{AtomicBool, Ordering},
+};
+
+/// Memory for endpoint I/O.
+///
+/// This allocates `SIZE` total bytes. The memory is then allocated for endpoints based
+/// on the need of each class.
+///
+/// Allocate this in a static, and supply it to your driver. Construction panics if the
+/// endpoint memory has already been assigned to another USB driver.
+///
+/// ```
+/// use imxrt_usbd::EndpointMemory;
+///
+/// static EP_MEMORY: EndpointMemory<4096> = EndpointMemory::new();
+/// ```
+pub struct EndpointMemory<const SIZE: usize> {
+    buffer: UnsafeCell<[u8; SIZE]>,
+    taken: AtomicBool,
+}
+
+impl<const SIZE: usize> EndpointMemory<SIZE> {
+    /// Allocate endpoint memory.
+    pub const fn new() -> Self {
+        Self {
+            buffer: UnsafeCell::new([0; SIZE]),
+            taken: AtomicBool::new(false),
+        }
+    }
+
+    /// Acquire the allocator for this endpoint memory.
+    ///
+    /// Returns `None` if the allocator has already been taken.
+    pub(crate) fn allocator(&'static self) -> Option<Allocator> {
+        if self.taken.swap(true, Ordering::SeqCst) {
+            None
+        } else {
+            // Safety: taken guards mutable access so that there's only one live
+            // mutable static.
+            Some(Allocator::new(unsafe { &mut *self.buffer.get() }))
+        }
+    }
+}
+
+unsafe impl<const SIZE: usize> Sync for EndpointMemory<SIZE> {}
+
 /// Endpoint memory buffer allocator
 pub struct Allocator {
     start: *mut u8,
@@ -16,7 +64,7 @@ unsafe impl Send for crate::buffer::Allocator {}
 
 impl Allocator {
     /// Create a memory allocator that allocates block from static, mutable memory.
-    pub fn new(buffer: &'static mut [u8]) -> Self {
+    fn new(buffer: &'static mut [u8]) -> Self {
         // Safety: buffer is static.
         unsafe { Self::from_buffer(buffer) }
     }
@@ -49,14 +97,6 @@ impl Allocator {
                 ptr: self.ptr,
                 len: size,
             })
-        }
-    }
-
-    /// Represents an `Allocator` that does not allocate any memory
-    pub fn empty() -> Self {
-        Allocator {
-            start: core::ptr::null_mut(),
-            ptr: core::ptr::null_mut(),
         }
     }
 }
@@ -160,7 +200,10 @@ mod test {
 
     #[test]
     fn allocate_empty() {
-        let mut alloc = Allocator::empty();
+        let mut alloc = Allocator {
+            start: core::ptr::null_mut(),
+            ptr: core::ptr::null_mut(),
+        };
         assert!(alloc.allocate(1).is_none());
     }
 }

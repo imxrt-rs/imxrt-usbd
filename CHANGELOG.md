@@ -22,17 +22,27 @@ Changelog
 
 - **BREAKING** Users now allocate space for endpoints. For backwards compatibility,
   allocate the maximum amount of endpoints. Supply the endpoint state to your driver's
-  constructor, as show below.
+  constructor, as show by 'new' in the example below.
+
+- **BREAKING** Change the representation of endpoint memory for I/O. Use `EndpointMemory`
+  as a replacement for `static mut [u8; N]`. See the before / after in the example below.
 
   ```rust
+  // NEW: allocate space for endpoint state.
   static EP_STATE: imxrt_usbd::EndpointState = imxrt_usbd::EndpointState::max_endpoints();
+
+  // Endpoint memory before:
+  // static mut EP_MEMORY: [u8; 2048] = [0; 2048];
+  // Endpoint memory after:
+  static EP_MEMORY: imxrt_usbd::EndpointMemory<2048> = imxrt_usbd::EndpointMemory::new();
 
   // ...
 
   imxrt_usbd::BusAdapter::with_speed(
       UsbPeripherals::usb1(),
-      &mut ENDPOINT_MEMORY,
-      &EP_STATE,                  // <-- NEW
+      // unsafe { &mut EP_MEMORY }, // Endpoint memory before
+      &EP_MEMORY,                   // Endpoint memory after
+      &EP_STATE,                    // <-- NEW
       SPEED,
   )
   ```
