@@ -3378,6 +3378,3 @@ impl ::core::ops::Deref for Instance {
 }
 
 unsafe impl Send for Instance {}
-
-pub const USB1: *const RegisterBlock = 0x402e0000 as *const _;
-pub const USB2: *const RegisterBlock = 0x402e0200 as *const _;

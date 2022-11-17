@@ -14,8 +14,8 @@
 //! use imxrt_usbd::BusAdapter;
 //! use imxrt_usbd::gpt;
 //!
-//! # struct Ps; use imxrt_usbd::Instance as Inst;
-//! # unsafe impl imxrt_usbd::Peripherals for Ps { fn instance(&self) -> Inst { panic!() } }
+//! # struct Ps;
+//! # unsafe impl imxrt_usbd::Peripherals for Ps { fn usb(&self) -> *const () { panic!() } fn usbphy(&self) -> *const () { panic!() } }
 //! # static EP_MEMORY: imxrt_usbd::EndpointMemory<1024> = imxrt_usbd::EndpointMemory::new();
 //! # static EP_STATE: imxrt_usbd::EndpointState = imxrt_usbd::EndpointState::max_endpoints();
 //!

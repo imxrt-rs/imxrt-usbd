@@ -5,7 +5,7 @@ pub mod usbphy;
 
 pub use imxrt_ral::{modify_reg, read_reg, write_reg, RORegister, RWRegister};
 
-use crate::{Instance, Peripherals};
+use crate::Peripherals;
 
 /// The RAL API requires us to treat all endpoint control registers as unique.
 /// We can make it a little easier with this function, the `EndptCtrl` type,
@@ -48,16 +48,10 @@ pub struct Instances {
 /// Converts the core registers into a USB register block instance
 pub fn instances<P: Peripherals>(peripherals: P) -> Instances {
     let usb = usb::Instance {
-        addr: match peripherals.instance() {
-            Instance::USB1 => usb::USB1,
-            Instance::USB2 => usb::USB2,
-        },
+        addr: peripherals.usb().cast(),
     };
     let usbphy = usbphy::Instance {
-        addr: match peripherals.instance() {
-            Instance::USB1 => usbphy::USBPHY1,
-            Instance::USB2 => usbphy::USBPHY2,
-        },
+        addr: peripherals.usbphy().cast(),
     };
     Instances { usb, usbphy }
 }

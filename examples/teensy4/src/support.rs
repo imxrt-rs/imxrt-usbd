@@ -45,8 +45,8 @@ fn panic(info: &core::panic::PanicInfo) -> ! {
 //
 
 struct UsbPeripherals {
-    _usb: ral::usb::Instance,
-    _phy: ral::usbphy::Instance,
+    usb: ral::usb::Instance,
+    phy: ral::usbphy::Instance,
     _nc: ral::usbnc::Instance,
     _analog: ral::usb_analog::Instance,
 }
@@ -55,8 +55,8 @@ impl UsbPeripherals {
     /// Panics if the instances are already taken
     fn usb1() -> UsbPeripherals {
         Self {
-            _usb: ral::usb::USB1::take().unwrap(),
-            _phy: ral::usbphy::USBPHY1::take().unwrap(),
+            usb: ral::usb::USB1::take().unwrap(),
+            phy: ral::usbphy::USBPHY1::take().unwrap(),
             _nc: ral::usbnc::USBNC1::take().unwrap(),
             _analog: ral::usb_analog::USB_ANALOG::take().unwrap(),
         }
@@ -64,8 +64,13 @@ impl UsbPeripherals {
 }
 
 unsafe impl imxrt_usbd::Peripherals for UsbPeripherals {
-    fn instance(&self) -> imxrt_usbd::Instance {
-        imxrt_usbd::Instance::USB1
+    fn usb(&self) -> *const () {
+        let rb: &ral::usb::RegisterBlock = &self.usb;
+        (rb as *const ral::usb::RegisterBlock).cast()
+    }
+    fn usbphy(&self) -> *const () {
+        let rb: &ral::usbphy::RegisterBlock = &self.phy;
+        (rb as *const ral::usbphy::RegisterBlock).cast()
     }
 }
 

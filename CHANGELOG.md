@@ -47,6 +47,9 @@ Changelog
   )
   ```
 
+- **BREAKING** Change the `unsafe trait Peripherals` API. Implementers must now supply the
+  addresses of USB register blocks. See the updated documentation for more details.
+
 - Add support for USB general purpose timers (GPT).
 - Fix the endpoint initialization routine, which would incorrectly zero the
   other half's endpoint type.

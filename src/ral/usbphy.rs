@@ -1691,6 +1691,3 @@ impl ::core::ops::Deref for Instance {
 }
 
 unsafe impl Send for Instance {}
-
-pub const USBPHY1: *const RegisterBlock = 0x400d9000 as *const _;
-pub const USBPHY2: *const RegisterBlock = 0x400da000 as *const _;
