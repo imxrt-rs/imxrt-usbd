@@ -667,9 +667,9 @@
     </span><span class="kw">pub fn </span>set_interrupts(<span class="kw-2">&amp;mut </span><span class="self">self</span>, interrupts: bool) {
         <span class="kw">if </span>interrupts {
             <span class="comment">// Keep this in sync with the poll() behaviors
-            </span><span class="macro">ral::write_reg!</span>(ral::usb, <span class="self">self</span>.usb, USBINTR, UE: <span class="number">1</span>, URE: <span class="number">1</span>, PCE: <span class="number">1</span>);
+            </span><span class="macro">ral::modify_reg!</span>(ral::usb, <span class="self">self</span>.usb, USBINTR, UE: <span class="number">1</span>, URE: <span class="number">1</span>, PCE: <span class="number">1</span>);
         } <span class="kw">else </span>{
-            <span class="macro">ral::write_reg!</span>(ral::usb, <span class="self">self</span>.usb, USBINTR, <span class="number">0</span>);
+            <span class="macro">ral::modify_reg!</span>(ral::usb, <span class="self">self</span>.usb, USBINTR, UE: <span class="number">0</span>, URE: <span class="number">0</span>, PCE: <span class="number">0</span>);
         }
     }
 

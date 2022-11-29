@@ -249,9 +249,6 @@
 <span id="249">249</span>
 <span id="250">250</span>
 <span id="251">251</span>
-<span id="252">252</span>
-<span id="253">253</span>
-<span id="254">254</span>
 </pre><pre class="rust"><code><span class="doccomment">//! USB general purpose timers.
 //!
 //! Each USB OTG peripheral has two general purpose timers (GPT). You can access
@@ -280,11 +277,8 @@
 //! #    unsafe { &amp;mut ENDPOINT_MEMORY }
 //! );
 //!
-//! // Prepare a GPT before creating a USB device
-//! # let cs = unsafe { &amp;cortex_m::interrupt::CriticalSection::new() };
-//! // Note: borrow_cpt requires a critical section. See the docs for
-//! // more information.
-//! bus_adapter.borrow_gpt(cs, gpt::Instance::Gpt0, |gpt| {
+//! // Prepare a GPT before creating a USB device;
+//! bus_adapter.gpt_mut(gpt::Instance::Gpt0, |gpt| {
 //!     gpt.stop(); // Stop the timer, just in case it&#39;s already running...
 //!     gpt.clear_elapsed(); // Clear any outstanding elapsed flags
 //!     gpt.set_interrupt_enabled(false); // Enable or disable interrupts
@@ -303,10 +297,10 @@
 //!
 //! // You can still access the timer through the bus() method on
 //! // the USB device.
-//! device.bus().borrow_gpt(cs, gpt::Instance::Gpt0, |gpt| gpt.run()); // Timer running!
+//! device.bus().gpt_mut(gpt::Instance::Gpt0, |gpt| gpt.run()); // Timer running!
 //!
 //! loop {
-//!     device.bus().borrow_gpt(cs, gpt::Instance::Gpt0, |gpt| {
+//!     device.bus().gpt_mut(gpt::Instance::Gpt0, |gpt| {
 //!         if gpt.is_elapsed() {
 //!             gpt.clear_elapsed();
 //!             // Timer elapsed!
@@ -482,8 +476,8 @@
     <span class="doccomment">/// Clear the flag that indicates the timer has elapsed.
     </span><span class="kw">pub fn </span>clear_elapsed(<span class="kw-2">&amp;mut </span><span class="self">self</span>) {
         <span class="kw">match </span><span class="self">self</span>.gpt {
-            Instance::Gpt0 =&gt; <span class="macro">ral::modify_reg!</span>(ral::usb, <span class="self">self</span>.usb, USBSTS, TI0: <span class="number">1</span>),
-            Instance::Gpt1 =&gt; <span class="macro">ral::modify_reg!</span>(ral::usb, <span class="self">self</span>.usb, USBSTS, TI1: <span class="number">1</span>),
+            Instance::Gpt0 =&gt; <span class="macro">ral::write_reg!</span>(ral::usb, <span class="self">self</span>.usb, USBSTS, TI0: <span class="number">1</span>),
+            Instance::Gpt1 =&gt; <span class="macro">ral::write_reg!</span>(ral::usb, <span class="self">self</span>.usb, USBSTS, TI1: <span class="number">1</span>),
         }
     }
 
