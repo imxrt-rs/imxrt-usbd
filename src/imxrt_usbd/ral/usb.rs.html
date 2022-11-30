@@ -3378,9 +3378,6 @@
 <span id="3378">3378</span>
 <span id="3379">3379</span>
 <span id="3380">3380</span>
-<span id="3381">3381</span>
-<span id="3382">3382</span>
-<span id="3383">3383</span>
 </pre><pre class="rust"><code><span class="doccomment">//! USB core registers and fields from the imxrt-ral
 </span><span class="attribute">#![allow(non_snake_case, non_upper_case_globals, non_camel_case_types, unused)]
 #![allow(clippy::module_inception)]
@@ -6761,8 +6758,5 @@
 }
 
 <span class="kw">unsafe impl </span>Send <span class="kw">for </span>Instance {}
-
-<span class="kw">pub const </span>USB1: <span class="kw-2">*const </span>RegisterBlock = <span class="number">0x402e0000 </span><span class="kw">as </span><span class="kw-2">*const </span><span class="kw">_</span>;
-<span class="kw">pub const </span>USB2: <span class="kw-2">*const </span>RegisterBlock = <span class="number">0x402e0200 </span><span class="kw">as </span><span class="kw-2">*const </span><span class="kw">_</span>;
 </code></pre></div>
 </section></div></main><div id="rustdoc-vars" data-root-path="../../../" data-current-crate="imxrt_usbd" data-themes="ayu,dark,light" data-resource-suffix="" data-rustdoc-version="1.65.0 (897e37553 2022-11-02)" ></div></body></html>

@@ -55,20 +55,14 @@
 <span id="55">55</span>
 <span id="56">56</span>
 <span id="57">57</span>
-<span id="58">58</span>
-<span id="59">59</span>
-<span id="60">60</span>
-<span id="61">61</span>
-<span id="62">62</span>
-<span id="63">63</span>
 </pre><pre class="rust"><code><span class="doccomment">//! imxrt-ral-like API for USB access
 
 </span><span class="kw">pub mod </span>usb;
 <span class="kw">pub mod </span>usbphy;
 
-<span class="kw">pub use </span>imxrt_ral::{modify_reg, read_reg, write_reg, RORegister, RWRegister};
+<span class="kw">pub use </span>ral_registers::{modify_reg, read_reg, write_reg, RORegister, RWRegister};
 
-<span class="kw">use crate</span>::{Instance, Peripherals};
+<span class="kw">use </span><span class="kw">crate</span>::Peripherals;
 
 <span class="doccomment">/// The RAL API requires us to treat all endpoint control registers as unique.
 /// We can make it a little easier with this function, the `EndptCtrl` type,
@@ -111,16 +105,10 @@
 <span class="doccomment">/// Converts the core registers into a USB register block instance
 </span><span class="kw">pub fn </span>instances&lt;P: Peripherals&gt;(peripherals: P) -&gt; Instances {
     <span class="kw">let </span>usb = usb::Instance {
-        addr: <span class="kw">match </span>peripherals.instance() {
-            Instance::USB1 =&gt; usb::USB1,
-            Instance::USB2 =&gt; usb::USB2,
-        },
+        addr: peripherals.usb().cast(),
     };
     <span class="kw">let </span>usbphy = usbphy::Instance {
-        addr: <span class="kw">match </span>peripherals.instance() {
-            Instance::USB1 =&gt; usbphy::USBPHY1,
-            Instance::USB2 =&gt; usbphy::USBPHY2,
-        },
+        addr: peripherals.usbphy().cast(),
     };
     Instances { usb, usbphy }
 }

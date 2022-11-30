@@ -269,6 +269,21 @@
 <span id="269">269</span>
 <span id="270">270</span>
 <span id="271">271</span>
+<span id="272">272</span>
+<span id="273">273</span>
+<span id="274">274</span>
+<span id="275">275</span>
+<span id="276">276</span>
+<span id="277">277</span>
+<span id="278">278</span>
+<span id="279">279</span>
+<span id="280">280</span>
+<span id="281">281</span>
+<span id="282">282</span>
+<span id="283">283</span>
+<span id="284">284</span>
+<span id="285">285</span>
+<span id="286">286</span>
 </pre><pre class="rust"><code><span class="doccomment">//! USB endpoints
 //!
 //! Use endpoints to
@@ -322,6 +337,16 @@
         buffer: Buffer,
         kind: EndpointType,
     ) -&gt; <span class="self">Self </span>{
+        <span class="kw">let </span>max_packet_size = buffer.len();
+        qh.set_zero_length_termination(<span class="bool-val">false</span>);
+        qh.set_max_packet_len(max_packet_size);
+        qh.set_interrupt_on_setup(
+            EndpointType::Control == kind &amp;&amp; address.direction() == UsbDirection::Out,
+        );
+
+        td.set_terminate();
+        td.clear_status();
+
         Endpoint {
             address,
             qh,
@@ -329,6 +354,11 @@
             buffer,
             kind,
         }
+    }
+
+    <span class="doccomment">/// Enable ZLT for the given endpoint.
+    </span><span class="kw">pub fn </span>enable_zlt(<span class="kw-2">&amp;mut </span><span class="self">self</span>) {
+        <span class="self">self</span>.qh.set_zero_length_termination(<span class="bool-val">true</span>);
     }
 
     <span class="doccomment">/// Indicates if the transfer descriptor is active

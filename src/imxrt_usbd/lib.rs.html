@@ -126,25 +126,6 @@
 <span id="126">126</span>
 <span id="127">127</span>
 <span id="128">128</span>
-<span id="129">129</span>
-<span id="130">130</span>
-<span id="131">131</span>
-<span id="132">132</span>
-<span id="133">133</span>
-<span id="134">134</span>
-<span id="135">135</span>
-<span id="136">136</span>
-<span id="137">137</span>
-<span id="138">138</span>
-<span id="139">139</span>
-<span id="140">140</span>
-<span id="141">141</span>
-<span id="142">142</span>
-<span id="143">143</span>
-<span id="144">144</span>
-<span id="145">145</span>
-<span id="146">146</span>
-<span id="147">147</span>
 </pre><pre class="rust"><code><span class="doccomment">//! A USB driver for i.MX RT processors
 //!
 //! `imxrt-usbd` provides a [`usb-device`] USB bus implementation, allowing you
@@ -179,11 +160,10 @@
 <span class="kw">mod </span>td;
 <span class="kw">mod </span>vcell;
 
+<span class="kw">pub use </span>buffer::EndpointMemory;
 <span class="kw">pub use </span>bus::{BusAdapter, Speed};
 <span class="kw">pub mod </span>gpt;
-
-<span class="doccomment">/// Eight endpoints, two directions
-</span><span class="kw">const </span>QH_COUNT: usize = <span class="number">8 </span>* <span class="number">2</span>;
+<span class="kw">pub use </span>state::{EndpointState, MAX_ENDPOINTS};
 
 <span class="doccomment">/// A type that owns all USB register blocks
 ///
@@ -192,8 +172,6 @@
 ///
 /// - USB core registers
 /// - USB PHY registers
-/// - USB non-core registers
-/// - USB analog registers
 ///
 /// When an instance of `Peripherals` exists, you must make sure that
 /// nothing else, other than the owner of the `Peripherals` object,
@@ -206,35 +184,31 @@
 /// operation. Incorrect usage, or failure to ensure exclusive
 /// ownership, could lead to data races and incorrect USB functionality.
 ///
-/// By implementing this trait, you ensure that the [`Instance`]
-/// identifier is valid for your chip. Not all i.MX RT peripherals
-/// have a USB2 peripheral instance, so you must ensure that the
-/// implementation is correct for your chip.
+/// All pointers are expected to point at the starting register block
+/// for the specified peripheral. Calls to the functions must return the
+/// the same value every time they&#39;re called.
 ///
 /// # Example
 ///
 /// A safe implementation of `Peripherals` that works with the
-/// `imxrt-ral` register access layer. Assume that `ral` is
-/// shorthand for `imxrt_ral`, like
-///
-/// ```
-/// use imxrt_ral as ral;
-/// ```
+/// `imxrt-ral` register access layer.
 ///
 /// ```no_run
-/// # mod ral {
-/// #   use core::ops::Deref; pub struct Instance; impl Deref for Instance { type Target = u32; fn deref(&amp;self) -&gt; &amp;u32 { unsafe { &amp;*(0x402e0200 as *const u32)} } }
+/// # mod imxrt_ral {
+/// #   pub struct RegisterBlock;
+/// #   use core::ops::Deref; pub struct Instance; impl Deref for Instance { type Target = RegisterBlock; fn deref(&amp;self) -&gt; &amp;RegisterBlock { unsafe { &amp;*(0x402e0200 as *const RegisterBlock)} } }
 /// #   pub fn take() -&gt; Result&lt;Instance, ()&gt; { Ok(Instance) }
-/// #   pub mod usb { pub use super::Instance; pub mod USB1 { pub use super::super::take; } }
-/// #   pub mod usbphy { pub use super::Instance; pub mod USBPHY1 { pub use super::super::take; } }
+/// #   pub mod usb { pub use super::{Instance, RegisterBlock}; pub mod USB1 { pub use super::super::take; } }
+/// #   pub mod usbphy { pub use super::{Instance, RegisterBlock}; pub mod USBPHY1 { pub use super::super::take; } }
 /// #   pub mod usbnc { pub use super::Instance; pub mod USBNC1 { pub use super::super::take; } }
 /// #   pub mod usb_analog { pub use super::Instance; pub mod USB_ANALOG { pub use super::super::take; } }
 /// # }
+/// use imxrt_ral as ral;
 /// use ral::usb;
 ///
 /// struct Peripherals {
-///     _usb: ral::usb::Instance,
-///     _phy: ral::usbphy::Instance,
+///     usb: ral::usb::Instance,
+///     phy: ral::usbphy::Instance,
 ///     _nc: ral::usbnc::Instance,
 ///     _analog: ral::usb_analog::Instance,
 /// }
@@ -243,8 +217,8 @@
 ///     /// Panics if the instances are already taken
 ///     fn usb1() -&gt; Peripherals {
 ///         Self {
-///             _usb: ral::usb::USB1::take().unwrap(),
-///             _phy: ral::usbphy::USBPHY1::take().unwrap(),
+///             usb: ral::usb::USB1::take().unwrap(),
+///             phy: ral::usbphy::USBPHY1::take().unwrap(),
 ///             _nc: ral::usbnc::USBNC1::take().unwrap(),
 ///             _analog: ral::usb_analog::USB_ANALOG::take().unwrap(),
 ///         }
@@ -256,8 +230,13 @@
 /// // guaranteed to be singletons. Given this approach, no one else
 /// // can safely access the USB registers.
 /// unsafe impl imxrt_usbd::Peripherals for Peripherals {
-///     fn instance(&amp;self) -&gt; imxrt_usbd::Instance {
-///         imxrt_usbd::Instance::USB1
+///     fn usb(&amp;self) -&gt; *const () {
+///         let rb: &amp;ral::usb::RegisterBlock = &amp;self.usb;
+///         (rb as *const ral::usb::RegisterBlock).cast()
+///     }
+///     fn usbphy(&amp;self) -&gt; *const () {
+///         let rb: &amp;ral::usbphy::RegisterBlock = &amp;self.phy;
+///         (rb as *const ral::usbphy::RegisterBlock).cast()
 ///     }
 /// }
 ///
@@ -265,32 +244,15 @@
 /// let bus = imxrt_usbd::BusAdapter::new(
 ///     peripherals,
 ///     // Rest of setup...
-///     # unsafe { static mut M: [u8; 1] = [0; 1]; &amp;mut M }
+///     # { static EP_MEMORY: imxrt_usbd::EndpointMemory&lt;1&gt; = imxrt_usbd::EndpointMemory::new(); &amp;EP_MEMORY },
+///     # { static EP_STATE: imxrt_usbd::EndpointState = imxrt_usbd::EndpointState::max_endpoints(); &amp;EP_STATE }
 /// );
 /// ```
 </span><span class="kw">pub unsafe trait </span>Peripherals {
-    <span class="doccomment">/// Returns the instance identifier for the core registers
-    ///
-    /// **Warning**: some i.MX RT peripherals have only one USB peripheral,
-    /// USB1. The behavior is undefined if you return `Instance::USB2` on
-    /// one of these systems.
-    </span><span class="kw">fn </span>instance(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; Instance;
-}
-
-<span class="doccomment">/// USB instance identifiers
-///
-/// These are *not* USB standards or speeds. They indicate if this
-/// is the USB1 register instance, or the USB2 register instance.
-///
-/// Note that some i.MX RT processors only have one USB instance (USB1).
-/// On those systems, it is invalid to ever indicate the USB2 instance.
-</span><span class="attribute">#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-#[allow(clippy::upper_case_acronyms)] </span><span class="comment">// USB naming makes sense here
-</span><span class="kw">pub enum </span>Instance {
-    <span class="doccomment">/// The first USB register instance
-    </span>USB1,
-    <span class="doccomment">/// The second USB register instance
-    </span>USB2,
+    <span class="doccomment">/// Returns the pointer to the USB register block.
+    </span><span class="kw">fn </span>usb(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">*const </span>();
+    <span class="doccomment">/// Returns the pointer to the USBPHY register block.
+    </span><span class="kw">fn </span>usbphy(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">*const </span>();
 }
 </code></pre></div>
 </section></div></main><div id="rustdoc-vars" data-root-path="../../" data-current-crate="imxrt_usbd" data-themes="ayu,dark,light" data-resource-suffix="" data-rustdoc-version="1.65.0 (897e37553 2022-11-02)" ></div></body></html>

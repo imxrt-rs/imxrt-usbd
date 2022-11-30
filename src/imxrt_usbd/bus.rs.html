@@ -394,6 +394,26 @@
 <span id="394">394</span>
 <span id="395">395</span>
 <span id="396">396</span>
+<span id="397">397</span>
+<span id="398">398</span>
+<span id="399">399</span>
+<span id="400">400</span>
+<span id="401">401</span>
+<span id="402">402</span>
+<span id="403">403</span>
+<span id="404">404</span>
+<span id="405">405</span>
+<span id="406">406</span>
+<span id="407">407</span>
+<span id="408">408</span>
+<span id="409">409</span>
+<span id="410">410</span>
+<span id="411">411</span>
+<span id="412">412</span>
+<span id="413">413</span>
+<span id="414">414</span>
+<span id="415">415</span>
+<span id="416">416</span>
 </pre><pre class="rust"><code><span class="doccomment">//! USB bus implementation
 //!
 //! The bus
@@ -442,9 +462,10 @@
 /// ```no_run
 /// use imxrt_usbd::BusAdapter;
 ///
-/// # struct Ps; use imxrt_usbd::Instance as Inst;
-/// # unsafe impl imxrt_usbd::Peripherals for Ps { fn instance(&amp;self) -&gt; Inst { panic!() } }
-/// static mut ENDPOINT_MEMORY: [u8; 1024] = [0; 1024];
+/// # struct Ps;
+/// # unsafe impl imxrt_usbd::Peripherals for Ps { fn usb(&amp;self) -&gt; *const () { panic!() } fn usbphy(&amp;self) -&gt; *const () { panic!() }}
+/// static EP_MEMORY: imxrt_usbd::EndpointMemory&lt;1024&gt; = imxrt_usbd::EndpointMemory::new();
+/// static EP_STATE: imxrt_usbd::EndpointState = imxrt_usbd::EndpointState::max_endpoints();
 ///
 /// // TODO initialize clocks...
 ///
@@ -452,7 +473,8 @@
 /// #   Ps;
 /// let bus_adapter = BusAdapter::new(
 ///     my_usb_peripherals,
-///     unsafe { &amp;mut ENDPOINT_MEMORY }
+///     &amp;EP_MEMORY,
+///     &amp;EP_STATE,
 /// );
 ///
 /// // Create the USB device...
@@ -511,8 +533,16 @@
     ///
     /// This is equivalent to [`BusAdapter::with_speed`] when supplying [`Speed::High`]. See
     /// the `with_speed` documentation for more information.
-    </span><span class="kw">pub fn </span>new&lt;P: <span class="kw">crate</span>::Peripherals&gt;(peripherals: P, buffer: <span class="kw-2">&amp;</span><span class="lifetime">&#39;static </span><span class="kw-2">mut </span>[u8]) -&gt; <span class="self">Self </span>{
-        <span class="self">Self</span>::with_speed(peripherals, buffer, Speed::High)
+    ///
+    /// # Panics
+    ///
+    /// Panics if `buffer` or `state` has already been associated with another USB bus.
+    </span><span class="kw">pub fn </span>new&lt;P: <span class="kw">crate</span>::Peripherals, <span class="kw">const </span>SIZE: usize, <span class="kw">const </span>EP_COUNT: usize&gt;(
+        peripherals: P,
+        buffer: <span class="kw-2">&amp;</span><span class="lifetime">&#39;static </span><span class="kw">crate</span>::buffer::EndpointMemory&lt;SIZE&gt;,
+        state: <span class="kw-2">&amp;</span><span class="lifetime">&#39;static </span><span class="kw">crate</span>::state::EndpointState&lt;EP_COUNT&gt;,
+    ) -&gt; <span class="self">Self </span>{
+        <span class="self">Self</span>::with_speed(peripherals, buffer, state, Speed::High)
     }
 
     <span class="doccomment">/// Create a USB bus adapter with the given speed
@@ -526,13 +556,16 @@
     /// You must also provide a region of memory that will used for endpoint I/O. The
     /// memory region will be partitioned for the endpoints, based on their requirements.
     ///
-    /// You must ensure that no one else is using the endpoint memory!
-    </span><span class="kw">pub fn </span>with_speed&lt;P: <span class="kw">crate</span>::Peripherals&gt;(
+    /// # Panics
+    ///
+    /// Panics if `buffer` or `state` has already been associated with another USB bus.
+    </span><span class="kw">pub fn </span>with_speed&lt;P: <span class="kw">crate</span>::Peripherals, <span class="kw">const </span>SIZE: usize, <span class="kw">const </span>EP_COUNT: usize&gt;(
         peripherals: P,
-        buffer: <span class="kw-2">&amp;</span><span class="lifetime">&#39;static </span><span class="kw-2">mut </span>[u8],
+        buffer: <span class="kw-2">&amp;</span><span class="lifetime">&#39;static </span><span class="kw">crate</span>::buffer::EndpointMemory&lt;SIZE&gt;,
+        state: <span class="kw-2">&amp;</span><span class="lifetime">&#39;static </span><span class="kw">crate</span>::state::EndpointState&lt;EP_COUNT&gt;,
         speed: Speed,
     ) -&gt; <span class="self">Self </span>{
-        <span class="self">Self</span>::init(peripherals, buffer, speed, <span class="prelude-val">None</span>)
+        <span class="self">Self</span>::init(peripherals, buffer, state, speed, <span class="prelude-val">None</span>)
     }
 
     <span class="doccomment">/// Create a USB bus adapter that never takes a critical section
@@ -545,29 +578,39 @@
     /// will not take critical sections in its `&amp;[mut] self` methods to ensure safe
     /// access. By using this object, you must manually hold the guarantees of
     /// `Sync` without the compiler&#39;s help.
-    </span><span class="kw">pub unsafe fn </span>without_critical_sections&lt;P: <span class="kw">crate</span>::Peripherals&gt;(
+    ///
+    /// # Panics
+    ///
+    /// Panics if `buffer` or `state` has already been associated with another USB bus.
+    </span><span class="kw">pub unsafe fn </span>without_critical_sections&lt;
+        P: <span class="kw">crate</span>::Peripherals,
+        <span class="kw">const </span>SIZE: usize,
+        <span class="kw">const </span>EP_COUNT: usize,
+    &gt;(
         peripherals: P,
-        buffer: <span class="kw-2">&amp;</span><span class="lifetime">&#39;static </span><span class="kw-2">mut </span>[u8],
+        buffer: <span class="kw-2">&amp;</span><span class="lifetime">&#39;static </span><span class="kw">crate</span>::buffer::EndpointMemory&lt;SIZE&gt;,
+        state: <span class="kw-2">&amp;</span><span class="lifetime">&#39;static </span><span class="kw">crate</span>::state::EndpointState&lt;EP_COUNT&gt;,
         speed: Speed,
     ) -&gt; <span class="self">Self </span>{
         <span class="self">Self</span>::init(
             peripherals,
             buffer,
+            state,
             speed,
             <span class="prelude-val">Some</span>(cortex_m::interrupt::CriticalSection::new()),
         )
     }
 
-    <span class="kw">fn </span>init&lt;P: <span class="kw">crate</span>::Peripherals&gt;(
+    <span class="kw">fn </span>init&lt;P: <span class="kw">crate</span>::Peripherals, <span class="kw">const </span>SIZE: usize, <span class="kw">const </span>EP_COUNT: usize&gt;(
         peripherals: P,
-        buffer: <span class="kw-2">&amp;</span><span class="lifetime">&#39;static </span><span class="kw-2">mut </span>[u8],
+        buffer: <span class="kw-2">&amp;</span><span class="lifetime">&#39;static </span><span class="kw">crate</span>::buffer::EndpointMemory&lt;SIZE&gt;,
+        state: <span class="kw-2">&amp;</span><span class="lifetime">&#39;static </span><span class="kw">crate</span>::state::EndpointState&lt;EP_COUNT&gt;,
         speed: Speed,
         cs: <span class="prelude-ty">Option</span>&lt;cortex_m::interrupt::CriticalSection&gt;,
     ) -&gt; <span class="self">Self </span>{
-        <span class="kw">let </span><span class="kw-2">mut </span>usb = Driver::new(peripherals);
+        <span class="kw">let </span><span class="kw-2">mut </span>usb = Driver::new(peripherals, buffer, state);
 
         usb.initialize(speed);
-        usb.set_endpoint_memory(buffer);
 
         BusAdapter {
             usb: Mutex::new(RefCell::new(usb)),
@@ -590,10 +633,7 @@
     /// and software is expected to send these packets. Enable this if you&#39;re confident
     /// that your (third-party) device / USB class isn&#39;t already sending these packets.
     ///
-    /// # Panics
-    ///
-    /// `enable_zlt` must be called before the endpoint is allocated. If the endpoint is
-    /// already allocated, this call panics.
+    /// This call does nothing if the endpoint isn&#39;t allocated.
     </span><span class="kw">pub fn </span>enable_zlt(<span class="kw-2">&amp;</span><span class="self">self</span>, ep_addr: EndpointAddress) {
         <span class="self">self</span>.with_usb_mut(|usb| usb.enable_zlt(ep_addr));
     }

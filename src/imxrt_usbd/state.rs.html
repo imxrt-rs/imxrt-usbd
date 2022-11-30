@@ -121,128 +121,488 @@
 <span id="121">121</span>
 <span id="122">122</span>
 <span id="123">123</span>
-</pre><pre class="rust"><code><span class="doccomment">//! Static state that&#39;s &#39;owned&#39; by a driver
-//!
-//! This module allocates the static memory or the USB drivers,
-//! and provides guidance on how to safely access this memory.
+<span id="124">124</span>
+<span id="125">125</span>
+<span id="126">126</span>
+<span id="127">127</span>
+<span id="128">128</span>
+<span id="129">129</span>
+<span id="130">130</span>
+<span id="131">131</span>
+<span id="132">132</span>
+<span id="133">133</span>
+<span id="134">134</span>
+<span id="135">135</span>
+<span id="136">136</span>
+<span id="137">137</span>
+<span id="138">138</span>
+<span id="139">139</span>
+<span id="140">140</span>
+<span id="141">141</span>
+<span id="142">142</span>
+<span id="143">143</span>
+<span id="144">144</span>
+<span id="145">145</span>
+<span id="146">146</span>
+<span id="147">147</span>
+<span id="148">148</span>
+<span id="149">149</span>
+<span id="150">150</span>
+<span id="151">151</span>
+<span id="152">152</span>
+<span id="153">153</span>
+<span id="154">154</span>
+<span id="155">155</span>
+<span id="156">156</span>
+<span id="157">157</span>
+<span id="158">158</span>
+<span id="159">159</span>
+<span id="160">160</span>
+<span id="161">161</span>
+<span id="162">162</span>
+<span id="163">163</span>
+<span id="164">164</span>
+<span id="165">165</span>
+<span id="166">166</span>
+<span id="167">167</span>
+<span id="168">168</span>
+<span id="169">169</span>
+<span id="170">170</span>
+<span id="171">171</span>
+<span id="172">172</span>
+<span id="173">173</span>
+<span id="174">174</span>
+<span id="175">175</span>
+<span id="176">176</span>
+<span id="177">177</span>
+<span id="178">178</span>
+<span id="179">179</span>
+<span id="180">180</span>
+<span id="181">181</span>
+<span id="182">182</span>
+<span id="183">183</span>
+<span id="184">184</span>
+<span id="185">185</span>
+<span id="186">186</span>
+<span id="187">187</span>
+<span id="188">188</span>
+<span id="189">189</span>
+<span id="190">190</span>
+<span id="191">191</span>
+<span id="192">192</span>
+<span id="193">193</span>
+<span id="194">194</span>
+<span id="195">195</span>
+<span id="196">196</span>
+<span id="197">197</span>
+<span id="198">198</span>
+<span id="199">199</span>
+<span id="200">200</span>
+<span id="201">201</span>
+<span id="202">202</span>
+<span id="203">203</span>
+<span id="204">204</span>
+<span id="205">205</span>
+<span id="206">206</span>
+<span id="207">207</span>
+<span id="208">208</span>
+<span id="209">209</span>
+<span id="210">210</span>
+<span id="211">211</span>
+<span id="212">212</span>
+<span id="213">213</span>
+<span id="214">214</span>
+<span id="215">215</span>
+<span id="216">216</span>
+<span id="217">217</span>
+<span id="218">218</span>
+<span id="219">219</span>
+<span id="220">220</span>
+<span id="221">221</span>
+<span id="222">222</span>
+<span id="223">223</span>
+<span id="224">224</span>
+<span id="225">225</span>
+<span id="226">226</span>
+<span id="227">227</span>
+<span id="228">228</span>
+<span id="229">229</span>
+<span id="230">230</span>
+<span id="231">231</span>
+<span id="232">232</span>
+<span id="233">233</span>
+<span id="234">234</span>
+<span id="235">235</span>
+<span id="236">236</span>
+<span id="237">237</span>
+<span id="238">238</span>
+<span id="239">239</span>
+<span id="240">240</span>
+<span id="241">241</span>
+<span id="242">242</span>
+<span id="243">243</span>
+<span id="244">244</span>
+<span id="245">245</span>
+<span id="246">246</span>
+<span id="247">247</span>
+<span id="248">248</span>
+<span id="249">249</span>
+<span id="250">250</span>
+<span id="251">251</span>
+<span id="252">252</span>
+<span id="253">253</span>
+<span id="254">254</span>
+<span id="255">255</span>
+<span id="256">256</span>
+<span id="257">257</span>
+<span id="258">258</span>
+<span id="259">259</span>
+<span id="260">260</span>
+<span id="261">261</span>
+<span id="262">262</span>
+<span id="263">263</span>
+<span id="264">264</span>
+<span id="265">265</span>
+<span id="266">266</span>
+<span id="267">267</span>
+<span id="268">268</span>
+<span id="269">269</span>
+<span id="270">270</span>
+<span id="271">271</span>
+<span id="272">272</span>
+<span id="273">273</span>
+<span id="274">274</span>
+<span id="275">275</span>
+<span id="276">276</span>
+<span id="277">277</span>
+<span id="278">278</span>
+<span id="279">279</span>
+<span id="280">280</span>
+<span id="281">281</span>
+<span id="282">282</span>
+<span id="283">283</span>
+<span id="284">284</span>
+<span id="285">285</span>
+<span id="286">286</span>
+<span id="287">287</span>
+<span id="288">288</span>
+<span id="289">289</span>
+<span id="290">290</span>
+<span id="291">291</span>
+<span id="292">292</span>
+<span id="293">293</span>
+<span id="294">294</span>
+<span id="295">295</span>
+<span id="296">296</span>
+<span id="297">297</span>
+<span id="298">298</span>
+<span id="299">299</span>
+<span id="300">300</span>
+<span id="301">301</span>
+<span id="302">302</span>
+<span id="303">303</span>
+</pre><pre class="rust"><code><span class="attribute">#![allow(clippy::declare_interior_mutable_const)] </span><span class="comment">// Usage is legit in this module.
 
-</span><span class="kw">use </span><span class="kw">crate</span>::QH_COUNT;
-<span class="kw">use crate</span>::{qh, ral, td};
+</span><span class="kw">use </span>core::{
+    cell::UnsafeCell,
+    mem::MaybeUninit,
+    sync::atomic::{AtomicU32, Ordering},
+};
+
+<span class="kw">use crate</span>::{buffer::Buffer, endpoint::Endpoint, qh::Qh, td::Td};
+<span class="kw">use </span>usb_device::{
+    endpoint::{EndpointAddress, EndpointType},
+    UsbDirection,
+};
 
 <span class="doccomment">/// A list of transfer descriptors
 ///
 /// Supports 1 TD per QH (per endpoint direction)
 </span><span class="attribute">#[repr(align(<span class="number">32</span>))]
-</span><span class="kw">struct </span>TdList([td::Td; QH_COUNT]);
-<span class="kw">const </span>TD_LIST_INIT: TdList = TdList([
-    td::Td::new(),
-    td::Td::new(),
-    td::Td::new(),
-    td::Td::new(),
-    td::Td::new(),
-    td::Td::new(),
-    td::Td::new(),
-    td::Td::new(),
-    td::Td::new(),
-    td::Td::new(),
-    td::Td::new(),
-    td::Td::new(),
-    td::Td::new(),
-    td::Td::new(),
-    td::Td::new(),
-    td::Td::new(),
-]);
+</span><span class="kw">struct </span>TdList&lt;<span class="kw">const </span>COUNT: usize&gt;([UnsafeCell&lt;Td&gt;; COUNT]);
+
+<span class="kw">impl</span>&lt;<span class="kw">const </span>COUNT: usize&gt; TdList&lt;COUNT&gt; {
+    <span class="kw">const fn </span>new() -&gt; <span class="self">Self </span>{
+        <span class="kw">const </span>TD: UnsafeCell&lt;Td&gt; = UnsafeCell::new(Td::new());
+        <span class="self">Self</span>([TD; COUNT])
+    }
+}
 
 <span class="doccomment">/// A list of queue heads
 ///
 /// One queue head per endpoint, per direction (default).
 </span><span class="attribute">#[repr(align(<span class="number">4096</span>))]
-</span><span class="kw">struct </span>QhList([qh::Qh; QH_COUNT]);
-<span class="kw">const </span>QH_LIST_INIT: QhList = QhList([
-    qh::Qh::new(),
-    qh::Qh::new(),
-    qh::Qh::new(),
-    qh::Qh::new(),
-    qh::Qh::new(),
-    qh::Qh::new(),
-    qh::Qh::new(),
-    qh::Qh::new(),
-    qh::Qh::new(),
-    qh::Qh::new(),
-    qh::Qh::new(),
-    qh::Qh::new(),
-    qh::Qh::new(),
-    qh::Qh::new(),
-    qh::Qh::new(),
-    qh::Qh::new(),
-]);
+</span><span class="kw">struct </span>QhList&lt;<span class="kw">const </span>COUNT: usize&gt;([UnsafeCell&lt;Qh&gt;; COUNT]);
 
-<span class="kw">struct </span>State {
-    qhs: QhList,
-    tds: TdList,
-}
-
-<span class="kw">const </span>STATE_INIT: State = State {
-    qhs: QH_LIST_INIT,
-    tds: TD_LIST_INIT,
-};
-
-<span class="kw">static </span><span class="kw-2">mut </span>USB1_STATE: State = STATE_INIT;
-<span class="kw">static </span><span class="kw-2">mut </span>USB2_STATE: State = STATE_INIT;
-
-<span class="kw">unsafe fn </span>state(usb: <span class="kw-2">&amp;</span>ral::usb::Instance) -&gt; <span class="kw-2">&amp;</span><span class="lifetime">&#39;static </span><span class="kw-2">mut </span>State {
-    <span class="kw">match </span><span class="kw-2">&amp;**</span>usb <span class="kw">as </span><span class="kw-2">*const </span><span class="kw">_ </span>{
-        ral::usb::USB1 =&gt; <span class="kw-2">&amp;mut </span>USB1_STATE,
-        ral::usb::USB2 =&gt; <span class="kw-2">&amp;mut </span>USB2_STATE,
-        <span class="kw">_ </span>=&gt; <span class="macro">unreachable!</span>(<span class="string">&quot;ral module ensures that the USB instance is one of these two value&quot;</span>),
+<span class="kw">impl</span>&lt;<span class="kw">const </span>COUNT: usize&gt; QhList&lt;COUNT&gt; {
+    <span class="kw">const fn </span>new() -&gt; <span class="self">Self </span>{
+        <span class="kw">const </span>QH: UnsafeCell&lt;Qh&gt; = UnsafeCell::new(Qh::new());
+        <span class="self">Self</span>([QH; COUNT])
     }
 }
 
-<span class="doccomment">/// Returns a pointer to the queue heads collection for this USB instance
+<span class="doccomment">/// The collection of endpoints.
 ///
-/// This is only safe to use when assigning the ENDPTLISTADDR to the USB
-/// instance.
-</span><span class="kw">pub fn </span>assign_endptlistaddr(usb: <span class="kw-2">&amp;</span>ral::usb::Instance) {
-    <span class="kw">let </span>ptr = <span class="kw">unsafe </span>{ state(usb).qhs.<span class="number">0</span>.as_ptr() };
-    <span class="macro">ral::write_reg!</span>(ral::usb, usb, ASYNCLISTADDR, ptr <span class="kw">as </span>u32);
+/// Maintained inside the EndpointState so that it&#39;s sized just right.
+</span><span class="kw">struct </span>EpList&lt;<span class="kw">const </span>COUNT: usize&gt;([UnsafeCell&lt;MaybeUninit&lt;Endpoint&gt;&gt;; COUNT]);
+
+<span class="kw">impl</span>&lt;<span class="kw">const </span>COUNT: usize&gt; EpList&lt;COUNT&gt; {
+    <span class="kw">const fn </span>new() -&gt; <span class="self">Self </span>{
+        <span class="kw">const </span>EP: UnsafeCell&lt;MaybeUninit&lt;Endpoint&gt;&gt; = UnsafeCell::new(MaybeUninit::uninit());
+        <span class="self">Self</span>([EP; COUNT])
+    }
 }
 
-<span class="doccomment">/// &quot;Steal&quot; the queue heads for this USB state, and return an array of references to queue
-/// heads
+<span class="doccomment">/// The maximum supported number of endpoints.
 ///
-/// # Safety
-///
-/// This should only be called once. You must make sure that the static, mutable references
-/// aren&#39;t mutably aliased. Consider taking them from this collection, and assigning them
-/// elsewhere.
-</span><span class="kw">pub unsafe fn </span>steal_qhs(usb: <span class="kw-2">&amp;</span>ral::usb::Instance) -&gt; [<span class="prelude-ty">Option</span>&lt;<span class="kw-2">&amp;</span><span class="lifetime">&#39;static </span><span class="kw-2">mut </span>qh::Qh&gt;; QH_COUNT] {
-    <span class="kw">let </span><span class="kw-2">mut </span>qhs = [
-        <span class="prelude-val">None</span>, <span class="prelude-val">None</span>, <span class="prelude-val">None</span>, <span class="prelude-val">None</span>, <span class="prelude-val">None</span>, <span class="prelude-val">None</span>, <span class="prelude-val">None</span>, <span class="prelude-val">None</span>, <span class="prelude-val">None</span>, <span class="prelude-val">None</span>, <span class="prelude-val">None</span>, <span class="prelude-val">None</span>, <span class="prelude-val">None</span>, <span class="prelude-val">None</span>, <span class="prelude-val">None</span>,
-        <span class="prelude-val">None</span>,
-    ];
-    <span class="kw">for </span>(dst, src) <span class="kw">in </span>qhs.iter_mut().zip(state(usb).qhs.<span class="number">0</span>.iter_mut()) {
-        <span class="kw-2">*</span>dst = <span class="prelude-val">Some</span>(src);
-    }
-    qhs
+/// Eight endpoints, two in each direction. Any endpoints allocated
+/// beyond this are wasted.
+</span><span class="kw">pub const </span>MAX_ENDPOINTS: usize = <span class="number">8 </span>* <span class="number">2</span>;
+
+<span class="doccomment">/// Produces an index into the EPs, QHs, and TDs collections
+</span><span class="kw">fn </span>index(ep_addr: EndpointAddress) -&gt; usize {
+    (ep_addr.index() * <span class="number">2</span>) + (UsbDirection::In == ep_addr.direction()) <span class="kw">as </span>usize
 }
 
-<span class="doccomment">/// &quot;Steal&quot; the transfer descriptors for this USB state, and return an array of transfer
-/// descriptor references.
+<span class="doccomment">/// Driver state associated with endpoints.
 ///
-/// # Safety
+/// Each USB driver needs an `EndpointState`. Allocate a `static` object
+/// and supply it to your USB constructor. Make sure that states are not
+/// shared across USB instances; otherwise, the driver constructor panics.
 ///
-/// This should only be called once. You must make sure that the static, mutable references
-/// aren&#39;t mutably aliased. Consider taking them from this collection, and assigning them
-/// elsewhere.
-</span><span class="kw">pub unsafe fn </span>steal_tds(usb: <span class="kw-2">&amp;</span>ral::usb::Instance) -&gt; [<span class="prelude-ty">Option</span>&lt;<span class="kw-2">&amp;</span><span class="lifetime">&#39;static </span><span class="kw-2">mut </span>td::Td&gt;; QH_COUNT] {
-    <span class="kw">let </span><span class="kw-2">mut </span>tds = [
-        <span class="prelude-val">None</span>, <span class="prelude-val">None</span>, <span class="prelude-val">None</span>, <span class="prelude-val">None</span>, <span class="prelude-val">None</span>, <span class="prelude-val">None</span>, <span class="prelude-val">None</span>, <span class="prelude-val">None</span>, <span class="prelude-val">None</span>, <span class="prelude-val">None</span>, <span class="prelude-val">None</span>, <span class="prelude-val">None</span>, <span class="prelude-val">None</span>, <span class="prelude-val">None</span>, <span class="prelude-val">None</span>,
-        <span class="prelude-val">None</span>,
-    ];
-    <span class="kw">for </span>(dst, src) <span class="kw">in </span>tds.iter_mut().zip(state(usb).tds.<span class="number">0</span>.iter_mut()) {
-        <span class="kw-2">*</span>dst = <span class="prelude-val">Some</span>(src);
+/// Use [`max_endpoints()`](EndpointState::max_endpoints) if you&#39;re not interested in reducing the
+/// memory used by this allocation. The default object holds enough
+/// state for all supported endpoints.
+///
+/// ```
+/// use imxrt_usbd::EndpointState;
+///
+/// static EP_STATE: EndpointState = EndpointState::max_endpoints();
+/// ```
+///
+/// If you know that you can use fewer endpoints, you can control the
+/// memory utilization with the const generic `COUNT`. You&#39;re expected
+/// to provide at least two endpoints -- one in each direction -- for
+/// control endpoints.
+///
+/// Know that endpoints are allocated in pairs; all even endpoints are
+/// OUT, and all odd endpoints are IN. For example, a `COUNT` of 5 will
+/// have 3 out endpoints, and 2 in endpoints. You can never have more
+/// IN that OUT endpoints without overallocating OUT endpoints.
+///
+/// ```
+/// use imxrt_usbd::EndpointState;
+///
+/// static EP_STATE: EndpointState&lt;5&gt; = EndpointState::new();
+/// ```
+///
+/// Any endpoint state allocated beyond [`MAX_ENDPOINTS`] are wasted.
+</span><span class="kw">pub struct </span>EndpointState&lt;<span class="kw">const </span>COUNT: usize = MAX_ENDPOINTS&gt; {
+    qh_list: QhList&lt;COUNT&gt;,
+    td_list: TdList&lt;COUNT&gt;,
+    ep_list: EpList&lt;COUNT&gt;,
+    <span class="doccomment">/// Low 16 bits are used for tracking endpoint allocation.
+    /// Bit 31 is set when the allocator is first taken. This
+    /// bit is always dropped during u32 -&gt; u16 conversions.
+    </span>alloc_mask: AtomicU32,
+}
+
+<span class="kw">unsafe impl</span>&lt;<span class="kw">const </span>COUNT: usize&gt; Sync <span class="kw">for </span>EndpointState&lt;COUNT&gt; {}
+
+<span class="kw">impl </span>EndpointState&lt;MAX_ENDPOINTS&gt; {
+    <span class="doccomment">/// Allocate space for the maximum number of endpoints.
+    ///
+    /// Use this if you don&#39;t want to consider the exact number
+    /// of endpoints that you might need.
+    </span><span class="kw">pub const fn </span>max_endpoints() -&gt; <span class="self">Self </span>{
+        <span class="self">Self</span>::new()
     }
-    tds
+}
+
+<span class="kw">impl</span>&lt;<span class="kw">const </span>COUNT: usize&gt; EndpointState&lt;COUNT&gt; {
+    <span class="doccomment">/// Allocate state for `COUNT` endpoints.
+    </span><span class="kw">pub const fn </span>new() -&gt; <span class="self">Self </span>{
+        <span class="self">Self </span>{
+            qh_list: QhList::new(),
+            td_list: TdList::new(),
+            ep_list: EpList::new(),
+            alloc_mask: AtomicU32::new(<span class="number">0</span>),
+        }
+    }
+
+    <span class="doccomment">/// Acquire the allocator.
+    ///
+    /// Returns `None` if the allocator was already taken.
+    </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>allocator(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Option</span>&lt;EndpointAllocator&gt; {
+        <span class="kw">const </span>ALLOCATOR_TAKEN: u32 = <span class="number">1 </span>&lt;&lt; <span class="number">31</span>;
+        <span class="kw">let </span>alloc_mask = <span class="self">self</span>.alloc_mask.fetch_or(ALLOCATOR_TAKEN, Ordering::SeqCst);
+        (alloc_mask &amp; ALLOCATOR_TAKEN == <span class="number">0</span>).then(|| EndpointAllocator {
+            qh_list: <span class="kw-2">&amp;</span><span class="self">self</span>.qh_list.<span class="number">0</span>[..<span class="self">self</span>.qh_list.<span class="number">0</span>.len().min(MAX_ENDPOINTS)],
+            td_list: <span class="kw-2">&amp;</span><span class="self">self</span>.td_list.<span class="number">0</span>[..<span class="self">self</span>.td_list.<span class="number">0</span>.len().min(MAX_ENDPOINTS)],
+            ep_list: <span class="kw-2">&amp;</span><span class="self">self</span>.ep_list.<span class="number">0</span>[..<span class="self">self</span>.ep_list.<span class="number">0</span>.len().min(MAX_ENDPOINTS)],
+            alloc_mask: <span class="kw-2">&amp;</span><span class="self">self</span>.alloc_mask,
+        })
+    }
+}
+
+<span class="kw">pub struct </span>EndpointAllocator&lt;<span class="lifetime">&#39;a</span>&gt; {
+    qh_list: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>[UnsafeCell&lt;Qh&gt;],
+    td_list: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>[UnsafeCell&lt;Td&gt;],
+    ep_list: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>[UnsafeCell&lt;MaybeUninit&lt;Endpoint&gt;&gt;],
+    alloc_mask: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>AtomicU32,
+}
+
+<span class="kw">unsafe impl </span>Send <span class="kw">for </span>EndpointAllocator&lt;<span class="lifetime">&#39;_</span>&gt; {}
+
+<span class="kw">impl </span>EndpointAllocator&lt;<span class="lifetime">&#39;_</span>&gt; {
+    <span class="doccomment">/// Atomically inserts the endpoint bit into the allocation mask, returning `None` if the
+    /// bit was already set.
+    </span><span class="kw">fn </span>try_mask_update(<span class="kw-2">&amp;mut </span><span class="self">self</span>, mask: u16) -&gt; <span class="prelude-ty">Option</span>&lt;()&gt; {
+        <span class="kw">let </span>mask = mask.into();
+        (mask &amp; <span class="self">self</span>.alloc_mask.fetch_or(mask, Ordering::SeqCst) == <span class="number">0</span>).then_some(())
+    }
+
+    <span class="doccomment">/// Returns `Some` if the endpoint is allocated.
+    </span><span class="kw">fn </span>check_allocated(<span class="kw-2">&amp;</span><span class="self">self</span>, index: usize) -&gt; <span class="prelude-ty">Option</span>&lt;()&gt; {
+        <span class="kw">let </span>mask = (index &lt; <span class="self">self</span>.qh_list.len()).then_some(<span class="number">1u16 </span>&lt;&lt; index)<span class="question-mark">?</span>;
+        (mask &amp; <span class="self">self</span>.alloc_mask.load(Ordering::SeqCst) <span class="kw">as </span>u16 != <span class="number">0</span>).then_some(())
+    }
+
+    <span class="doccomment">/// Acquire the QH list address.
+    ///
+    /// Used to tell the hardware where the queue heads are located.
+    </span><span class="kw">pub fn </span>qh_list_addr(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">*const </span>() {
+        <span class="self">self</span>.qh_list.as_ptr().cast()
+    }
+
+    <span class="doccomment">/// Returns the total number of endpoints that could be allocated.
+    </span><span class="kw">pub fn </span>capacity(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; usize {
+        <span class="self">self</span>.ep_list.len()
+    }
+
+    <span class="doccomment">/// Acquire the endpoint.
+    ///
+    /// Returns `None` if the endpoint isn&#39;t allocated.
+    </span><span class="kw">pub fn </span>endpoint(<span class="kw-2">&amp;</span><span class="self">self</span>, addr: EndpointAddress) -&gt; <span class="prelude-ty">Option</span>&lt;<span class="kw-2">&amp;</span>Endpoint&gt; {
+        <span class="kw">let </span>index = index(addr);
+        <span class="self">self</span>.check_allocated(index)<span class="question-mark">?</span>;
+
+        <span class="comment">// Safety: there&#39;s no other mutable access at this call site.
+        // Perceived lifetime is tied to the EndpointAllocator, which has an
+        // immutable receiver.
+
+        </span><span class="kw">let </span>ep = <span class="kw">unsafe </span>{ <span class="kw-2">&amp;*</span><span class="self">self</span>.ep_list[index].get() };
+        <span class="comment">// Safety: endpoint is allocated. Checked above.
+        </span><span class="prelude-val">Some</span>(<span class="kw">unsafe </span>{ ep.assume_init_ref() })
+    }
+
+    <span class="doccomment">/// Aquire the mutable endpoint.
+    ///
+    /// Returns `None` if the endpoint isn&#39;t allocated.
+    </span><span class="kw">pub fn </span>endpoint_mut(<span class="kw-2">&amp;mut </span><span class="self">self</span>, addr: EndpointAddress) -&gt; <span class="prelude-ty">Option</span>&lt;<span class="kw-2">&amp;mut </span>Endpoint&gt; {
+        <span class="kw">let </span>index = index(addr);
+        <span class="self">self</span>.check_allocated(index)<span class="question-mark">?</span>;
+
+        <span class="comment">// Safety: there&#39;s no other immutable or mutable access at this call site.
+        // Perceived lifetime is tied to the EndpointAllocator, which has a
+        // mutable receiver.
+        </span><span class="kw">let </span>ep = <span class="kw">unsafe </span>{ <span class="kw-2">&amp;mut *</span><span class="self">self</span>.ep_list[index].get() };
+
+        <span class="comment">// Safety: endpoint is allocated. Checked above.
+        </span><span class="prelude-val">Some</span>(<span class="kw">unsafe </span>{ ep.assume_init_mut() })
+    }
+
+    <span class="doccomment">/// Allocate the endpoint for the specified address.
+    ///
+    /// Returns `None` if any are true:
+    ///
+    /// - The endpoint is already allocated.
+    /// - We cannot allocate an endpoint for the given address.
+    </span><span class="kw">pub fn </span>allocate_endpoint(
+        <span class="kw-2">&amp;mut </span><span class="self">self</span>,
+        addr: EndpointAddress,
+        buffer: Buffer,
+        kind: EndpointType,
+    ) -&gt; <span class="prelude-ty">Option</span>&lt;<span class="kw-2">&amp;mut </span>Endpoint&gt; {
+        <span class="kw">let </span>index = index(addr);
+        <span class="kw">let </span>mask = (index &lt; <span class="self">self</span>.qh_list.len()).then_some(<span class="number">1u16 </span>&lt;&lt; index)<span class="question-mark">?</span>;
+
+        <span class="comment">// If we pass this call, we&#39;re the only caller able to observe mutable
+        // QHs, TDs, and EPs at index.
+        </span><span class="self">self</span>.try_mask_update(mask)<span class="question-mark">?</span>;
+
+        <span class="comment">// Safety: index in range. Atomic update on alloc_mask prevents races for
+        // allocation, and ensures that we only release one &amp;mut reference for each
+        // component.
+        </span><span class="kw">let </span>qh = <span class="kw">unsafe </span>{ <span class="kw-2">&amp;mut *</span><span class="self">self</span>.qh_list[index].get() };
+        <span class="kw">let </span>td = <span class="kw">unsafe </span>{ <span class="kw-2">&amp;mut *</span><span class="self">self</span>.td_list[index].get() };
+        <span class="comment">// We cannot access these two components after this call. The endpoint
+        // takes mutable references, so it has exclusive ownership of both.
+        // This module is designed to isolate this access so we can visually
+        // see where we have these &amp;mut accesses.
+
+        // EP is uninitialized.
+        </span><span class="kw">let </span>ep = <span class="kw">unsafe </span>{ <span class="kw-2">&amp;mut *</span><span class="self">self</span>.ep_list[index].get() };
+        <span class="comment">// Nothing to drop here.
+        </span>ep.write(Endpoint::new(addr, qh, td, buffer, kind));
+        <span class="comment">// Safety: EP is initialized.
+        </span><span class="prelude-val">Some</span>(<span class="kw">unsafe </span>{ ep.assume_init_mut() })
+    }
+}
+
+<span class="attribute">#[cfg(test)]
+</span><span class="kw">mod </span>tests {
+    <span class="kw">use super</span>::{EndpointAddress, EndpointState, EndpointType};
+    <span class="kw">use </span><span class="kw">crate</span>::buffer;
+
+    <span class="attribute">#[test]
+    </span><span class="kw">fn </span>acquire_allocator() {
+        <span class="kw">let </span>ep_state = EndpointState::max_endpoints();
+        ep_state.allocator().unwrap();
+        <span class="kw">for _ in </span><span class="number">0</span>..<span class="number">10 </span>{
+            <span class="macro">assert!</span>(ep_state.allocator().is_none());
+        }
+    }
+
+    <span class="attribute">#[test]
+    </span><span class="kw">fn </span>allocate_endpoint() {
+        <span class="kw">let </span><span class="kw-2">mut </span>buffer = [<span class="number">0</span>; <span class="number">128</span>];
+        <span class="kw">let </span><span class="kw-2">mut </span>buffer_alloc = <span class="kw">unsafe </span>{ buffer::Allocator::from_buffer(<span class="kw-2">&amp;mut </span>buffer) };
+        <span class="kw">let </span>ep_state = EndpointState::max_endpoints();
+        <span class="kw">let </span><span class="kw-2">mut </span>ep_alloc = ep_state.allocator().unwrap();
+
+        <span class="comment">// First endpoint allocation.
+        </span><span class="kw">let </span>addr = EndpointAddress::from(<span class="number">0</span>);
+        <span class="macro">assert!</span>(ep_alloc.endpoint(addr).is_none());
+        <span class="macro">assert!</span>(ep_alloc.endpoint_mut(addr).is_none());
+
+        <span class="kw">let </span>ep = ep_alloc
+            .allocate_endpoint(addr, buffer_alloc.allocate(<span class="number">2</span>).unwrap(), EndpointType::Bulk)
+            .unwrap();
+        <span class="macro">assert_eq!</span>(ep.address(), addr);
+
+        <span class="macro">assert!</span>(ep_alloc.endpoint(addr).is_some());
+        <span class="macro">assert!</span>(ep_alloc.endpoint_mut(addr).is_some());
+
+        <span class="comment">// Double-allocate existing endpoint.
+        </span><span class="kw">let </span>ep =
+            ep_alloc.allocate_endpoint(addr, buffer_alloc.allocate(<span class="number">2</span>).unwrap(), EndpointType::Bulk);
+        <span class="macro">assert!</span>(ep.is_none());
+
+        <span class="macro">assert!</span>(ep_alloc.endpoint(addr).is_some());
+        <span class="macro">assert!</span>(ep_alloc.endpoint_mut(addr).is_some());
+
+        <span class="comment">// Allocate a new endpoint.
+        </span><span class="kw">let </span>addr = EndpointAddress::from(<span class="number">1 </span>&lt;&lt; <span class="number">7</span>);
+
+        <span class="macro">assert!</span>(ep_alloc.endpoint(addr).is_none());
+        <span class="macro">assert!</span>(ep_alloc.endpoint_mut(addr).is_none());
+
+        <span class="kw">let </span>ep = ep_alloc
+            .allocate_endpoint(addr, buffer_alloc.allocate(<span class="number">2</span>).unwrap(), EndpointType::Bulk)
+            .unwrap();
+        <span class="macro">assert_eq!</span>(ep.address(), addr);
+    }
 }
 </code></pre></div>
 </section></div></main><div id="rustdoc-vars" data-root-path="../../" data-current-crate="imxrt_usbd" data-themes="ayu,dark,light" data-resource-suffix="" data-rustdoc-version="1.65.0 (897e37553 2022-11-02)" ></div></body></html>

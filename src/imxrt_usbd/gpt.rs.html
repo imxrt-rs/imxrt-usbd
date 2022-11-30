@@ -249,6 +249,8 @@
 <span id="249">249</span>
 <span id="250">250</span>
 <span id="251">251</span>
+<span id="252">252</span>
+<span id="253">253</span>
 </pre><pre class="rust"><code><span class="doccomment">//! USB general purpose timers.
 //!
 //! Each USB OTG peripheral has two general purpose timers (GPT). You can access
@@ -265,16 +267,18 @@
 //! use imxrt_usbd::BusAdapter;
 //! use imxrt_usbd::gpt;
 //!
-//! # struct Ps; use imxrt_usbd::Instance as Inst;
-//! # unsafe impl imxrt_usbd::Peripherals for Ps { fn instance(&amp;self) -&gt; Inst { panic!() } }
-//! # static mut ENDPOINT_MEMORY: [u8; 1024] = [0; 1024];
+//! # struct Ps;
+//! # unsafe impl imxrt_usbd::Peripherals for Ps { fn usb(&amp;self) -&gt; *const () { panic!() } fn usbphy(&amp;self) -&gt; *const () { panic!() } }
+//! # static EP_MEMORY: imxrt_usbd::EndpointMemory&lt;1024&gt; = imxrt_usbd::EndpointMemory::new();
+//! # static EP_STATE: imxrt_usbd::EndpointState = imxrt_usbd::EndpointState::max_endpoints();
 //!
 //! # let my_usb_peripherals = // Your Peripherals instance...
 //! #   Ps;
 //! let bus_adapter = BusAdapter::new(
 //!     // ...
 //! #    my_usb_peripherals,
-//! #    unsafe { &amp;mut ENDPOINT_MEMORY }
+//! #    &amp;EP_MEMORY,
+//! #    &amp;EP_STATE,
 //! );
 //!
 //! // Prepare a GPT before creating a USB device;

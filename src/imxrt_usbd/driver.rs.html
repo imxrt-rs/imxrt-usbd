@@ -461,63 +461,46 @@
 <span id="461">461</span>
 <span id="462">462</span>
 <span id="463">463</span>
-<span id="464">464</span>
-<span id="465">465</span>
-<span id="466">466</span>
-<span id="467">467</span>
-<span id="468">468</span>
-<span id="469">469</span>
-<span id="470">470</span>
-<span id="471">471</span>
-<span id="472">472</span>
-<span id="473">473</span>
-<span id="474">474</span>
-<span id="475">475</span>
-<span id="476">476</span>
-<span id="477">477</span>
-<span id="478">478</span>
-<span id="479">479</span>
-<span id="480">480</span>
-<span id="481">481</span>
-<span id="482">482</span>
-<span id="483">483</span>
-<span id="484">484</span>
-<span id="485">485</span>
-<span id="486">486</span>
-<span id="487">487</span>
-<span id="488">488</span>
-<span id="489">489</span>
-<span id="490">490</span>
-<span id="491">491</span>
 </pre><pre class="rust"><code><span class="doccomment">//! Internal USB driver
 //!
 //! The goal is to keep this somewhat agnostic from the usb-device
 //! bus behaviors, so that it could be used separately. However, it&#39;s
 //! not yet exposed in the package&#39;s API.
 
-</span><span class="kw">use super</span>::{endpoint::Endpoint, state};
-<span class="kw">use crate</span>::{buffer, gpt, qh, ral, td, QH_COUNT};
+</span><span class="kw">use crate</span>::{buffer, gpt, ral};
 <span class="kw">use </span>usb_device::{
     bus::PollResult,
     endpoint::{EndpointAddress, EndpointType},
     UsbDirection, UsbError,
 };
 
-<span class="kw">const </span>EP_INIT: [<span class="prelude-ty">Option</span>&lt;Endpoint&gt;; QH_COUNT] = [
-    <span class="prelude-val">None</span>, <span class="prelude-val">None</span>, <span class="prelude-val">None</span>, <span class="prelude-val">None</span>, <span class="prelude-val">None</span>, <span class="prelude-val">None</span>, <span class="prelude-val">None</span>, <span class="prelude-val">None</span>, <span class="prelude-val">None</span>, <span class="prelude-val">None</span>, <span class="prelude-val">None</span>, <span class="prelude-val">None</span>, <span class="prelude-val">None</span>, <span class="prelude-val">None</span>, <span class="prelude-val">None</span>, <span class="prelude-val">None</span>,
-];
-
-<span class="doccomment">/// Produces an index into the EPs, QHs, and TDs collections
-</span><span class="kw">fn </span>index(ep_addr: EndpointAddress) -&gt; usize {
-    (ep_addr.index() * <span class="number">2</span>) + (UsbDirection::In == ep_addr.direction()) <span class="kw">as </span>usize
+<span class="doccomment">/// Direct index to the OUT control endpoint
+</span><span class="kw">fn </span>ctrl_ep0_out() -&gt; EndpointAddress {
+    <span class="comment">// Constructor not currently const. Otherwise, this would
+    // be a const.
+    </span>EndpointAddress::from_parts(<span class="number">0</span>, UsbDirection::Out)
 }
 
-<span class="doccomment">/// Direct index to the OUT control endpoint
-</span><span class="kw">const </span>CTRL_EP0_OUT: usize = <span class="number">0</span>;
 <span class="doccomment">/// Direct index to the IN control endpoint
-</span><span class="kw">const </span>CTRL_EP0_IN: usize = <span class="number">1</span>;
-<span class="doccomment">/// Slice all non-zero endpoints...
-</span><span class="kw">const </span>NON_ZERO_EPS: core::ops::RangeFrom&lt;usize&gt; = <span class="number">2</span>..;
+</span><span class="kw">fn </span>ctrl_ep0_in() -&gt; EndpointAddress {
+    EndpointAddress::from_parts(<span class="number">0</span>, UsbDirection::In)
+}
+
+<span class="doccomment">/// Produce an iterator over `count` endpoint addresses.
+</span><span class="kw">fn </span>all_ep_addrs(count: usize) -&gt; <span class="kw">impl </span>Iterator&lt;Item = EndpointAddress&gt; {
+    (<span class="number">0</span>..count).flat_map(|index| {
+        <span class="kw">let </span>ep_out = EndpointAddress::from_parts(index, UsbDirection::Out);
+        <span class="kw">let </span>ep_in = EndpointAddress::from_parts(index, UsbDirection::In);
+        [ep_out, ep_in]
+    })
+}
+
+<span class="doccomment">/// Produce an iterator over all endpoint addresses with a non-zero index.
+///
+/// This skips control endpoints.
+</span><span class="kw">fn </span>non_zero_ep_addrs(count: usize) -&gt; <span class="kw">impl </span>Iterator&lt;Item = EndpointAddress&gt; {
+    all_ep_addrs(count).skip(<span class="number">2</span>)
+}
 
 <span class="doccomment">/// USB low / full / high speed setting.
 </span><span class="attribute">#[derive(Clone, Copy, PartialEq, Eq, Debug)]
@@ -547,18 +530,10 @@
 /// - call [`initialize()`](Driver::initialize) once
 /// - supply endpoint memory with [`set_endpoint_memory()`](USB::set_endpoint_memory)
 </span><span class="kw">pub struct </span>Driver {
-    <span class="doccomment">/// Endpoints, indexed by `index()`
-    ///
-    /// None: not allocated
-    /// Some: allocated
-    </span>endpoints: [<span class="prelude-ty">Option</span>&lt;Endpoint&gt;; QH_COUNT],
     usb: ral::usb::Instance,
     phy: ral::usbphy::Instance,
-    <span class="doccomment">/// References moved into endpoints during endpoint allocation.
-    </span>qhs: [<span class="prelude-ty">Option</span>&lt;<span class="kw-2">&amp;</span><span class="lifetime">&#39;static </span><span class="kw-2">mut </span>qh::Qh&gt;; QH_COUNT],
-    <span class="doccomment">/// References moved into endpoints during endpoint allocation.
-    </span>tds: [<span class="prelude-ty">Option</span>&lt;<span class="kw-2">&amp;</span><span class="lifetime">&#39;static </span><span class="kw-2">mut </span>td::Td&gt;; QH_COUNT],
     buffer_allocator: buffer::Allocator,
+    ep_allocator: <span class="kw">crate</span>::state::EndpointAllocator&lt;<span class="lifetime">&#39;static</span>&gt;,
     <span class="doccomment">/// Track which read endpoints have completed, so as to not
     /// confuse the device and appear out of sync with poll() calls.
     ///
@@ -576,35 +551,30 @@
     ///
     /// Creation does nothing except for assign static memory to the driver.
     /// After creating the driver, call [`initialize()`](USB::initialize).
-    </span><span class="kw">pub fn </span>new&lt;P: <span class="kw">crate</span>::Peripherals&gt;(peripherals: P) -&gt; <span class="self">Self </span>{
+    ///
+    /// # Panics
+    ///
+    /// Panics if the endpoint bufer or state has already been assigned to another USB
+    /// driver.
+    </span><span class="kw">pub fn </span>new&lt;P: <span class="kw">crate</span>::Peripherals, <span class="kw">const </span>SIZE: usize, <span class="kw">const </span>EP_COUNT: usize&gt;(
+        peripherals: P,
+        buffer: <span class="kw-2">&amp;</span><span class="lifetime">&#39;static </span><span class="kw">crate</span>::buffer::EndpointMemory&lt;SIZE&gt;,
+        state: <span class="kw-2">&amp;</span><span class="lifetime">&#39;static </span><span class="kw">crate</span>::state::EndpointState&lt;EP_COUNT&gt;,
+    ) -&gt; <span class="self">Self </span>{
         <span class="comment">// Safety: taking static memory. Assumes that the provided
         // USB instance is a singleton, which is the only safe way for it
         // to exist.
         </span><span class="kw">let </span>ral::Instances { usb, usbphy: phy } = ral::instances(peripherals);
-        <span class="kw">unsafe </span>{
-            <span class="kw">let </span>qhs = state::steal_qhs(<span class="kw-2">&amp;</span>usb);
-            <span class="kw">let </span>tds = state::steal_tds(<span class="kw-2">&amp;</span>usb);
-            Driver {
-                endpoints: EP_INIT,
-                usb,
-                phy,
-                qhs,
-                tds,
-                buffer_allocator: buffer::Allocator::empty(),
-                ep_out: <span class="number">0</span>,
-            }
+        <span class="kw">let </span>ep_allocator = state.allocator().expect(<span class="string">&quot;Endpoint state already assigned&quot;</span>);
+        Driver {
+            usb,
+            phy,
+            buffer_allocator: buffer
+                .allocator()
+                .expect(<span class="string">&quot;Endpoint memory already assigned&quot;</span>),
+            ep_allocator,
+            ep_out: <span class="number">0</span>,
         }
-    }
-
-    <span class="doccomment">/// Set the region of memory that can be used for endpoint I/O
-    ///
-    /// This memory will be shared across all endpoints. you should size it
-    /// to support all the endpoints that might be allocated by your USB classes.
-    ///
-    /// After this call, `Driver` assumes that it&#39;s the sole owner of `buffer`.
-    /// You assume the `unsafe`ty to make that true.
-    </span><span class="kw">pub fn </span>set_endpoint_memory(<span class="kw-2">&amp;mut </span><span class="self">self</span>, buffer: <span class="kw-2">&amp;</span><span class="lifetime">&#39;static </span><span class="kw-2">mut </span>[u8]) {
-        <span class="self">self</span>.buffer_allocator = buffer::Allocator::new(buffer);
     }
 
     <span class="doccomment">/// Initialize the USB physical layer, and the USB core registers
@@ -632,16 +602,12 @@
         <span class="comment">// Disable interrupts by default
         </span><span class="macro">ral::write_reg!</span>(ral::usb, <span class="self">self</span>.usb, USBINTR, <span class="number">0</span>);
 
-        state::assign_endptlistaddr(<span class="kw-2">&amp;</span><span class="self">self</span>.usb);
-
-        <span class="comment">// Turn off ZLT for each endpoint. Software (usb-device and associated drivers)
-        // are expected to sent ZLPs as necessary. This setting can be overridden on an
-        // endpoint-by-endpoint basis before endpoint allocation.
-        </span><span class="self">self</span>.qhs.iter_mut().for_each(|qh| {
-            <span class="kw">if let </span><span class="prelude-val">Some</span>(qh) = qh {
-                qh.set_zero_length_termination(<span class="bool-val">false</span>);
-            }
-        });
+        <span class="macro">ral::write_reg!</span>(
+            ral::usb,
+            <span class="self">self</span>.usb,
+            ASYNCLISTADDR,
+            <span class="self">self</span>.ep_allocator.qh_list_addr() <span class="kw">as </span>u32
+        )
     }
 
     <span class="doccomment">/// Enable zero-length termination (ZLT) for the given endpoint
@@ -652,15 +618,11 @@
     /// and software is expected to send these packets. Enable this if you&#39;re confident
     /// that your (third-party) device / USB class isn&#39;t already sending these packets.
     ///
-    /// # Panics
-    ///
-    /// `enable_zlt` must be called before the endpoint is allocated. If the endpoint is
-    /// already allocated, this call panics.
+    /// This call does nothing if the endpoint isn&#39;t allocated.
     </span><span class="kw">pub fn </span>enable_zlt(<span class="kw-2">&amp;mut </span><span class="self">self</span>, ep_addr: EndpointAddress) {
-        <span class="kw">let </span>qh = <span class="self">self</span>.qhs[index(ep_addr)]
-            .as_mut()
-            .expect(<span class="string">&quot;Endpoint is already allocated&quot;</span>);
-        qh.set_zero_length_termination(<span class="bool-val">true</span>);
+        <span class="kw">if let </span><span class="prelude-val">Some</span>(ep) = <span class="self">self</span>.ep_allocator.endpoint_mut(ep_addr) {
+            ep.enable_zlt();
+        }
     }
 
     <span class="doccomment">/// Enable (`true`) or disable (`false`) USB interrupts
@@ -712,10 +674,7 @@
 
     <span class="doccomment">/// Check if the endpoint is valid
     </span><span class="kw">pub fn </span>is_allocated(<span class="kw-2">&amp;</span><span class="self">self</span>, addr: EndpointAddress) -&gt; bool {
-        <span class="self">self</span>.endpoints
-            .get(index(addr))
-            .map(|ep| ep.is_some())
-            .unwrap_or(<span class="bool-val">false</span>)
+        <span class="self">self</span>.ep_allocator.endpoint(addr).is_some()
     }
 
     <span class="doccomment">/// Read either a setup, or a data buffer, from EP0 OUT
@@ -724,7 +683,7 @@
     ///
     /// Panics if EP0 OUT isn&#39;t allocated.
     </span><span class="kw">pub fn </span>ctrl0_read(<span class="kw-2">&amp;mut </span><span class="self">self</span>, buffer: <span class="kw-2">&amp;mut </span>[u8]) -&gt; <span class="prelude-ty">Result</span>&lt;usize, UsbError&gt; {
-        <span class="kw">let </span>ctrl_out = <span class="self">self</span>.endpoints[CTRL_EP0_OUT].as_mut().unwrap();
+        <span class="kw">let </span>ctrl_out = <span class="self">self</span>.ep_allocator.endpoint_mut(ctrl_ep0_out()).unwrap();
         <span class="kw">if </span>ctrl_out.has_setup(<span class="kw-2">&amp;</span><span class="self">self</span>.usb) &amp;&amp; buffer.len() &gt;= <span class="number">8 </span>{
             <span class="macro">debug!</span>(<span class="string">&quot;EP0 Out SETUP&quot;</span>);
             <span class="kw">let </span>setup = ctrl_out.read_setup(<span class="kw-2">&amp;</span><span class="self">self</span>.usb);
@@ -764,7 +723,7 @@
     ///
     /// Panics if EP0 IN isn&#39;t allocated, or if EP0 OUT isn&#39;t allocated.
     </span><span class="kw">pub fn </span>ctrl0_write(<span class="kw-2">&amp;mut </span><span class="self">self</span>, buffer: <span class="kw-2">&amp;</span>[u8]) -&gt; <span class="prelude-ty">Result</span>&lt;usize, UsbError&gt; {
-        <span class="kw">let </span>ctrl_in = <span class="self">self</span>.endpoints[CTRL_EP0_IN].as_mut().unwrap();
+        <span class="kw">let </span>ctrl_in = <span class="self">self</span>.ep_allocator.endpoint_mut(ctrl_ep0_in()).unwrap();
         <span class="macro">debug!</span>(<span class="string">&quot;EP0 In {}&quot;</span>, buffer.len());
         ctrl_in.check_errors()<span class="question-mark">?</span>;
 
@@ -778,7 +737,7 @@
         ctrl_in.schedule_transfer(<span class="kw-2">&amp;</span><span class="self">self</span>.usb, written);
 
         <span class="comment">// Might need an OUT schedule for a status phase...
-        </span><span class="kw">let </span>ctrl_out = <span class="self">self</span>.endpoints[CTRL_EP0_OUT].as_mut().unwrap();
+        </span><span class="kw">let </span>ctrl_out = <span class="self">self</span>.ep_allocator.endpoint_mut(ctrl_ep0_out()).unwrap();
         <span class="kw">if </span>!ctrl_out.is_primed(<span class="kw-2">&amp;</span><span class="self">self</span>.usb) {
             ctrl_out.clear_complete(<span class="kw-2">&amp;</span><span class="self">self</span>.usb);
             ctrl_out.clear_nack(<span class="kw-2">&amp;</span><span class="self">self</span>.usb);
@@ -794,7 +753,7 @@
     ///
     /// Panics if the endpoint isn&#39;t allocated.
     </span><span class="kw">pub fn </span>ep_read(<span class="kw-2">&amp;mut </span><span class="self">self</span>, buffer: <span class="kw-2">&amp;mut </span>[u8], addr: EndpointAddress) -&gt; <span class="prelude-ty">Result</span>&lt;usize, UsbError&gt; {
-        <span class="kw">let </span>ep = <span class="self">self</span>.endpoints[index(addr)].as_mut().unwrap();
+        <span class="kw">let </span>ep = <span class="self">self</span>.ep_allocator.endpoint_mut(addr).unwrap();
         <span class="macro">debug!</span>(<span class="string">&quot;EP{} Out&quot;</span>, ep.address().index());
         ep.check_errors()<span class="question-mark">?</span>;
 
@@ -819,7 +778,7 @@
     ///
     /// Panics if the endpoint isn&#39;t allocated.
     </span><span class="kw">pub fn </span>ep_write(<span class="kw-2">&amp;mut </span><span class="self">self</span>, buffer: <span class="kw-2">&amp;</span>[u8], addr: EndpointAddress) -&gt; <span class="prelude-ty">Result</span>&lt;usize, UsbError&gt; {
-        <span class="kw">let </span>ep = <span class="self">self</span>.endpoints[index(addr)].as_mut().unwrap();
+        <span class="kw">let </span>ep = <span class="self">self</span>.ep_allocator.endpoint_mut(addr).unwrap();
         ep.check_errors()<span class="question-mark">?</span>;
 
         <span class="kw">if </span>ep.is_primed(<span class="kw-2">&amp;</span><span class="self">self</span>.usb) {
@@ -840,7 +799,7 @@
     ///
     /// Panics if the endpoint isn&#39;t allocated
     </span><span class="kw">pub fn </span>ep_stall(<span class="kw-2">&amp;mut </span><span class="self">self</span>, stall: bool, addr: EndpointAddress) {
-        <span class="kw">let </span>ep = <span class="self">self</span>.endpoints[index(addr)].as_mut().unwrap();
+        <span class="kw">let </span>ep = <span class="self">self</span>.ep_allocator.endpoint_mut(addr).unwrap();
         ep.set_stalled(<span class="kw-2">&amp;</span><span class="self">self</span>.usb, stall);
 
         <span class="comment">// Re-prime any OUT endpoints if we&#39;re unstalling
@@ -856,8 +815,8 @@
     ///
     /// Panics if the endpoint isn&#39;t allocated
     </span><span class="kw">pub fn </span>is_ep_stalled(<span class="kw-2">&amp;</span><span class="self">self</span>, addr: EndpointAddress) -&gt; bool {
-        <span class="self">self</span>.endpoints[index(addr)]
-            .as_ref()
+        <span class="self">self</span>.ep_allocator
+            .endpoint(addr)
             .unwrap()
             .is_stalled(<span class="kw-2">&amp;</span><span class="self">self</span>.usb)
     }
@@ -878,28 +837,11 @@
         buffer: buffer::Buffer,
         kind: EndpointType,
     ) {
-        <span class="kw">let </span>qh = <span class="self">self</span>.qhs[index(addr)].take().unwrap();
-        <span class="kw">let </span>td = <span class="self">self</span>.tds[index(addr)].take().unwrap();
+        <span class="self">self</span>.ep_allocator
+            .allocate_endpoint(addr, buffer, kind)
+            .unwrap();
 
-        <span class="kw">let </span>max_packet_size = buffer.len();
-        qh.set_max_packet_len(max_packet_size);
-        qh.set_interrupt_on_setup(
-            EndpointType::Control == kind &amp;&amp; addr.direction() == UsbDirection::Out,
-        );
-
-        td.set_terminate();
-        td.clear_status();
-
-        <span class="kw">let </span>ep = Endpoint::new(addr, qh, td, buffer, kind);
-        <span class="self">self</span>.endpoints[index(addr)] = <span class="prelude-val">Some</span>(ep);
-
-        <span class="macro">debug!</span>(
-            <span class="string">&quot;ALLOC EP{} {:?} {:?} {}&quot;</span>,
-            addr.index(),
-            addr.direction(),
-            kind,
-            max_packet_size
-        );
+        <span class="macro">debug!</span>(<span class="string">&quot;ALLOC EP{} {:?} {:?}&quot;</span>, addr.index(), addr.direction(), kind);
     }
 
     <span class="doccomment">/// Invoked when the device transitions into the configured state
@@ -912,29 +854,31 @@
     ///
     /// This should only be called when the device is configured
     </span><span class="kw">fn </span>enable_endpoints(<span class="kw-2">&amp;mut </span><span class="self">self</span>) {
-        <span class="kw">for </span>ep <span class="kw">in </span><span class="self">self</span>.endpoints.iter_mut().flatten() {
-            ep.enable(<span class="kw-2">&amp;</span><span class="self">self</span>.usb);
+        <span class="kw">for </span>addr <span class="kw">in </span>all_ep_addrs(<span class="self">self</span>.ep_allocator.capacity()) {
+            <span class="kw">if let </span><span class="prelude-val">Some</span>(ep) = <span class="self">self</span>.ep_allocator.endpoint_mut(addr) {
+                ep.enable(<span class="kw-2">&amp;</span><span class="self">self</span>.usb);
+            }
         }
     }
 
     <span class="doccomment">/// Prime all non-zero, enabled OUT endpoints
     </span><span class="kw">fn </span>prime_endpoints(<span class="kw-2">&amp;mut </span><span class="self">self</span>) {
-        <span class="kw">for </span>ep <span class="kw">in </span><span class="self">self</span>.endpoints[NON_ZERO_EPS]
-            .iter_mut()
-            .flatten()
-            .filter(|ep| UsbDirection::Out == ep.address().direction())
-        {
-            <span class="kw">if </span>ep.is_enabled(<span class="kw-2">&amp;</span><span class="self">self</span>.usb) {
-                <span class="kw">let </span>max_packet_len = ep.max_packet_len();
-                ep.schedule_transfer(<span class="kw-2">&amp;</span><span class="self">self</span>.usb, max_packet_len);
+        <span class="kw">for </span>addr <span class="kw">in </span>non_zero_ep_addrs(<span class="self">self</span>.ep_allocator.capacity()) {
+            <span class="kw">if let </span><span class="prelude-val">Some</span>(ep) = <span class="self">self</span>.ep_allocator.endpoint_mut(addr) {
+                <span class="kw">if </span>ep.is_enabled(<span class="kw-2">&amp;</span><span class="self">self</span>.usb) &amp;&amp; ep.address().direction() == UsbDirection::Out {
+                    <span class="kw">let </span>max_packet_len = ep.max_packet_len();
+                    ep.schedule_transfer(<span class="kw-2">&amp;</span><span class="self">self</span>.usb, max_packet_len);
+                }
             }
         }
     }
 
     <span class="doccomment">/// Initialize (or reinitialize) all non-zero endpoints
     </span><span class="kw">fn </span>initialize_endpoints(<span class="kw-2">&amp;mut </span><span class="self">self</span>) {
-        <span class="kw">for </span>ep <span class="kw">in </span><span class="self">self</span>.endpoints[NON_ZERO_EPS].iter_mut().flatten() {
-            ep.initialize(<span class="kw-2">&amp;</span><span class="self">self</span>.usb);
+        <span class="kw">for </span>addr <span class="kw">in </span>non_zero_ep_addrs(<span class="self">self</span>.ep_allocator.capacity()) {
+            <span class="kw">if let </span><span class="prelude-val">Some</span>(ep) = <span class="self">self</span>.ep_allocator.endpoint_mut(addr) {
+                ep.initialize(<span class="kw-2">&amp;</span><span class="self">self</span>.usb);
+            }
         }
     }
 
