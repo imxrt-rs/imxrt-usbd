@@ -4,6 +4,9 @@ Changelog
 [Unreleased]
 ------------
 
+[0.2.0] 2022-11-30
+------------------
+
 - **BREAKING** Add high-speed driver support.
   - Remove the `full_speed` module, and move `BusAdapter` into the crate root.
     See the before / after below to update your code.
@@ -61,5 +64,6 @@ Changelog
 
 First release
 
-[Unreleased]: https://github.com/imxrt-rs/imxrt-usbd/compare/v0.1.0...HEAD
+[Unreleased]: https://github.com/imxrt-rs/imxrt-usbd/compare/v0.2.0...HEAD
+[0.2.0]: https://github.com/imxrt-rs/imxrt-usbd/compare/v0.1.0...0.2.0
 [0.1.0]: https://github.com/imxrt-rs/imxrt-usbd/tree/v0.1.0
