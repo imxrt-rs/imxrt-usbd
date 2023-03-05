@@ -23,22 +23,6 @@ fn ctrl_ep0_in() -> EndpointAddress {
     EndpointAddress::from_parts(0, UsbDirection::In)
 }
 
-/// Produce an iterator over `count` endpoint addresses.
-fn all_ep_addrs(count: usize) -> impl Iterator<Item = EndpointAddress> {
-    (0..count).flat_map(|index| {
-        let ep_out = EndpointAddress::from_parts(index, UsbDirection::Out);
-        let ep_in = EndpointAddress::from_parts(index, UsbDirection::In);
-        [ep_out, ep_in]
-    })
-}
-
-/// Produce an iterator over all endpoint addresses with a non-zero index.
-///
-/// This skips control endpoints.
-fn non_zero_ep_addrs(count: usize) -> impl Iterator<Item = EndpointAddress> {
-    all_ep_addrs(count).skip(2)
-}
-
 /// USB low / full / high speed setting.
 #[derive(Clone, Copy, PartialEq, Eq, Debug)]
 pub enum Speed {
@@ -391,31 +375,25 @@ impl Driver {
     ///
     /// This should only be called when the device is configured
     fn enable_endpoints(&mut self) {
-        for addr in all_ep_addrs(self.ep_allocator.capacity()) {
-            if let Some(ep) = self.ep_allocator.endpoint_mut(addr) {
-                ep.enable(&self.usb);
-            }
+        for ep in self.ep_allocator.nonzero_endpoints_iter_mut() {
+            ep.enable(&self.usb);
         }
     }
 
     /// Prime all non-zero, enabled OUT endpoints
     fn prime_endpoints(&mut self) {
-        for addr in non_zero_ep_addrs(self.ep_allocator.capacity()) {
-            if let Some(ep) = self.ep_allocator.endpoint_mut(addr) {
-                if ep.is_enabled(&self.usb) && ep.address().direction() == UsbDirection::Out {
-                    let max_packet_len = ep.max_packet_len();
-                    ep.schedule_transfer(&self.usb, max_packet_len);
-                }
+        for ep in self.ep_allocator.nonzero_endpoints_iter_mut() {
+            if ep.is_enabled(&self.usb) && ep.address().direction() == UsbDirection::Out {
+                let max_packet_len = ep.max_packet_len();
+                ep.schedule_transfer(&self.usb, max_packet_len);
             }
         }
     }
 
     /// Initialize (or reinitialize) all non-zero endpoints
     fn initialize_endpoints(&mut self) {
-        for addr in non_zero_ep_addrs(self.ep_allocator.capacity()) {
-            if let Some(ep) = self.ep_allocator.endpoint_mut(addr) {
-                ep.initialize(&self.usb);
-            }
+        for ep in self.ep_allocator.nonzero_endpoints_iter_mut() {
+            ep.initialize(&self.usb);
         }
     }
 

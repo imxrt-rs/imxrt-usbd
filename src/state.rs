@@ -161,7 +161,8 @@ impl EndpointAllocator<'_> {
 
     /// Returns `Some` if the endpoint is allocated.
     fn check_allocated(&self, index: usize) -> Option<()> {
-        let mask = (index < self.qh_list.len()).then_some(1u16 << index)?;
+        (index < self.qh_list.len()).then_some(())?;
+        let mask = 1u16 << index;
         (mask & self.alloc_mask.load(Ordering::SeqCst) as u16 != 0).then_some(())
     }
 
@@ -170,11 +171,6 @@ impl EndpointAllocator<'_> {
     /// Used to tell the hardware where the queue heads are located.
     pub fn qh_list_addr(&self) -> *const () {
         self.qh_list.as_ptr().cast()
-    }
-
-    /// Returns the total number of endpoints that could be allocated.
-    pub fn capacity(&self) -> usize {
-        self.ep_list.len()
     }
 
     /// Acquire the endpoint.
@@ -193,20 +189,51 @@ impl EndpointAllocator<'_> {
         Some(unsafe { ep.assume_init_ref() })
     }
 
-    /// Aquire the mutable endpoint.
+    /// Implementation detail to permit endpoint iteration.
     ///
-    /// Returns `None` if the endpoint isn't allocated.
-    pub fn endpoint_mut(&mut self, addr: EndpointAddress) -> Option<&mut Endpoint> {
+    /// # Safety
+    ///
+    /// This can only be called from a method that takes a mutable receiver.
+    /// Otherwise, you could reach the same mutable endpoint more than once.
+    unsafe fn endpoint_mut_inner(&self, addr: EndpointAddress) -> Option<&mut Endpoint> {
         let index = index(addr);
         self.check_allocated(index)?;
 
-        // Safety: there's no other immutable or mutable access at this call site.
-        // Perceived lifetime is tied to the EndpointAllocator, which has a
-        // mutable receiver.
+        // Safety: the caller ensures that we actually have a mutable reference.
+        // Once we have a mutable reference, this is equivalent to calling the
+        // safe UnsafeCell::get_mut method.
         let ep = unsafe { &mut *self.ep_list[index].get() };
 
         // Safety: endpoint is allocated. Checked above.
         Some(unsafe { ep.assume_init_mut() })
+    }
+
+    /// Aquire the mutable endpoint.
+    ///
+    /// Returns `None` if the endpoint isn't allocated.
+    pub fn endpoint_mut(&mut self, addr: EndpointAddress) -> Option<&mut Endpoint> {
+        // Safety: call from method with mutable receiver.
+        unsafe { self.endpoint_mut_inner(addr) }
+    }
+
+    /// Return an iterator of all allocated endpoints.
+    pub fn endpoints_iter_mut(&mut self) -> impl Iterator<Item = &mut Endpoint> {
+        (0..8)
+            .flat_map(|index| {
+                let ep_out = EndpointAddress::from_parts(index, UsbDirection::Out);
+                let ep_in = EndpointAddress::from_parts(index, UsbDirection::In);
+                [ep_out, ep_in]
+            })
+            // Safety: call from method with mutable receiver.
+            .flat_map(|ep| unsafe { self.endpoint_mut_inner(ep) })
+    }
+
+    /// Returns an iterator for all non-zero, allocated endpoints.
+    ///
+    /// "Non-zero" excludes the first two control endpoints.
+    pub fn nonzero_endpoints_iter_mut(&mut self) -> impl Iterator<Item = &mut Endpoint> {
+        self.endpoints_iter_mut()
+            .filter(|ep| ep.address().index() != 0)
     }
 
     /// Allocate the endpoint for the specified address.
@@ -222,7 +249,8 @@ impl EndpointAllocator<'_> {
         kind: EndpointType,
     ) -> Option<&mut Endpoint> {
         let index = index(addr);
-        let mask = (index < self.qh_list.len()).then_some(1u16 << index)?;
+        (index < self.qh_list.len()).then_some(())?;
+        let mask = 1u16 << index;
 
         // If we pass this call, we're the only caller able to observe mutable
         // QHs, TDs, and EPs at index.
@@ -274,7 +302,11 @@ mod tests {
         assert!(ep_alloc.endpoint_mut(addr).is_none());
 
         let ep = ep_alloc
-            .allocate_endpoint(addr, buffer_alloc.allocate(2).unwrap(), EndpointType::Bulk)
+            .allocate_endpoint(
+                addr,
+                buffer_alloc.allocate(2).unwrap(),
+                EndpointType::Control,
+            )
             .unwrap();
         assert_eq!(ep.address(), addr);
 
@@ -282,8 +314,11 @@ mod tests {
         assert!(ep_alloc.endpoint_mut(addr).is_some());
 
         // Double-allocate existing endpoint.
-        let ep =
-            ep_alloc.allocate_endpoint(addr, buffer_alloc.allocate(2).unwrap(), EndpointType::Bulk);
+        let ep = ep_alloc.allocate_endpoint(
+            addr,
+            buffer_alloc.allocate(2).unwrap(),
+            EndpointType::Control,
+        );
         assert!(ep.is_none());
 
         assert!(ep_alloc.endpoint(addr).is_some());
@@ -296,8 +331,45 @@ mod tests {
         assert!(ep_alloc.endpoint_mut(addr).is_none());
 
         let ep = ep_alloc
-            .allocate_endpoint(addr, buffer_alloc.allocate(2).unwrap(), EndpointType::Bulk)
+            .allocate_endpoint(
+                addr,
+                buffer_alloc.allocate(2).unwrap(),
+                EndpointType::Control,
+            )
             .unwrap();
         assert_eq!(ep.address(), addr);
+
+        // Allocate a non-zero endpoint
+
+        let addr = EndpointAddress::from(3);
+        assert!(ep_alloc.endpoint(addr).is_none());
+        assert!(ep_alloc.endpoint_mut(addr).is_none());
+
+        let ep = ep_alloc
+            .allocate_endpoint(addr, buffer_alloc.allocate(4).unwrap(), EndpointType::Bulk)
+            .unwrap();
+        assert_eq!(ep.address(), addr);
+
+        assert_eq!(ep_alloc.endpoints_iter_mut().count(), 3);
+        assert_eq!(ep_alloc.nonzero_endpoints_iter_mut().count(), 1);
+
+        for (actual, expected) in ep_alloc.endpoints_iter_mut().zip([0usize, 0, 3]) {
+            assert_eq!(actual.address().index(), expected, "{:?}", actual.address());
+        }
+
+        for (actual, expected) in ep_alloc.nonzero_endpoints_iter_mut().zip([3]) {
+            assert_eq!(actual.address().index(), expected, "{:?}", actual.address());
+        }
+
+        // Try to allocate an invalid endpoint.
+        let addr = EndpointAddress::from(42);
+        let ep = ep_alloc.allocate_endpoint(
+            addr,
+            buffer_alloc.allocate(4).unwrap(),
+            EndpointType::Interrupt,
+        );
+        assert!(ep.is_none());
+
+        assert_eq!(ep_alloc.endpoints_iter_mut().count(), 3);
     }
 }

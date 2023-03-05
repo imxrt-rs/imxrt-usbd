@@ -4,6 +4,9 @@ Changelog
 [Unreleased]
 ------------
 
+Fix an overflowing left shift that could occur when enabling and allocating
+endpoints.
+
 [0.2.0] 2022-11-30
 ------------------
 
