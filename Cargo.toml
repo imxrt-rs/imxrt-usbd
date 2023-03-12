@@ -1,6 +1,6 @@
 [package]
 name = "imxrt-usbd"
-version = "0.2.0"
+version = "0.2.1"
 authors = ["Ian McIntyre <ianpmcintyre@gmail.com>"]
 repository = "https://github.com/imxrt-rs/imxrt-usbd"
 edition.workspace = true

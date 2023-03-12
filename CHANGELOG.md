@@ -4,6 +4,9 @@ Changelog
 [Unreleased]
 ------------
 
+[0.2.1] 2023-03-14
+------------------
+
 Fix an overflowing left shift that could occur when enabling and allocating
 endpoints.
 
@@ -67,6 +70,7 @@ endpoints.
 
 First release
 
-[Unreleased]: https://github.com/imxrt-rs/imxrt-usbd/compare/v0.2.0...HEAD
-[0.2.0]: https://github.com/imxrt-rs/imxrt-usbd/compare/v0.1.0...0.2.0
+[Unreleased]: https://github.com/imxrt-rs/imxrt-usbd/compare/v0.2.1...HEAD
+[0.2.1]: https://github.com/imxrt-rs/imxrt-usbd/compare/v0.2.0...v0.2.1
+[0.2.0]: https://github.com/imxrt-rs/imxrt-usbd/compare/v0.1.0...v0.2.0
 [0.1.0]: https://github.com/imxrt-rs/imxrt-usbd/tree/v0.1.0
