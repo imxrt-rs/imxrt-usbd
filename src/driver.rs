@@ -24,7 +24,7 @@ fn ctrl_ep0_in() -> EndpointAddress {
 }
 
 /// USB low / full / high speed setting.
-#[derive(Clone, Copy, PartialEq, Eq, Debug)]
+#[derive(Clone, Copy, PartialEq, Eq, Debug, Default)]
 pub enum Speed {
     /// Throttle to low / full speeds.
     ///
@@ -35,13 +35,8 @@ pub enum Speed {
     ///
     /// A high-speed device can still interface a low / full
     /// speed host, so use this setting for the most flexibility.
+    #[default]
     High,
-}
-
-impl Default for Speed {
-    fn default() -> Self {
-        Speed::High
-    }
 }
 
 /// A USB driver
