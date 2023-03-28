@@ -34,35 +34,20 @@ examples. These tests run on your host system.
 
 To **debug** the library, enable the internal `__log` feature. The feature
 enables the library's internal [`log`](https://crates.io/crates/log) hooks.
-Then, initialize your logger of choice in your program. See the Teensy 4
-examples to see how you might use a UART logger to debug your program. You may
-also need to configure the maximum log level as a feature on the `log` crate.
+Then, initialize your logger of choice in your program. You may also need to
+configure the maximum log level as a feature on the `log` crate.
 
-To test on **hardware**, either
+To test on **hardware**, refer to the hardware examples maintained in the
+[imxrt-hal project](https://github.com/imxrt-rs/imxrt-hal). Those examples
+work on multiple development boards. We welcome new USB example contributions
+there. If the imxrt-hal project does not support your development board, open
+an issue in the imxrt-hal issue tracker.
 
-- use an existing example package, or
-- contribute a new example package for your system
+If you're testing imxrt-usbd changes with the imxrt-hal examples, you'll need
+a way to integrate your patches into that project's build. [Consider using
+patches to override dependencies][patch].
 
-To **test `usb-device` compatibility**, use [the `usb-device` test class][test-class]
-program in each example.
-
-1. Build and flash the `test_class` example onto your hardware. See your
-   example's documentation for build and flash instructions. Keep your board
-   connected to your host.
-2. Clone and enter [the `usb-device` repository][usb-device-repo]
-
-    ```
-    git clone https://github.com/mvirkkunen/usb-device.git && cd usb-device
-    ```
-3. Run `cargo test --features=test-class-high-speed` in the `usb-device` directory.
-
-[test-class]: https://docs.rs/usb-device/0.2.7/usb_device/test_class/index.html
-[usb-device-repo]: https://github.com/mvirkkunen/usb-device
-
-By default, examples build a high-speed USB device. To force a low / full speed
-device, disable the example's default features. If you're testing a low / full
-speed device with the `test_class`, remove the `--features=test-class-high-speed`
-in step 3, above, so that the test evaluates a low / full speed test class.
+[patch]: https://doc.rust-lang.org/cargo/reference/overriding-dependencies.html
 
 For **design** information, see the API docs. Most modules include a high-level
 blurb that talks about what's going on. There are also public-facing design

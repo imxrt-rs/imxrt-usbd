@@ -19,7 +19,7 @@ embedded Rust program. It should support all i.MX RT microcontrollers.
 [`usb-device`]: https://crates.io/crates/usb-device
 
 See the API docs for usage, features, and examples. To try examples on actual
-hardware, see the [`examples` directory](./examples).
+hardware, see the [imxrt-hal examples](https://github.com/imxrt-rs/imxrt-hal).
 
 
 License

@@ -8,9 +8,7 @@ on:
 
 jobs:
 
-  # Ensure Rust code formatting is consistent across all source code
-  #
-  # This checks the main library, and all examples.
+  # Ensure Rust code formatting is consistent across all source code.
   format:
     runs-on: ubuntu-latest
     steps:
@@ -21,11 +19,6 @@ jobs:
       with:
         command: fmt
         args: --verbose --all -- --check
-    - name: Check examples/teensy4 formatting
-      uses: actions-rs/cargo@v1
-      with:
-        command: fmt
-        args: --manifest-path examples/teensy4/Cargo.toml --verbose --all -- --check
   
   # For each chip, build and lint the main library
   clippy:
@@ -55,46 +48,6 @@ jobs:
       with:
         command: test
         args: --verbose
-
-  # Build & lint the teensy4 examples
-  teensy4-clippy:
-    runs-on: ubuntu-latest
-    steps:
-    - uses: actions/checkout@v2
-    - uses: actions-rs/toolchain@v1
-      with:
-        toolchain: stable
-        components: clippy
-        target: thumbv7em-none-eabihf
-        override: true
-        profile: minimal
-    - uses: actions-rs/clippy-check@v1
-      with:
-        token: ${{ secrets.GITHUB_TOKEN }}
-        args: --manifest-path examples/teensy4/Cargo.toml --verbose --target thumbv7em-none-eabihf -- -D warnings
-        name: Lint the teensy4 examples
-
-  # Ensure that the Teensy 4 examples build across all hosts
-  teensy4-xplat:
-    strategy:
-      matrix:
-        host: [ macos-latest, ubuntu-latest, windows-latest ]
-    runs-on: ${{ matrix.host }}
-    steps:
-    - uses: actions/checkout@v2
-    - uses: actions-rs/toolchain@v1
-      with:
-          profile: minimal
-          toolchain: stable
-          target: thumbv7em-none-eabihf
-          override: true
-    - name: Build examples/teensy4 for ${{ matrix.os }}
-      uses: actions-rs/cargo@v1
-      env:
-        RUSTFLAGS: -C link-arg=-Tt4link.x
-      with:
-        command: build
-        args: --manifest-path examples/teensy4/Cargo.toml --verbose --target thumbv7em-none-eabihf
 
   # Make sure documentation builds, and doclinks are valid
   doc:

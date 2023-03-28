@@ -13,7 +13,6 @@ USB driver for NXP iMX RT processors
 """
 exclude = [
     ".github/*",
-    "examples/*",
     ".gitignore",
 ]
 
@@ -33,11 +32,6 @@ __log = ["log"]
 
 [package.metadata.docs.rs]
 default-target = "thumbv7em-none-eabihf"
-
-[workspace]
-members = [
-    "examples/teensy4"
-]
 
 [workspace.package]
 edition = "2021"
