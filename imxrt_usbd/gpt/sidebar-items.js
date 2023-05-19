@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"enum":[["Instance","GPT instance identifiers."],["Mode","GPT timer mode."]],"struct":[["Gpt","General purpose timer (GPT)."]]};
+window.SIDEBAR_ITEMS = {"enum":["Instance","Mode"],"struct":["Gpt"]};
