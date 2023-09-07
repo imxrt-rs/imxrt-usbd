@@ -4,6 +4,8 @@ Changelog
 [Unreleased]
 ------------
 
+Resolve an issue where endpoints were reset when exiting suspend.
+
 [0.2.1] 2023-03-14
 ------------------
 

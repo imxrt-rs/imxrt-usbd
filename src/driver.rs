@@ -145,9 +145,9 @@ impl Driver {
     pub fn set_interrupts(&mut self, interrupts: bool) {
         if interrupts {
             // Keep this in sync with the poll() behaviors
-            ral::modify_reg!(ral::usb, self.usb, USBINTR, UE: 1, URE: 1, PCE: 1);
+            ral::modify_reg!(ral::usb, self.usb, USBINTR, UE: 1, URE: 1);
         } else {
-            ral::modify_reg!(ral::usb, self.usb, USBINTR, UE: 0, URE: 0, PCE: 0);
+            ral::modify_reg!(ral::usb, self.usb, USBINTR, UE: 0, URE: 0);
         }
     }
 
@@ -186,6 +186,8 @@ impl Driver {
             "Took too long to handle bus reset"
         );
         debug!("RESET");
+
+        self.initialize_endpoints();
     }
 
     /// Check if the endpoint is valid
@@ -400,11 +402,6 @@ impl Driver {
         if usbsts & USBSTS::URI::mask != 0 {
             ral::write_reg!(ral::usb, self.usb, USBSTS, URI: 1);
             return PollResult::Reset;
-        }
-
-        if usbsts & USBSTS::PCI::mask != 0 {
-            ral::write_reg!(ral::usb, self.usb, USBSTS, PCI: 1);
-            self.initialize_endpoints();
         }
 
         if usbsts & USBSTS::UI::mask != 0 {
