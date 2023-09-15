@@ -4,6 +4,9 @@ Changelog
 [Unreleased]
 ------------
 
+[0.2.2] 2023-09-15
+------------------
+
 Resolve an issue where endpoints were reset when exiting suspend.
 
 [0.2.1] 2023-03-14
@@ -73,6 +76,7 @@ endpoints.
 First release
 
 [Unreleased]: https://github.com/imxrt-rs/imxrt-usbd/compare/v0.2.1...HEAD
+[0.2.2]: https://github.com/imxrt-rs/imxrt-usbd/compare/v0.2.1...v0.2.2
 [0.2.1]: https://github.com/imxrt-rs/imxrt-usbd/compare/v0.2.0...v0.2.1
 [0.2.0]: https://github.com/imxrt-rs/imxrt-usbd/compare/v0.1.0...v0.2.0
 [0.1.0]: https://github.com/imxrt-rs/imxrt-usbd/tree/v0.1.0
