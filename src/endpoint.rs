@@ -105,10 +105,10 @@ impl Endpoint {
             let endptctrl = endpoint_control::register(usb, self.address.index());
             match self.address.direction() {
                 UsbDirection::In => {
-                    ral::modify_reg!(endpoint_control, &endptctrl, ENDPTCTRL, TXE: 0, TXT: EndpointType::Bulk as u32)
+                    ral::modify_reg!(endpoint_control, &endptctrl, ENDPTCTRL, TXE: 0, TXT: into_raw_endpoint_type(EndpointType::Bulk))
                 }
                 UsbDirection::Out => {
-                    ral::modify_reg!(endpoint_control, &endptctrl, ENDPTCTRL, RXE: 0, RXT: EndpointType::Bulk as u32)
+                    ral::modify_reg!(endpoint_control, &endptctrl, ENDPTCTRL, RXE: 0, RXT: into_raw_endpoint_type(EndpointType::Bulk))
                 }
             }
         }
@@ -248,10 +248,10 @@ impl Endpoint {
             let endptctrl = endpoint_control::register(usb, self.address.index());
             match self.address.direction() {
                 UsbDirection::In => {
-                    ral::modify_reg!(endpoint_control, &endptctrl, ENDPTCTRL, TXE: 1, TXR: 1, TXT: self.kind as u32)
+                    ral::modify_reg!(endpoint_control, &endptctrl, ENDPTCTRL, TXE: 1, TXR: 1, TXT: into_raw_endpoint_type(self.kind))
                 }
                 UsbDirection::Out => {
-                    ral::modify_reg!(endpoint_control, &endptctrl, ENDPTCTRL, RXE: 1, RXR: 1, RXT: self.kind as u32)
+                    ral::modify_reg!(endpoint_control, &endptctrl, ENDPTCTRL, RXE: 1, RXR: 1, RXT: into_raw_endpoint_type(self.kind))
                 }
             }
         }
@@ -283,4 +283,14 @@ impl Endpoint {
             }
         }
     }
+}
+
+/// Converts the endpoint type into its ENDPTCTRL endpoint type
+/// enumerations.
+///
+/// See the ENDPTCTRL register documentation in the reference manual.
+fn into_raw_endpoint_type(ep_type: EndpointType) -> u32 {
+    // Bits 0..1 represent the transfer type for the endpoint,
+    // and it's compatible with ENDPTCTRL's enumerated values.
+    (ep_type.to_bm_attributes() & 0b11u8).into()
 }

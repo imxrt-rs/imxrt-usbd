@@ -43,7 +43,7 @@
 //! let bus_allocator = usb_device::bus::UsbBusAllocator::new(bus_adapter);
 //!
 //! let mut device = UsbDeviceBuilder::new(&bus_allocator, UsbVidPid(0x5824, 0x27dd))
-//!     .product("imxrt-usbd")
+//!     .strings(&[StringDescriptors::default().product("imxrt-usbd")]).unwrap()
 //!     .build();
 //!
 //! // You can still access the timer through the bus() method on
