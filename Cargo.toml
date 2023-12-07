@@ -20,7 +20,7 @@ exclude = [
 bitflags = "1.2"
 cortex-m = "0.7"
 ral-registers = "0.1"
-usb-device = "0.2"
+usb-device = "0.3"
 
 [dependencies.log]
 optional = true
