@@ -169,11 +169,11 @@ mod test {
 
     #[test]
     fn allocate_entire_buffer() {
-        static mut BUFFER: [u8; 32] = [0; 32];
-        let mut alloc = unsafe { Allocator::new(&mut BUFFER) };
+        let mut buffer: [u8; 32] = [0; 32];
+        let mut alloc = unsafe { Allocator::from_buffer(&mut buffer) };
         let ptr = alloc.allocate(32);
         assert!(ptr.is_some());
-        assert_eq!(ptr.unwrap().ptr, unsafe { BUFFER.as_mut_ptr() });
+        assert_eq!(ptr.unwrap().ptr, buffer.as_mut_ptr());
 
         let ptr = alloc.allocate(1);
         assert!(ptr.is_none());
@@ -181,17 +181,17 @@ mod test {
 
     #[test]
     fn allocate_partial_buffers() {
-        static mut BUFFER: [u8; 32] = [0; 32];
-        let mut alloc = unsafe { Allocator::new(&mut BUFFER) };
+        let mut buffer: [u8; 32] = [0; 32];
+        let mut alloc = unsafe { Allocator::from_buffer(&mut buffer) };
 
         let ptr = alloc.allocate(7);
         assert!(ptr.is_some());
-        assert_eq!(ptr.unwrap().ptr, unsafe { BUFFER.as_mut_ptr().add(32 - 7) });
+        assert_eq!(ptr.unwrap().ptr, unsafe { buffer.as_mut_ptr().add(32 - 7) });
 
         let ptr = alloc.allocate(7);
         assert!(ptr.is_some());
         assert_eq!(ptr.unwrap().ptr, unsafe {
-            BUFFER.as_mut_ptr().add(32 - 14)
+            buffer.as_mut_ptr().add(32 - 14)
         });
 
         let ptr = alloc.allocate(19);
