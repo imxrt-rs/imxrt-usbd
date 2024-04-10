@@ -17,6 +17,7 @@
 //! [`usb-device`]: https://crates.io/crates/usb-device
 
 #![no_std]
+#![warn(unsafe_op_in_unsafe_fn)]
 
 #[macro_use]
 mod log;

@@ -181,7 +181,9 @@ impl BusAdapter {
             buffer,
             state,
             speed,
-            Some(cortex_m::interrupt::CriticalSection::new()),
+            // Safety: see the above API docs. Caller knows that we're faking our
+            // Sync capability.
+            Some(unsafe { cortex_m::interrupt::CriticalSection::new() }),
         )
     }
 
