@@ -1,4 +1,6 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `src/endpoint.rs`."><title>endpoint.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceSerif4-Regular-46f98efaafac5295.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/FiraSans-Regular-018c141bf0843ffd.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/FiraSans-Medium-8f9a781e4970d388.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceSerif4-Bold-a2c9cd1067f8b328.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2"><link rel="stylesheet" href="../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../static.files/rustdoc-9bb858ba049f1f21.css" id="mainThemeStyle"><meta name="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="imxrt_usbd" data-themes="" data-resource-suffix="" data-rustdoc-version="1.72.0 (5680fa18f 2023-08-23)" data-channel="1.72.0" data-search-js="search-f6292fe389d70017.js" data-settings-js="settings-de11bff964e9d4e5.js" data-settings-css="settings-8c76f75bfb6bd192.css" data-theme-light-css="light-0f8c037637f9eb3e.css" data-theme-dark-css="dark-1097f8e92a01e3cf.css" data-theme-ayu-css="ayu-614652228113ac93.css" ><script src="../../static.files/storage-59fd9b8ccb335783.js"></script><script defer src="../../static.files/source-script-106908c7a7964ba4.js"></script><script defer src="../../source-files.js"></script><script defer src="../../static.files/main-0795b7d26be81095.js"></script><noscript><link rel="stylesheet" media="(prefers-color-scheme:light)" href="../../static.files/light-0f8c037637f9eb3e.css"><link rel="stylesheet" media="(prefers-color-scheme:dark)" href="../../static.files/dark-1097f8e92a01e3cf.css"><link rel="stylesheet" href="../../static.files/noscript-13285aec31fa243e.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-16x16-8b506e7a72182f1c.png"><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"></nav><main><nav class="sub"><a class="sub-logo-container" href="../../imxrt_usbd/index.html"><img class="rust-logo" src="../../static.files/rust-logo-151179464ae7ed46.svg" alt="logo"></a><form class="search-form"><span></span><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><a href="../../help.html">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../static.files/wheel-7b819b6101059cd0.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `src/endpoint.rs`."><title>endpoint.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceSerif4-Regular-46f98efaafac5295.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/FiraSans-Regular-018c141bf0843ffd.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/FiraSans-Medium-8f9a781e4970d388.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2"><link rel="stylesheet" href="../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../static.files/rustdoc-5bc39a1768837dd0.css"><meta name="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="imxrt_usbd" data-themes="" data-resource-suffix="" data-rustdoc-version="1.77.2 (25ef9e3d8 2024-04-09)" data-channel="1.77.2" data-search-js="search-dd67cee4cfa65049.js" data-settings-js="settings-4313503d2e1961c2.js" ><script src="../../static.files/storage-4c98445ec4002617.js"></script><script defer src="../../static.files/src-script-e66d777a5a92e9b2.js"></script><script defer src="../../src-files.js"></script><script defer src="../../static.files/main-48f368f3872407c8.js"></script><noscript><link rel="stylesheet" href="../../static.files/noscript-04d5337699b92874.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-16x16-8b506e7a72182f1c.png"><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title">
+            <h2>Files</h2></div></nav><div class="sidebar-resizer"></div>
+    <main><nav class="sub"><form class="search-form"><span></span><div id="sidebar-button" tabindex="-1"><a href="../../imxrt_usbd/all.html" title="show sidebar"></a></div><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" tabindex="-1"><a href="../../help.html" title="help">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../static.files/wheel-7b819b6101059cd0.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
 <a href="#2" id="2">2</a>
 <a href="#3" id="3">3</a>
 <a href="#4" id="4">4</a>
@@ -284,6 +286,16 @@
 <a href="#284" id="284">284</a>
 <a href="#285" id="285">285</a>
 <a href="#286" id="286">286</a>
+<a href="#287" id="287">287</a>
+<a href="#288" id="288">288</a>
+<a href="#289" id="289">289</a>
+<a href="#290" id="290">290</a>
+<a href="#291" id="291">291</a>
+<a href="#292" id="292">292</a>
+<a href="#293" id="293">293</a>
+<a href="#294" id="294">294</a>
+<a href="#295" id="295">295</a>
+<a href="#296" id="296">296</a>
 </pre></div><pre class="rust"><code><span class="doccomment">//! USB endpoints
 //!
 //! Use endpoints to
@@ -293,19 +305,19 @@
 //! - check transfer statuses
 //! - signal endpoint state to the host
 //!
-//! The endpoint &quot;owns&quot; the static QH and TD memory. These
+//! The endpoint "owns" the static QH and TD memory. These
 //! are temporarily stored in the driver behind an Option.
 //! Once allocated, the driver will move the reference into
 //! the endpoint, where it resides forever. You can use methods
 //! on the endpoint to safely access QH and TD state.
 //!
 //! The endpoints take immutable borrows of the USB instance.
-//! The contract is that, if the *Endpoint* is mutable, it&#39;s
+//! The contract is that, if the *Endpoint* is mutable, it's
 //! permitted to modify its own USB register (or register
 //! field). This gives us a kind of loose runtime ownership
 //! of endpoint registers, but it only works if all endpoints
 //! are owned by the same object, since we rely on carrying
-//! the mutable borrow to prevent races. That&#39;s how today&#39;s
+//! the mutable borrow to prevent races. That's how today's
 //! driver works.
 
 </span><span class="kw">use crate</span>::{
@@ -323,8 +335,8 @@
 <span class="doccomment">/// A USB endpoint
 </span><span class="kw">pub struct </span>Endpoint {
     address: EndpointAddress,
-    qh: <span class="kw-2">&amp;</span><span class="lifetime">&#39;static </span><span class="kw-2">mut </span>Qh,
-    td: <span class="kw-2">&amp;</span><span class="lifetime">&#39;static </span><span class="kw-2">mut </span>Td,
+    qh: <span class="kw-2">&amp;</span><span class="lifetime">'static </span><span class="kw-2">mut </span>Qh,
+    td: <span class="kw-2">&amp;</span><span class="lifetime">'static </span><span class="kw-2">mut </span>Td,
     buffer: Buffer,
     kind: EndpointType,
 }
@@ -332,8 +344,8 @@
 <span class="kw">impl </span>Endpoint {
     <span class="kw">pub fn </span>new(
         address: EndpointAddress,
-        qh: <span class="kw-2">&amp;</span><span class="lifetime">&#39;static </span><span class="kw-2">mut </span>Qh,
-        td: <span class="kw-2">&amp;</span><span class="lifetime">&#39;static </span><span class="kw-2">mut </span>Td,
+        qh: <span class="kw-2">&amp;</span><span class="lifetime">'static </span><span class="kw-2">mut </span>Qh,
+        td: <span class="kw-2">&amp;</span><span class="lifetime">'static </span><span class="kw-2">mut </span>Td,
         buffer: Buffer,
         kind: EndpointType,
     ) -&gt; <span class="self">Self </span>{
@@ -384,17 +396,17 @@
         }
     }
 
-    <span class="doccomment">/// Initialize the endpoint, should be called soon after it&#39;s assigned,
+    <span class="doccomment">/// Initialize the endpoint, should be called soon after it's assigned,
     /// or after transitioning out of configuration (reset the endpoint).
     </span><span class="kw">pub fn </span>initialize(<span class="kw-2">&amp;mut </span><span class="self">self</span>, usb: <span class="kw-2">&amp;</span>ral::usb::Instance) {
         <span class="kw">if </span><span class="self">self</span>.address.index() != <span class="number">0 </span>{
             <span class="kw">let </span>endptctrl = endpoint_control::register(usb, <span class="self">self</span>.address.index());
             <span class="kw">match </span><span class="self">self</span>.address.direction() {
                 UsbDirection::In =&gt; {
-                    <span class="macro">ral::modify_reg!</span>(endpoint_control, <span class="kw-2">&amp;</span>endptctrl, ENDPTCTRL, TXE: <span class="number">0</span>, TXT: EndpointType::Bulk <span class="kw">as </span>u32)
+                    <span class="macro">ral::modify_reg!</span>(endpoint_control, <span class="kw-2">&amp;</span>endptctrl, ENDPTCTRL, TXE: <span class="number">0</span>, TXT: into_raw_endpoint_type(EndpointType::Bulk))
                 }
                 UsbDirection::Out =&gt; {
-                    <span class="macro">ral::modify_reg!</span>(endpoint_control, <span class="kw-2">&amp;</span>endptctrl, ENDPTCTRL, RXE: <span class="number">0</span>, RXT: EndpointType::Bulk <span class="kw">as </span>u32)
+                    <span class="macro">ral::modify_reg!</span>(endpoint_control, <span class="kw-2">&amp;</span>endptctrl, ENDPTCTRL, RXE: <span class="number">0</span>, RXT: into_raw_endpoint_type(EndpointType::Bulk))
                 }
             }
         }
@@ -419,15 +431,15 @@
     ///
     /// This is only meaningful for a control OUT endpoint.
     </span><span class="kw">pub fn </span>read_setup(<span class="kw-2">&amp;mut </span><span class="self">self</span>, usb: <span class="kw-2">&amp;</span>ral::usb::Instance) -&gt; u64 {
-        <span class="comment">// Reference manual isn&#39;t really clear on whe we should clear the ENDPTSETUPSTAT
+        <span class="comment">// Reference manual isn't really clear on whe we should clear the ENDPTSETUPSTAT
         // bit...
         //
-        // - section &quot;Control Endpoint Operational Model&quot; says that we should clear it
+        // - section "Control Endpoint Operational Model" says that we should clear it
         //   *before* attempting to read the setup buffer, but
-        // - section &quot;Operational Model For Setup Transfers&quot; says to do it *after*
+        // - section "Operational Model For Setup Transfers" says to do it *after*
         //   we read the setup buffer
         //
-        // We&#39;re going with the &quot;before&quot; approach here. (Reference manual is iMXRT1060, rev2)
+        // We're going with the "before" approach here. (Reference manual is iMXRT1060, rev2)
         </span><span class="macro">ral::write_reg!</span>(ral::usb, usb, ENDPTSETUPSTAT, <span class="number">1 </span>&lt;&lt; <span class="self">self</span>.address.index());
         <span class="kw">loop </span>{
             <span class="macro">ral::modify_reg!</span>(ral::usb, usb, USBCMD, SUTW: <span class="number">1</span>);
@@ -534,10 +546,10 @@
             <span class="kw">let </span>endptctrl = endpoint_control::register(usb, <span class="self">self</span>.address.index());
             <span class="kw">match </span><span class="self">self</span>.address.direction() {
                 UsbDirection::In =&gt; {
-                    <span class="macro">ral::modify_reg!</span>(endpoint_control, <span class="kw-2">&amp;</span>endptctrl, ENDPTCTRL, TXE: <span class="number">1</span>, TXR: <span class="number">1</span>, TXT: <span class="self">self</span>.kind <span class="kw">as </span>u32)
+                    <span class="macro">ral::modify_reg!</span>(endpoint_control, <span class="kw-2">&amp;</span>endptctrl, ENDPTCTRL, TXE: <span class="number">1</span>, TXR: <span class="number">1</span>, TXT: into_raw_endpoint_type(<span class="self">self</span>.kind))
                 }
                 UsbDirection::Out =&gt; {
-                    <span class="macro">ral::modify_reg!</span>(endpoint_control, <span class="kw-2">&amp;</span>endptctrl, ENDPTCTRL, RXE: <span class="number">1</span>, RXR: <span class="number">1</span>, RXT: <span class="self">self</span>.kind <span class="kw">as </span>u32)
+                    <span class="macro">ral::modify_reg!</span>(endpoint_control, <span class="kw-2">&amp;</span>endptctrl, ENDPTCTRL, RXE: <span class="number">1</span>, RXR: <span class="number">1</span>, RXT: into_raw_endpoint_type(<span class="self">self</span>.kind))
                 }
             }
         }
@@ -569,5 +581,15 @@
             }
         }
     }
+}
+
+<span class="doccomment">/// Converts the endpoint type into its ENDPTCTRL endpoint type
+/// enumerations.
+///
+/// See the ENDPTCTRL register documentation in the reference manual.
+</span><span class="kw">fn </span>into_raw_endpoint_type(ep_type: EndpointType) -&gt; u32 {
+    <span class="comment">// Bits 0..1 represent the transfer type for the endpoint,
+    // and it's compatible with ENDPTCTRL's enumerated values.
+    </span>(ep_type.to_bm_attributes() &amp; <span class="number">0b11u8</span>).into()
 }
 </code></pre></div></section></main></body></html>

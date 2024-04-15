@@ -1,4 +1,6 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `src/driver.rs`."><title>driver.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceSerif4-Regular-46f98efaafac5295.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/FiraSans-Regular-018c141bf0843ffd.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/FiraSans-Medium-8f9a781e4970d388.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceSerif4-Bold-a2c9cd1067f8b328.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2"><link rel="stylesheet" href="../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../static.files/rustdoc-9bb858ba049f1f21.css" id="mainThemeStyle"><meta name="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="imxrt_usbd" data-themes="" data-resource-suffix="" data-rustdoc-version="1.72.0 (5680fa18f 2023-08-23)" data-channel="1.72.0" data-search-js="search-f6292fe389d70017.js" data-settings-js="settings-de11bff964e9d4e5.js" data-settings-css="settings-8c76f75bfb6bd192.css" data-theme-light-css="light-0f8c037637f9eb3e.css" data-theme-dark-css="dark-1097f8e92a01e3cf.css" data-theme-ayu-css="ayu-614652228113ac93.css" ><script src="../../static.files/storage-59fd9b8ccb335783.js"></script><script defer src="../../static.files/source-script-106908c7a7964ba4.js"></script><script defer src="../../source-files.js"></script><script defer src="../../static.files/main-0795b7d26be81095.js"></script><noscript><link rel="stylesheet" media="(prefers-color-scheme:light)" href="../../static.files/light-0f8c037637f9eb3e.css"><link rel="stylesheet" media="(prefers-color-scheme:dark)" href="../../static.files/dark-1097f8e92a01e3cf.css"><link rel="stylesheet" href="../../static.files/noscript-13285aec31fa243e.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-16x16-8b506e7a72182f1c.png"><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"></nav><main><nav class="sub"><a class="sub-logo-container" href="../../imxrt_usbd/index.html"><img class="rust-logo" src="../../static.files/rust-logo-151179464ae7ed46.svg" alt="logo"></a><form class="search-form"><span></span><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><a href="../../help.html">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../static.files/wheel-7b819b6101059cd0.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `src/driver.rs`."><title>driver.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceSerif4-Regular-46f98efaafac5295.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/FiraSans-Regular-018c141bf0843ffd.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/FiraSans-Medium-8f9a781e4970d388.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2"><link rel="stylesheet" href="../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../static.files/rustdoc-5bc39a1768837dd0.css"><meta name="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="imxrt_usbd" data-themes="" data-resource-suffix="" data-rustdoc-version="1.77.2 (25ef9e3d8 2024-04-09)" data-channel="1.77.2" data-search-js="search-dd67cee4cfa65049.js" data-settings-js="settings-4313503d2e1961c2.js" ><script src="../../static.files/storage-4c98445ec4002617.js"></script><script defer src="../../static.files/src-script-e66d777a5a92e9b2.js"></script><script defer src="../../src-files.js"></script><script defer src="../../static.files/main-48f368f3872407c8.js"></script><noscript><link rel="stylesheet" href="../../static.files/noscript-04d5337699b92874.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-16x16-8b506e7a72182f1c.png"><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title">
+            <h2>Files</h2></div></nav><div class="sidebar-resizer"></div>
+    <main><nav class="sub"><form class="search-form"><span></span><div id="sidebar-button" tabindex="-1"><a href="../../imxrt_usbd/all.html" title="show sidebar"></a></div><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" tabindex="-1"><a href="../../help.html" title="help">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../static.files/wheel-7b819b6101059cd0.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
 <a href="#2" id="2">2</a>
 <a href="#3" id="3">3</a>
 <a href="#4" id="4">4</a>
@@ -434,8 +436,8 @@
 </pre></div><pre class="rust"><code><span class="doccomment">//! Internal USB driver
 //!
 //! The goal is to keep this somewhat agnostic from the usb-device
-//! bus behaviors, so that it could be used separately. However, it&#39;s
-//! not yet exposed in the package&#39;s API.
+//! bus behaviors, so that it could be used separately. However, it's
+//! not yet exposed in the package's API.
 
 </span><span class="kw">use crate</span>::{buffer, gpt, ral};
 <span class="kw">use </span>usb_device::{
@@ -482,13 +484,13 @@
     usb: ral::usb::Instance,
     phy: ral::usbphy::Instance,
     buffer_allocator: buffer::Allocator,
-    ep_allocator: <span class="kw">crate</span>::state::EndpointAllocator&lt;<span class="lifetime">&#39;static</span>&gt;,
+    ep_allocator: <span class="kw">crate</span>::state::EndpointAllocator&lt;<span class="lifetime">'static</span>&gt;,
     <span class="doccomment">/// Track which read endpoints have completed, so as to not
     /// confuse the device and appear out of sync with poll() calls.
     ///
     /// Persisting the ep_out mask across poll() calls lets us make
-    /// sure that results of ep_read calls match what&#39;s signaled from
-    /// poll() calls. During testing, we saw that poll() wouldn&#39;t signal
+    /// sure that results of ep_read calls match what's signaled from
+    /// poll() calls. During testing, we saw that poll() wouldn't signal
     /// ep_out complete. But, the class could still call ep_read(), and
     /// it would return data. The usb-device test_class treats that as
     /// a failure, so we should keep behaviors consistent.
@@ -507,20 +509,20 @@
     /// driver.
     </span><span class="kw">pub fn </span>new&lt;P: <span class="kw">crate</span>::Peripherals, <span class="kw">const </span>SIZE: usize, <span class="kw">const </span>EP_COUNT: usize&gt;(
         peripherals: P,
-        buffer: <span class="kw-2">&amp;</span><span class="lifetime">&#39;static </span><span class="kw">crate</span>::buffer::EndpointMemory&lt;SIZE&gt;,
-        state: <span class="kw-2">&amp;</span><span class="lifetime">&#39;static </span><span class="kw">crate</span>::state::EndpointState&lt;EP_COUNT&gt;,
+        buffer: <span class="kw-2">&amp;</span><span class="lifetime">'static </span><span class="kw">crate</span>::buffer::EndpointMemory&lt;SIZE&gt;,
+        state: <span class="kw-2">&amp;</span><span class="lifetime">'static </span><span class="kw">crate</span>::state::EndpointState&lt;EP_COUNT&gt;,
     ) -&gt; <span class="self">Self </span>{
         <span class="comment">// Safety: taking static memory. Assumes that the provided
         // USB instance is a singleton, which is the only safe way for it
         // to exist.
         </span><span class="kw">let </span>ral::Instances { usb, usbphy: phy } = ral::instances(peripherals);
-        <span class="kw">let </span>ep_allocator = state.allocator().expect(<span class="string">&quot;Endpoint state already assigned&quot;</span>);
+        <span class="kw">let </span>ep_allocator = state.allocator().expect(<span class="string">"Endpoint state already assigned"</span>);
         Driver {
             usb,
             phy,
             buffer_allocator: buffer
                 .allocator()
-                .expect(<span class="string">&quot;Endpoint memory already assigned&quot;</span>),
+                .expect(<span class="string">"Endpoint memory already assigned"</span>),
             ep_allocator,
             ep_out: <span class="number">0</span>,
         }
@@ -540,7 +542,7 @@
 
         <span class="macro">ral::write_reg!</span>(ral::usb, <span class="self">self</span>.usb, USBCMD, RST: <span class="number">1</span>);
         <span class="kw">while </span><span class="macro">ral::read_reg!</span>(ral::usb, <span class="self">self</span>.usb, USBCMD, RST == <span class="number">1</span>) {}
-        <span class="comment">// ITC is reset to some non-immediate value. Use the &#39;immediate&#39; value by default.
+        <span class="comment">// ITC is reset to some non-immediate value. Use the 'immediate' value by default.
         // (Note: this also zeros all other USBCMD fields.)
         </span><span class="macro">ral::write_reg!</span>(ral::usb, <span class="self">self</span>.usb, USBCMD, ITC: <span class="number">0</span>);
 
@@ -564,10 +566,10 @@
     /// When ZLT is enabled, software does not need to send a zero-length packet
     /// to terminate a transfer where the number of bytes equals the max packet size.
     /// The hardware will send this zero-length packet itself. By default, ZLT is off,
-    /// and software is expected to send these packets. Enable this if you&#39;re confident
-    /// that your (third-party) device / USB class isn&#39;t already sending these packets.
+    /// and software is expected to send these packets. Enable this if you're confident
+    /// that your (third-party) device / USB class isn't already sending these packets.
     ///
-    /// This call does nothing if the endpoint isn&#39;t allocated.
+    /// This call does nothing if the endpoint isn't allocated.
     </span><span class="kw">pub fn </span>enable_zlt(<span class="kw-2">&amp;mut </span><span class="self">self</span>, ep_addr: EndpointAddress) {
         <span class="kw">if let </span><span class="prelude-val">Some</span>(ep) = <span class="self">self</span>.ep_allocator.endpoint_mut(ep_addr) {
             ep.enable_zlt();
@@ -591,10 +593,10 @@
     }
 
     <span class="kw">pub fn </span>set_address(<span class="kw-2">&amp;mut </span><span class="self">self</span>, address: u8) {
-        <span class="comment">// See the &quot;quirk&quot; note in the UsbBus impl. We&#39;re using USBADRA to let
+        <span class="comment">// See the "quirk" note in the UsbBus impl. We're using USBADRA to let
         // the hardware set the address before the status phase.
         </span><span class="macro">ral::write_reg!</span>(ral::usb, <span class="self">self</span>.usb, DEVICEADDR, USBADR: address <span class="kw">as </span>u32, USBADRA: <span class="number">1</span>);
-        <span class="macro">debug!</span>(<span class="string">&quot;ADDRESS {}&quot;</span>, address);
+        <span class="macro">debug!</span>(<span class="string">"ADDRESS {}"</span>, address);
     }
 
     <span class="kw">pub fn </span>attach(<span class="kw-2">&amp;mut </span><span class="self">self</span>) {
@@ -616,9 +618,9 @@
 
         <span class="macro">debug_assert!</span>(
             <span class="macro">ral::read_reg!</span>(ral::usb, <span class="self">self</span>.usb, PORTSC1, PR == <span class="number">1</span>),
-            <span class="string">&quot;Took too long to handle bus reset&quot;
+            <span class="string">"Took too long to handle bus reset"
         </span>);
-        <span class="macro">debug!</span>(<span class="string">&quot;RESET&quot;</span>);
+        <span class="macro">debug!</span>(<span class="string">"RESET"</span>);
 
         <span class="self">self</span>.initialize_endpoints();
     }
@@ -632,11 +634,11 @@
     ///
     /// # Panics
     ///
-    /// Panics if EP0 OUT isn&#39;t allocated.
+    /// Panics if EP0 OUT isn't allocated.
     </span><span class="kw">pub fn </span>ctrl0_read(<span class="kw-2">&amp;mut </span><span class="self">self</span>, buffer: <span class="kw-2">&amp;mut </span>[u8]) -&gt; <span class="prelude-ty">Result</span>&lt;usize, UsbError&gt; {
         <span class="kw">let </span>ctrl_out = <span class="self">self</span>.ep_allocator.endpoint_mut(ctrl_ep0_out()).unwrap();
         <span class="kw">if </span>ctrl_out.has_setup(<span class="kw-2">&amp;</span><span class="self">self</span>.usb) &amp;&amp; buffer.len() &gt;= <span class="number">8 </span>{
-            <span class="macro">debug!</span>(<span class="string">&quot;EP0 Out SETUP&quot;</span>);
+            <span class="macro">debug!</span>(<span class="string">"EP0 Out SETUP"</span>);
             <span class="kw">let </span>setup = ctrl_out.read_setup(<span class="kw-2">&amp;</span><span class="self">self</span>.usb);
             buffer[..<span class="number">8</span>].copy_from_slice(<span class="kw-2">&amp;</span>setup.to_le_bytes());
 
@@ -658,7 +660,7 @@
             ctrl_out.clear_nack(<span class="kw-2">&amp;</span><span class="self">self</span>.usb);
 
             <span class="kw">let </span>read = ctrl_out.read(buffer);
-            <span class="macro">debug!</span>(<span class="string">&quot;EP0 Out {}&quot;</span>, read);
+            <span class="macro">debug!</span>(<span class="string">"EP0 Out {}"</span>, read);
             <span class="kw">let </span>max_packet_len = ctrl_out.max_packet_len();
             ctrl_out.schedule_transfer(<span class="kw-2">&amp;</span><span class="self">self</span>.usb, max_packet_len);
 
@@ -672,10 +674,10 @@
     ///
     /// # Panics
     ///
-    /// Panics if EP0 IN isn&#39;t allocated, or if EP0 OUT isn&#39;t allocated.
+    /// Panics if EP0 IN isn't allocated, or if EP0 OUT isn't allocated.
     </span><span class="kw">pub fn </span>ctrl0_write(<span class="kw-2">&amp;mut </span><span class="self">self</span>, buffer: <span class="kw-2">&amp;</span>[u8]) -&gt; <span class="prelude-ty">Result</span>&lt;usize, UsbError&gt; {
         <span class="kw">let </span>ctrl_in = <span class="self">self</span>.ep_allocator.endpoint_mut(ctrl_ep0_in()).unwrap();
-        <span class="macro">debug!</span>(<span class="string">&quot;EP0 In {}&quot;</span>, buffer.len());
+        <span class="macro">debug!</span>(<span class="string">"EP0 In {}"</span>, buffer.len());
         ctrl_in.check_errors()<span class="question-mark">?</span>;
 
         <span class="kw">if </span>ctrl_in.is_primed(<span class="kw-2">&amp;</span><span class="self">self</span>.usb) {
@@ -702,10 +704,10 @@
     ///
     /// # Panics
     ///
-    /// Panics if the endpoint isn&#39;t allocated.
+    /// Panics if the endpoint isn't allocated.
     </span><span class="kw">pub fn </span>ep_read(<span class="kw-2">&amp;mut </span><span class="self">self</span>, buffer: <span class="kw-2">&amp;mut </span>[u8], addr: EndpointAddress) -&gt; <span class="prelude-ty">Result</span>&lt;usize, UsbError&gt; {
         <span class="kw">let </span>ep = <span class="self">self</span>.ep_allocator.endpoint_mut(addr).unwrap();
-        <span class="macro">debug!</span>(<span class="string">&quot;EP{} Out&quot;</span>, ep.address().index());
+        <span class="macro">debug!</span>(<span class="string">"EP{} Out"</span>, ep.address().index());
         ep.check_errors()<span class="question-mark">?</span>;
 
         <span class="kw">if </span>ep.is_primed(<span class="kw-2">&amp;</span><span class="self">self</span>.usb) || (<span class="self">self</span>.ep_out &amp; (<span class="number">1 </span>&lt;&lt; ep.address().index()) == <span class="number">0</span>) {
@@ -727,7 +729,7 @@
     ///
     /// # Panics
     ///
-    /// Panics if the endpoint isn&#39;t allocated.
+    /// Panics if the endpoint isn't allocated.
     </span><span class="kw">pub fn </span>ep_write(<span class="kw-2">&amp;mut </span><span class="self">self</span>, buffer: <span class="kw-2">&amp;</span>[u8], addr: EndpointAddress) -&gt; <span class="prelude-ty">Result</span>&lt;usize, UsbError&gt; {
         <span class="kw">let </span>ep = <span class="self">self</span>.ep_allocator.endpoint_mut(addr).unwrap();
         ep.check_errors()<span class="question-mark">?</span>;
@@ -748,12 +750,12 @@
     ///
     /// # Panics
     ///
-    /// Panics if the endpoint isn&#39;t allocated
+    /// Panics if the endpoint isn't allocated
     </span><span class="kw">pub fn </span>ep_stall(<span class="kw-2">&amp;mut </span><span class="self">self</span>, stall: bool, addr: EndpointAddress) {
         <span class="kw">let </span>ep = <span class="self">self</span>.ep_allocator.endpoint_mut(addr).unwrap();
         ep.set_stalled(<span class="kw-2">&amp;</span><span class="self">self</span>.usb, stall);
 
-        <span class="comment">// Re-prime any OUT endpoints if we&#39;re unstalling
+        <span class="comment">// Re-prime any OUT endpoints if we're unstalling
         </span><span class="kw">if </span>!stall &amp;&amp; addr.direction() == UsbDirection::Out &amp;&amp; !ep.is_primed(<span class="kw-2">&amp;</span><span class="self">self</span>.usb) {
             <span class="kw">let </span>max_packet_len = ep.max_packet_len();
             ep.schedule_transfer(<span class="kw-2">&amp;</span><span class="self">self</span>.usb, max_packet_len);
@@ -764,7 +766,7 @@
     ///
     /// # Panics
     ///
-    /// Panics if the endpoint isn&#39;t allocated
+    /// Panics if the endpoint isn't allocated
     </span><span class="kw">pub fn </span>is_ep_stalled(<span class="kw-2">&amp;</span><span class="self">self</span>, addr: EndpointAddress) -&gt; bool {
         <span class="self">self</span>.ep_allocator
             .endpoint(addr)
@@ -792,7 +794,7 @@
             .allocate_endpoint(addr, buffer, kind)
             .unwrap();
 
-        <span class="macro">debug!</span>(<span class="string">&quot;ALLOC EP{} {:?} {:?}&quot;</span>, addr.index(), addr.direction(), kind);
+        <span class="macro">debug!</span>(<span class="string">"ALLOC EP{} {:?} {:?}"</span>, addr.index(), addr.direction(), kind);
     }
 
     <span class="doccomment">/// Invoked when the device transitions into the configured state
@@ -841,7 +843,7 @@
             <span class="macro">ral::write_reg!</span>(ral::usb, <span class="self">self</span>.usb, USBSTS, UI: <span class="number">1</span>);
 
             <span class="macro">trace!</span>(
-                <span class="string">&quot;{:X} {:X}&quot;</span>,
+                <span class="string">"{:X} {:X}"</span>,
                 <span class="macro">ral::read_reg!</span>(ral::usb, <span class="self">self</span>.usb, ENDPTSETUPSTAT),
                 <span class="macro">ral::read_reg!</span>(ral::usb, <span class="self">self</span>.usb, ENDPTCOMPLETE)
             );
