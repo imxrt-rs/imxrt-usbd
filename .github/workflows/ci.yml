@@ -35,7 +35,7 @@ jobs:
     - uses: actions-rs/clippy-check@v1
       with:
         token: ${{ secrets.GITHUB_TOKEN }}
-        args: --verbose --features __log --target thumbv7em-none-eabihf -- -D warnings
+        args: --verbose --all-features --target thumbv7em-none-eabihf -- -D warnings
         name: Lint the library
 
   # Run unit and documentation tests for a chip

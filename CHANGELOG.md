@@ -7,6 +7,8 @@ Changelog
 **BREAKING** Update to `usb-device` 0.3. By adopting this release, you're
 required to use `usb-device` 0.3 and its compatible packages.
 
+Add feature `defmt-03` to enable internal logging of the USB device stack.
+
 [0.2.2] 2023-09-15
 ------------------
 

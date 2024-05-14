@@ -15,6 +15,10 @@
 //! clocks.
 //!
 //! [`usb-device`]: https://crates.io/crates/usb-device
+//!
+//! # Debugging features
+//!
+//! Enable the `defmt-03` feature to activate internal logging using defmt (version 0.3).
 
 #![no_std]
 #![warn(unsafe_op_in_unsafe_fn)]

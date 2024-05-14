@@ -353,7 +353,7 @@ impl UsbBus for BusAdapter {
             }
             .map_err(|status| {
                 warn!(
-                    "EP{} {:?} STATUS {:?}",
+                    "EP{=usize} {} STATUS {}",
                     ep_addr.index(),
                     ep_addr.direction(),
                     status
@@ -380,7 +380,7 @@ impl UsbBus for BusAdapter {
             }
             .map_err(|status| {
                 warn!(
-                    "EP{} {:?} STATUS {:?}",
+                    "EP{=usize} {} STATUS {}",
                     ep_addr.index(),
                     ep_addr.direction(),
                     status

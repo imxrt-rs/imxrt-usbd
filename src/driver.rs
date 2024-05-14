@@ -161,7 +161,7 @@ impl Driver {
         // See the "quirk" note in the UsbBus impl. We're using USBADRA to let
         // the hardware set the address before the status phase.
         ral::write_reg!(ral::usb, self.usb, DEVICEADDR, USBADR: address as u32, USBADRA: 1);
-        debug!("ADDRESS {}", address);
+        debug!("ADDRESS {=u8}", address);
     }
 
     pub fn attach(&mut self) {
@@ -225,7 +225,7 @@ impl Driver {
             ctrl_out.clear_nack(&self.usb);
 
             let read = ctrl_out.read(buffer);
-            debug!("EP0 Out {}", read);
+            debug!("EP0 Out {=usize}", read);
             let max_packet_len = ctrl_out.max_packet_len();
             ctrl_out.schedule_transfer(&self.usb, max_packet_len);
 
@@ -242,7 +242,7 @@ impl Driver {
     /// Panics if EP0 IN isn't allocated, or if EP0 OUT isn't allocated.
     pub fn ctrl0_write(&mut self, buffer: &[u8]) -> Result<usize, UsbError> {
         let ctrl_in = self.ep_allocator.endpoint_mut(ctrl_ep0_in()).unwrap();
-        debug!("EP0 In {}", buffer.len());
+        debug!("EP0 In {=usize}", buffer.len());
         ctrl_in.check_errors()?;
 
         if ctrl_in.is_primed(&self.usb) {
@@ -272,7 +272,7 @@ impl Driver {
     /// Panics if the endpoint isn't allocated.
     pub fn ep_read(&mut self, buffer: &mut [u8], addr: EndpointAddress) -> Result<usize, UsbError> {
         let ep = self.ep_allocator.endpoint_mut(addr).unwrap();
-        debug!("EP{} Out", ep.address().index());
+        debug!("EP{=usize} Out", ep.address().index());
         ep.check_errors()?;
 
         if ep.is_primed(&self.usb) || (self.ep_out & (1 << ep.address().index()) == 0) {
@@ -359,7 +359,12 @@ impl Driver {
             .allocate_endpoint(addr, buffer, kind)
             .unwrap();
 
-        debug!("ALLOC EP{} {:?} {:?}", addr.index(), addr.direction(), kind);
+        debug!(
+            "ALLOC EP{=usize} {} {}",
+            addr.index(),
+            addr.direction(),
+            kind
+        );
     }
 
     /// Invoked when the device transitions into the configured state
@@ -408,7 +413,7 @@ impl Driver {
             ral::write_reg!(ral::usb, self.usb, USBSTS, UI: 1);
 
             trace!(
-                "{:X} {:X}",
+                "ENDPTSETUPSTAT: {=u32:#010X}  ENDPTCOMPLETE: {=u32:#010X}",
                 ral::read_reg!(ral::usb, self.usb, ENDPTSETUPSTAT),
                 ral::read_reg!(ral::usb, self.usb, ENDPTCOMPLETE)
             );

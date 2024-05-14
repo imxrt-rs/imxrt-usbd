@@ -22,13 +22,13 @@ cortex-m = "0.7"
 ral-registers = "0.1"
 usb-device = "0.3"
 
-[dependencies.log]
+[dependencies.defmt-03]
+package = "defmt"
+version = "0.3"
 optional = true
-version = "0.4"
 
 [features]
- # Internal debugging feature; do not use
-__log = ["log"]
+"defmt-03" = ["dep:defmt-03", "usb-device/defmt"]
 
 [package.metadata.docs.rs]
 default-target = "thumbv7em-none-eabihf"
