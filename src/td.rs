@@ -108,7 +108,7 @@ impl Td {
 }
 
 bitflags::bitflags! {
-    pub struct Status : u32 {
+    pub(crate) struct Status : u32 {
         const ACTIVE = TOKEN::STATUS::RW::ACTIVE;
         const HALTED = TOKEN::STATUS::RW::HALTED;
         const DATA_BUFFER_ERROR = TOKEN::STATUS::RW::DATA_BUFFER_ERROR;
