@@ -96,6 +96,8 @@ mod CAPABILITIES {
     }
 }
 
+const _: [(); 1] = [(); (core::mem::size_of::<Qh>() <= 64) as usize];
+
 #[cfg(test)]
 mod test {
     use super::Qh;
@@ -122,5 +124,3 @@ mod test {
         assert_eq!(qh.CAPABILITIES.read(), 1 << 29);
     }
 }
-
-const _: [(); 1] = [(); (core::mem::size_of::<Qh>() <= 64) as usize];

@@ -27,6 +27,12 @@ pub struct EndpointMemory<const SIZE: usize> {
     taken: AtomicBool,
 }
 
+impl<const SIZE: usize> Default for EndpointMemory<SIZE> {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl<const SIZE: usize> EndpointMemory<SIZE> {
     /// Allocate endpoint memory.
     pub const fn new() -> Self {
