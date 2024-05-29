@@ -116,6 +116,12 @@ impl EndpointState<MAX_ENDPOINTS> {
     }
 }
 
+impl<const COUNT: usize> Default for EndpointState<COUNT> {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl<const COUNT: usize> EndpointState<COUNT> {
     /// Allocate state for `COUNT` endpoints.
     pub const fn new() -> Self {
