@@ -12,19 +12,19 @@ jobs:
   format:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v4
     - run: rustup component add rustfmt
     - name: Check library formatting
       uses: actions-rs/cargo@v1
       with:
         command: fmt
         args: --verbose --all -- --check
-  
+
   # For each chip, build and lint the main library
   clippy:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v4
     - uses: actions-rs/toolchain@v1
       with:
         toolchain: stable
@@ -42,12 +42,34 @@ jobs:
   test:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v4
     - name: Run unit and documentation tests
       uses: actions-rs/cargo@v1
       with:
         command: test
         args: --verbose
+
+  # Check if dependency versions in Cargo.toml are updated correctly
+  min-versions:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install nightly toolchain
+        uses: dtolnay/rust-toolchain@nightly
+        with:
+          targets: thumbv7em-none-eabihf
+
+      - name: Install cargo-hack
+        uses: taiki-e/install-action@cargo-hack
+      - name: Install cargo-minimal-versions
+        uses: taiki-e/install-action@cargo-minimal-versions
+
+      - name: Check with minimal versions
+        run: cargo minimal-versions check
+
+      - name: Run tests with minimal versions
+        run: cargo minimal-versions test
 
   # Make sure documentation builds, and doclinks are valid
   doc:
@@ -55,7 +77,7 @@ jobs:
       RUSTDOCFLAGS: -D warnings
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v4
     - name: Check documentation and doclinks
       uses: actions-rs/cargo@v1
       with:
