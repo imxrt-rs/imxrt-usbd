@@ -1,0 +1,7 @@
+[package]
+name = "i-need-min-cm"
+version = "0.1.0"
+
+[dependencies]
+cortex-m = "=0.7.0"
+imxrt-usbd = { path = ".." }

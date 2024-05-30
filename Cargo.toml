@@ -30,6 +30,9 @@ optional = true
 [features]
 "defmt-03" = ["dep:defmt-03", "usb-device/defmt"]
 
+[workspace]
+exclude = ["i-need-min-cm"]
+
 [package.metadata.docs.rs]
 default-target = "thumbv7em-none-eabihf"
 

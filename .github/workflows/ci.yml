@@ -20,6 +20,23 @@ jobs:
         command: fmt
         args: --verbose --all -- --check
 
+  cortex-m-compat:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    - uses: actions-rs/toolchain@v1
+      with:
+        toolchain: stable
+        components: clippy
+        target: thumbv7em-none-eabihf
+        override: true
+        profile: minimal
+    - name: Check cortex-m compatibility
+      uses: actions-rs/cargo@v1
+      with:
+        command: build
+        args: --manifest-path i-need-min-cm/Cargo.toml
+
   # For each chip, build and lint the main library
   clippy:
     runs-on: ubuntu-latest
