@@ -55,10 +55,13 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Install nightly toolchain
-        uses: dtolnay/rust-toolchain@nightly
+      - name: Install stable toolchain
+        uses: dtolnay/rust-toolchain@stable
         with:
           targets: thumbv7em-none-eabihf
+
+      - name: Install nightly toolchain
+        uses: dtolnay/rust-toolchain@nightly
 
       - name: Install cargo-hack
         uses: taiki-e/install-action@cargo-hack
@@ -66,10 +69,10 @@ jobs:
         uses: taiki-e/install-action@cargo-minimal-versions
 
       - name: Check with minimal versions
-        run: cargo minimal-versions check --all-features
+        run: cargo +stable minimal-versions check --all-features
 
       - name: Run tests with minimal versions
-        run: cargo minimal-versions test
+        run: cargo +stable minimal-versions test
 
   # Make sure documentation builds, and doclinks are valid
   doc:
