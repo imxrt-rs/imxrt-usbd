@@ -12,19 +12,19 @@ jobs:
   format:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v4
     - run: rustup component add rustfmt
     - name: Check library formatting
       uses: actions-rs/cargo@v1
       with:
         command: fmt
         args: --verbose --all -- --check
-  
+
   # For each chip, build and lint the main library
   clippy:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v4
     - uses: actions-rs/toolchain@v1
       with:
         toolchain: stable
@@ -42,12 +42,44 @@ jobs:
   test:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v4
     - name: Run unit and documentation tests
       uses: actions-rs/cargo@v1
       with:
         command: test
         args: --verbose
+
+  # Check if project can be built with MSRV and minimal dependency versions.
+  #
+  # To find out the current MSRV, remove the `rust-version` entry from `Cargo.toml` and run:
+  # cargo minimal-versions msrv --target=thumbv7em-none-eabihf --all-features
+  msrv-and-min-versions:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install nightly toolchain
+        uses: dtolnay/rust-toolchain@nightly
+        with:
+          tool: cargo-hack, cargo-minimal-versions, cargo-binstall
+
+      - name: Install cargo-msrv
+        run: cargo binstall --version 0.16.0-beta.22 --no-confirm cargo-msrv
+
+      - name: Determine MSRV
+        run: echo "MSRV=$(cargo msrv show --output-format=minimal)" >> $GITHUB_ENV
+
+      - name: Show MSRV
+        run: echo $MSRV
+
+      - name: Install MSRV Rust version
+        run: rustup toolchain install $MSRV --target thumbv7em-none-eabihf
+
+      - name: Check with minimal versions
+        run: cargo +${MSRV} minimal-versions check --target thumbv7em-none-eabihf --all-features
+
+      - name: Run tests with minimal versions
+        run: cargo +${MSRV} minimal-versions test
 
   # Make sure documentation builds, and doclinks are valid
   doc:
@@ -55,7 +87,7 @@ jobs:
       RUSTDOCFLAGS: -D warnings
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v4
     - name: Check documentation and doclinks
       uses: actions-rs/cargo@v1
       with:

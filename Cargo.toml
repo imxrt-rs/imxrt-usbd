@@ -4,6 +4,7 @@ version = "0.3.0"
 authors = ["Ian McIntyre <ianpmcintyre@gmail.com>"]
 repository = "https://github.com/imxrt-rs/imxrt-usbd"
 edition.workspace = true
+rust-version.workspace = true
 license = "MIT OR Apache-2.0"
 keywords = ["imxrt", "nxp", "embedded", "usb"]
 categories = ["embedded", "no-std"]
@@ -22,6 +23,10 @@ cortex-m = "0.7"
 ral-registers = "0.1"
 usb-device = "0.3"
 
+# Not an actual dependency, but required for min-versions check
+# TODO: Check again at a later time and remove if no longer necessary
+bare-metal = ">= 0.2.4"
+
 [dependencies.defmt-03]
 package = "defmt"
 version = "0.3"
@@ -30,11 +35,15 @@ optional = true
 [features]
 "defmt-03" = ["dep:defmt-03", "usb-device/defmt"]
 
+[dev-dependencies]
+usb-device = "0.3.1"
+
 [package.metadata.docs.rs]
 default-target = "thumbv7em-none-eabihf"
 
 [workspace.package]
 edition = "2021"
+rust-version = "1.74"
 
 [profile.release]
 overflow-checks = true
