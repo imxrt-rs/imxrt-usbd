@@ -4,6 +4,7 @@ version = "0.3.0"
 authors = ["Ian McIntyre <ianpmcintyre@gmail.com>"]
 repository = "https://github.com/imxrt-rs/imxrt-usbd"
 edition.workspace = true
+rust-version.workspace = true
 license = "MIT OR Apache-2.0"
 keywords = ["imxrt", "nxp", "embedded", "usb"]
 categories = ["embedded", "no-std"]
@@ -35,6 +36,7 @@ default-target = "thumbv7em-none-eabihf"
 
 [workspace.package]
 edition = "2021"
+rust-version = "1.74"
 
 [profile.release]
 overflow-checks = true

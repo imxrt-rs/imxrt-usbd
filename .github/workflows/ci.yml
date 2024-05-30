@@ -19,7 +19,7 @@ jobs:
       with:
         command: fmt
         args: --verbose --all -- --check
-  
+
   # For each chip, build and lint the main library
   clippy:
     runs-on: ubuntu-latest
@@ -48,6 +48,29 @@ jobs:
       with:
         command: test
         args: --verbose
+
+  # Check if MSRV (Minimal Supported Rust Version) in Cargo.toml can compile the project
+  msrv:
+    name: Minimum Supported Rust Version
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout sources
+        uses: actions/checkout@v4
+
+      - name: Install cargo-binstall
+        uses: taiki-e/install-action@v2
+        with:
+          tool: cargo-binstall
+
+      - name: Install cargo-msrv
+        run: cargo binstall --version 0.16.0-beta.20 --no-confirm cargo-msrv
+
+      #- uses: Swatinem/rust-cache@v1
+
+      - name: Check MSRV
+        # Enable this to automatically determine what the MSRV should be
+        #run: cargo msrv --output-format json --target=thumbv7em-none-eabihf
+        run: cargo msrv --output-format json --target=thumbv7em-none-eabihf verify
 
   # Make sure documentation builds, and doclinks are valid
   doc:
