@@ -69,8 +69,8 @@ jobs:
 
       - name: Check MSRV
         # Enable this to automatically determine what the MSRV should be
-        #run: cargo msrv --output-format json --target=thumbv7em-none-eabihf
-        run: cargo msrv --output-format json --target=thumbv7em-none-eabihf verify
+        #run: cargo msrv --output-format json --target=thumbv7em-none-eabihf --all-features
+        run: cargo msrv --output-format json --target=thumbv7em-none-eabihf --all-features verify
 
   # Make sure documentation builds, and doclinks are valid
   doc:
