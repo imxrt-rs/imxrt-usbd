@@ -11,19 +11,21 @@
 //! adapter documentation for more information.
 //!
 //! ```no_run
-//! use imxrt_usbd::BusAdapter;
+//! use imxrt_ral as ral;
+//! use imxrt_usbd::{BusAdapter, Instances};
 //! use imxrt_usbd::gpt;
 //!
-//! # struct Ps;
-//! # unsafe impl imxrt_usbd::Peripherals for Ps { fn usb(&self) -> *const () { panic!() } fn usbphy(&self) -> *const () { panic!() } }
 //! # static EP_MEMORY: imxrt_usbd::EndpointMemory<1024> = imxrt_usbd::EndpointMemory::new();
 //! # static EP_STATE: imxrt_usbd::EndpointState = imxrt_usbd::EndpointState::max_endpoints();
 //!
-//! # let my_usb_peripherals = // Your Peripherals instance...
-//! #   Ps;
+//! # let instances = Instances {
+//! #     usb: unsafe { ral::usb::USB::instance() },
+//! #     usbnc: unsafe { ral::usbnc::USBNC::instance() },
+//! #     usbphy: unsafe { ral::usbphy::USBPHY::instance() },
+//! # };
 //! let bus_adapter = BusAdapter::new(
 //!     // ...
-//! #    my_usb_peripherals,
+//! #    instances,
 //! #    &EP_MEMORY,
 //! #    &EP_STATE,
 //! );
@@ -98,7 +100,7 @@ pub enum Instance {
 /// See the module-level documentation for an example.
 pub struct Gpt<'a> {
     /// Borrow of USB registers from a peripheral
-    usb: &'a mut ral::usb::Instance,
+    usb: &'a mut ral::AnyUsbInstance,
     /// GPT instance
     gpt: Instance,
 }
@@ -109,11 +111,9 @@ impl<'a> Gpt<'a> {
     /// *Why take a mutable reference?* The mutable reference prevents you from
     /// creating two GPTs that alias the same GPT instance.
     ///
-    /// *Why not `pub`?* The `ral::usb::Instance` isn't compatible with the
-    /// `imxrt_ral::usb::Instance` type, since we're duplicating the RAL module
-    /// in our package. Since that type isn't exposed outside of this crate, no
-    /// one could create this `Gpt`, anyway.
-    pub(crate) fn new(usb: &'a mut ral::usb::Instance, gpt: Instance) -> Self {
+    /// *Why not `pub`?* The `ral::AnyUsbInstance` type has an erased instance
+    /// number and isn't exposed outside of this crate.
+    pub(crate) fn new(usb: &'a mut ral::AnyUsbInstance, gpt: Instance) -> Self {
         Self { usb, gpt }
     }
 

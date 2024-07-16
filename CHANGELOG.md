@@ -4,6 +4,10 @@ Changelog
 [Unreleased]
 ------------
 
+The package now requires imxrt-ral to represent its register access layer.
+The `Peripherals` trait is gone, and users are expected to use imxrt-ral
+peripheral instances.
+
 [0.3.0] 2024-05-29
 ------------------
 

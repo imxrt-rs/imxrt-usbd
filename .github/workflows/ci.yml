@@ -35,7 +35,7 @@ jobs:
     - uses: actions-rs/clippy-check@v1
       with:
         token: ${{ secrets.GITHUB_TOKEN }}
-        args: --verbose --all-features --target thumbv7em-none-eabihf -- -D warnings
+        args: --verbose --all-features --target thumbv7em-none-eabihf --features=imxrt-ral/imxrt1011 -- -D warnings
         name: Lint the library
 
   # Run unit and documentation tests for a chip
@@ -47,7 +47,7 @@ jobs:
       uses: actions-rs/cargo@v1
       with:
         command: test
-        args: --verbose
+        args: --all-features --verbose
 
   # Make sure documentation builds, and doclinks are valid
   doc:
@@ -60,3 +60,4 @@ jobs:
       uses: actions-rs/cargo@v1
       with:
         command: rustdoc
+        args: --all-features --features=imxrt-ral/imxrt1011

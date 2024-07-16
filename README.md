@@ -12,7 +12,8 @@ imxrt-usbd
 
 A USB driver for i.MX RT processors. `imxrt-usbd` provides a [`usb-device`]
 USB bus implementation, allowing you to add USB device features to your
-embedded Rust program. It should support all i.MX RT microcontrollers.
+embedded Rust program. It should support all i.MX RT microcontrollers
+supported by [`imxrt-ral`].
 
 [`imxrt-ral`]: https://crates.io/crates/imxrt-ral
 [main-api-docs]: https://imxrt-rs.github.io/imxrt-usbd/
@@ -21,6 +22,11 @@ embedded Rust program. It should support all i.MX RT microcontrollers.
 See the API docs for usage, features, and examples. To try examples on actual
 hardware, see the [imxrt-hal examples](https://github.com/imxrt-rs/imxrt-hal).
 
+To build this package, make sure an imxrt-ral feature is enabled. For example,
+
+```
+cargo build --features=imxrt-ral/imxrt1011
+```
 
 License
 -------

@@ -136,7 +136,7 @@ impl<const COUNT: usize> EndpointState<COUNT> {
     /// Acquire the allocator.
     ///
     /// Returns `None` if the allocator was already taken.
-    pub(crate) fn allocator(&self) -> Option<EndpointAllocator> {
+    pub(crate) fn allocator(&self) -> Option<EndpointAllocator<'_>> {
         const ALLOCATOR_TAKEN: u32 = 1 << 31;
         let alloc_mask = self.alloc_mask.fetch_or(ALLOCATOR_TAKEN, Ordering::SeqCst);
         (alloc_mask & ALLOCATOR_TAKEN == 0).then(|| EndpointAllocator {
@@ -201,6 +201,7 @@ impl EndpointAllocator<'_> {
     ///
     /// This can only be called from a method that takes a mutable receiver.
     /// Otherwise, you could reach the same mutable endpoint more than once.
+    #[expect(clippy::mut_from_ref, reason = "Only called while &mut available")]
     unsafe fn endpoint_mut_inner(&self, addr: EndpointAddress) -> Option<&mut Endpoint> {
         let index = index(addr);
         self.check_allocated(index)?;

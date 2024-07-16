@@ -46,8 +46,8 @@ pub enum Speed {
 /// - call [`initialize()`](Driver::initialize) once
 /// - supply endpoint memory with [`set_endpoint_memory()`](USB::set_endpoint_memory)
 pub struct Driver {
-    usb: ral::usb::Instance,
-    phy: ral::usbphy::Instance,
+    usb: ral::AnyUsbInstance,
+    phy: ral::AnyUsbphyInstance,
     buffer_allocator: buffer::Allocator,
     ep_allocator: crate::state::EndpointAllocator<'static>,
     /// Track which read endpoints have completed, so as to not
@@ -72,15 +72,12 @@ impl Driver {
     ///
     /// Panics if the endpoint bufer or state has already been assigned to another USB
     /// driver.
-    pub fn new<P: crate::Peripherals, const SIZE: usize, const EP_COUNT: usize>(
-        peripherals: P,
+    pub fn new<const N: u8, const SIZE: usize, const EP_COUNT: usize>(
+        instances: crate::Instances<N>,
         buffer: &'static crate::buffer::EndpointMemory<SIZE>,
         state: &'static crate::state::EndpointState<EP_COUNT>,
     ) -> Self {
-        // Safety: taking static memory. Assumes that the provided
-        // USB instance is a singleton, which is the only safe way for it
-        // to exist.
-        let ral::Instances { usb, usbphy: phy } = ral::instances(peripherals);
+        let ral::ErasedInstances { usb, usbphy: phy } = ral::erase_instances(instances);
         let ep_allocator = state.allocator().expect("Endpoint state already assigned");
         Driver {
             usb,

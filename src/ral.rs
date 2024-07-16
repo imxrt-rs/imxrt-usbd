@@ -1,17 +1,57 @@
-//! imxrt-ral-like API for USB access
+//! Re-exports and helpers for imxrt-ral register access.
 
-pub mod usb;
-pub mod usbphy;
+pub use imxrt_ral::{modify_reg, read_reg, usb, usbphy, write_reg};
 
-pub use ral_registers::{modify_reg, read_reg, write_reg, RORegister, RWRegister};
+/// The "don't care" peripheral instance number.
+const ANY_INSTANCE: u8 = u8::MAX;
 
-use crate::Peripherals;
+/// A USB instance without its compile-time instance number.
+pub type AnyUsbInstance = usb::Instance<{ ANY_INSTANCE }>;
+
+/// A USBPHY instance without its compile-time instance number.
+pub type AnyUsbphyInstance = usbphy::Instance<{ ANY_INSTANCE }>;
+
+/// Discard the compile-time instance number from an imxrt-ral instance.
+///
+/// # Safety
+///
+/// A properly-constructed instance points to static MMIO and is
+/// assumed to "own" that MMIO space. We assume static lifetime and
+/// take ownership.
+fn into_any<T, const N: u8>(
+    inst: imxrt_ral::Instance<T, N>,
+) -> imxrt_ral::Instance<T, { ANY_INSTANCE }> {
+    unsafe {
+        let rb: *const T = &*inst;
+        imxrt_ral::Instance::new(rb)
+    }
+}
+
+pub(crate) struct ErasedInstances {
+    pub usb: AnyUsbInstance,
+    pub usbphy: AnyUsbphyInstance,
+}
+
+/// Convert typed imxrt-ral instances into type-erased instances.
+///
+/// The USBNC instance is consumed but not used by the driver internally.
+pub(crate) fn erase_instances<const N: u8>(instances: super::Instances<N>) -> ErasedInstances {
+    let super::Instances {
+        usb,
+        usbnc: _,
+        usbphy,
+    } = instances;
+    ErasedInstances {
+        usb: into_any(usb),
+        usbphy: into_any(usbphy),
+    }
+}
 
 /// The RAL API requires us to treat all endpoint control registers as unique.
 /// We can make it a little easier with this function, the `EndptCtrl` type,
 /// and the helper module.
 pub mod endpoint_control {
-    use crate::ral;
+    use imxrt_ral as ral;
 
     #[allow(non_snake_case)]
     pub struct EndptCtrl<'a> {
@@ -20,38 +60,16 @@ pub mod endpoint_control {
 
     #[allow(non_snake_case)]
     pub mod ENDPTCTRL {
-        pub use super::ral::usb::ENDPTCTRL1::*;
+        pub use imxrt_ral::usb::ENDPTCTRL::*;
     }
 
-    pub fn register(usb: &super::usb::Instance, endpoint: usize) -> EndptCtrl {
+    pub fn register(usb: &super::AnyUsbInstance, endpoint: usize) -> EndptCtrl<'_> {
         EndptCtrl {
-            ENDPTCTRL: match endpoint {
-                0 => &usb.ENDPTCTRL0,
-                1 => &usb.ENDPTCTRL1,
-                2 => &usb.ENDPTCTRL2,
-                3 => &usb.ENDPTCTRL3,
-                4 => &usb.ENDPTCTRL4,
-                5 => &usb.ENDPTCTRL5,
-                6 => &usb.ENDPTCTRL6,
-                7 => &usb.ENDPTCTRL7,
-                _ => unreachable!("ENDPTCTRL register {} doesn't exist", endpoint),
+            ENDPTCTRL: if endpoint == 0 {
+                &usb.ENDPTCTRL0
+            } else {
+                &usb.ENDPTCTRL[endpoint - 1]
             },
         }
     }
-}
-
-pub struct Instances {
-    pub usb: usb::Instance,
-    pub usbphy: usbphy::Instance,
-}
-
-/// Converts the core registers into a USB register block instance
-pub fn instances<P: Peripherals>(peripherals: P) -> Instances {
-    let usb = usb::Instance {
-        addr: peripherals.usb().cast(),
-    };
-    let usbphy = usbphy::Instance {
-        addr: peripherals.usbphy().cast(),
-    };
-    Instances { usb, usbphy }
 }

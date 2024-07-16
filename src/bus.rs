@@ -44,19 +44,21 @@ pub use super::driver::Speed;
 /// your USB class' documentation for details. This example also skips the clock initialization.
 ///
 /// ```no_run
-/// use imxrt_usbd::BusAdapter;
+/// use imxrt_ral as ral;
+/// use imxrt_usbd::{BusAdapter, Instances};
 ///
-/// # struct Ps;
-/// # unsafe impl imxrt_usbd::Peripherals for Ps { fn usb(&self) -> *const () { panic!() } fn usbphy(&self) -> *const () { panic!() }}
 /// static EP_MEMORY: imxrt_usbd::EndpointMemory<1024> = imxrt_usbd::EndpointMemory::new();
 /// static EP_STATE: imxrt_usbd::EndpointState = imxrt_usbd::EndpointState::max_endpoints();
 ///
 /// // TODO initialize clocks...
 ///
-/// let my_usb_peripherals = // Your Peripherals instance...
-/// #   Ps;
+/// let instances = Instances {
+///     usb: unsafe { ral::usb::USB::instance() },
+///     usbnc: unsafe { ral::usbnc::USBNC::instance() },
+///     usbphy: unsafe { ral::usbphy::USBPHY::instance() },
+/// };
 /// let bus_adapter = BusAdapter::new(
-///     my_usb_peripherals,
+///     instances,
 ///     &EP_MEMORY,
 ///     &EP_STATE,
 /// );
@@ -121,12 +123,12 @@ impl BusAdapter {
     /// # Panics
     ///
     /// Panics if `buffer` or `state` has already been associated with another USB bus.
-    pub fn new<P: crate::Peripherals, const SIZE: usize, const EP_COUNT: usize>(
-        peripherals: P,
+    pub fn new<const N: u8, const SIZE: usize, const EP_COUNT: usize>(
+        instances: crate::Instances<N>,
         buffer: &'static crate::buffer::EndpointMemory<SIZE>,
         state: &'static crate::state::EndpointState<EP_COUNT>,
     ) -> Self {
-        Self::with_speed(peripherals, buffer, state, Speed::High)
+        Self::with_speed(instances, buffer, state, Speed::High)
     }
 
     /// Create a USB bus adapter with the given speed
@@ -134,8 +136,7 @@ impl BusAdapter {
     /// Specify [`Speed::LowFull`] to throttle the USB data rate.
     ///
     /// When this function returns, the `BusAdapter` has initialized the PHY and USB core peripherals.
-    /// The adapter expects to own these two peripherals, along with the other peripherals required
-    /// by the [`Peripherals`](crate::Peripherals) safety contract.
+    /// The adapter takes ownership of these two peripherals for the lifetime of the driver.
     ///
     /// You must also provide a region of memory that will used for endpoint I/O. The
     /// memory region will be partitioned for the endpoints, based on their requirements.
@@ -143,13 +144,13 @@ impl BusAdapter {
     /// # Panics
     ///
     /// Panics if `buffer` or `state` has already been associated with another USB bus.
-    pub fn with_speed<P: crate::Peripherals, const SIZE: usize, const EP_COUNT: usize>(
-        peripherals: P,
+    pub fn with_speed<const N: u8, const SIZE: usize, const EP_COUNT: usize>(
+        instances: crate::Instances<N>,
         buffer: &'static crate::buffer::EndpointMemory<SIZE>,
         state: &'static crate::state::EndpointState<EP_COUNT>,
         speed: Speed,
     ) -> Self {
-        Self::init(peripherals, buffer, state, speed, None)
+        Self::init(instances, buffer, state, speed, None)
     }
 
     /// Create a USB bus adapter that never takes a critical section
@@ -167,17 +168,17 @@ impl BusAdapter {
     ///
     /// Panics if `buffer` or `state` has already been associated with another USB bus.
     pub unsafe fn without_critical_sections<
-        P: crate::Peripherals,
+        const N: u8,
         const SIZE: usize,
         const EP_COUNT: usize,
     >(
-        peripherals: P,
+        instances: crate::Instances<N>,
         buffer: &'static crate::buffer::EndpointMemory<SIZE>,
         state: &'static crate::state::EndpointState<EP_COUNT>,
         speed: Speed,
     ) -> Self {
         Self::init(
-            peripherals,
+            instances,
             buffer,
             state,
             speed,
@@ -187,14 +188,14 @@ impl BusAdapter {
         )
     }
 
-    fn init<P: crate::Peripherals, const SIZE: usize, const EP_COUNT: usize>(
-        peripherals: P,
+    fn init<const N: u8, const SIZE: usize, const EP_COUNT: usize>(
+        instances: crate::Instances<N>,
         buffer: &'static crate::buffer::EndpointMemory<SIZE>,
         state: &'static crate::state::EndpointState<EP_COUNT>,
         speed: Speed,
         cs: Option<cortex_m::interrupt::CriticalSection>,
     ) -> Self {
-        let mut usb = Driver::new(peripherals, buffer, state);
+        let mut usb = Driver::new(instances, buffer, state);
 
         usb.initialize(speed);
 
@@ -344,21 +345,18 @@ impl UsbBus for BusAdapter {
                 return Err(usb_device::UsbError::InvalidEndpoint);
             }
 
-            // Keep map_err if warn! is compiled out.
-            #[allow(clippy::map_identity)]
             let written = if ep_addr.index() == 0 {
                 usb.ctrl0_write(buf)
             } else {
                 usb.ep_write(buf, ep_addr)
             }
-            .map_err(|status| {
+            .inspect_err(|&_status| {
                 warn!(
                     "EP{=usize} {} STATUS {}",
                     ep_addr.index(),
                     ep_addr.direction(),
-                    status
+                    _status
                 );
-                status
             })?;
 
             Ok(written)
@@ -371,21 +369,18 @@ impl UsbBus for BusAdapter {
                 return Err(usb_device::UsbError::InvalidEndpoint);
             }
 
-            // Keep map_err if warn! is compiled out.
-            #[allow(clippy::map_identity)]
             let read = if ep_addr.index() == 0 {
                 usb.ctrl0_read(buf)
             } else {
                 usb.ep_read(buf, ep_addr)
             }
-            .map_err(|status| {
+            .inspect_err(|&_status| {
                 warn!(
                     "EP{=usize} {} STATUS {}",
                     ep_addr.index(),
                     ep_addr.direction(),
-                    status
+                    _status
                 );
-                status
             })?;
 
             Ok(read)
