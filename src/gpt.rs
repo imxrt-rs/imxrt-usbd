@@ -199,7 +199,7 @@ impl<'a> Gpt<'a> {
     /// Note that the load count value is not loaded until the next call to `reset()` (one shot mode)
     /// or until after the timer elapses (repeat mode).
     pub fn set_load(&mut self, us: u32) {
-        let count = us.min(0xFF_FFFF).max(1).saturating_sub(1);
+        let count = us.clamp(1, 0xFF_FFFF).saturating_sub(1);
         match self.gpt {
             Instance::Gpt0 => ral::write_reg!(ral::usb, self.usb, GPTIMER0LD, count),
             Instance::Gpt1 => ral::write_reg!(ral::usb, self.usb, GPTIMER1LD, count),

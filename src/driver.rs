@@ -178,7 +178,7 @@ impl Driver {
         ral::write_reg!(ral::usb, self.usb, ENDPTNAKEN, 0);
 
         while ral::read_reg!(ral::usb, self.usb, ENDPTPRIME) != 0 {}
-        ral::write_reg!(ral::usb, self.usb, ENDPTFLUSH, u32::max_value());
+        ral::write_reg!(ral::usb, self.usb, ENDPTFLUSH, u32::MAX);
         while ral::read_reg!(ral::usb, self.usb, ENDPTFLUSH) != 0 {}
 
         debug_assert!(
