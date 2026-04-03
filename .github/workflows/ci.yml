@@ -12,42 +12,42 @@ jobs:
   format:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v2
-    - run: rustup component add rustfmt
+    - uses: actions/checkout@v6
+    - run: rustup toolchain install stable --no-self-update --profile minimal
     - name: Check library formatting
-      uses: actions-rs/cargo@v1
-      with:
-        command: fmt
-        args: --verbose --all -- --check
-  
-  # For each chip, build and lint the main library
+      run: cargo fmt --all --check
+
+  # Build the library for each supported chip
+  check:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        chip: [imxrt1011, imxrt1021, imxrt1052, imxrt1062, imxrt1176_cm7]
+    steps:
+    - uses: actions/checkout@v6
+    - run: rustup toolchain install stable --no-self-update --profile minimal --target thumbv7em-none-eabihf
+    - name: Check the package with ${{ matrix.chip }}
+      run: cargo check --target thumbv7em-none-eabihf --features=imxrt-ral/${{ matrix.chip }}
+
+  # Lint the library
   clippy:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v2
-    - uses: actions-rs/toolchain@v1
-      with:
-        toolchain: stable
-        components: clippy
-        target: thumbv7em-none-eabihf
-        override: true
-        profile: minimal
-    - uses: actions-rs/clippy-check@v1
-      with:
-        token: ${{ secrets.GITHUB_TOKEN }}
-        args: --verbose --all-features --target thumbv7em-none-eabihf --features=imxrt-ral/imxrt1011 -- -D warnings
-        name: Lint the library
+    - uses: actions/checkout@v6
+    - run: rustup toolchain install stable --no-self-update --profile minimal --component clippy --target thumbv7em-none-eabihf
+    - name: Lint the library (all features)
+      run: cargo clippy --verbose --all-features --target thumbv7em-none-eabihf --features=imxrt-ral/imxrt1011 -- -D warnings
+    - name: Lint the library (no default features)
+      run: cargo clippy --verbose --target thumbv7em-none-eabihf --features=imxrt-ral/imxrt1011 -- -D warnings
 
   # Run unit and documentation tests for a chip
   test:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v6
+    - run: rustup toolchain install stable --no-self-update --profile minimal
     - name: Run unit and documentation tests
-      uses: actions-rs/cargo@v1
-      with:
-        command: test
-        args: --all-features --verbose
+      run: cargo test --all-features --verbose
 
   # Make sure documentation builds, and doclinks are valid
   doc:
@@ -55,9 +55,7 @@ jobs:
       RUSTDOCFLAGS: -D warnings
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v6
+    - run: rustup toolchain install stable --no-self-update --profile minimal
     - name: Check documentation and doclinks
-      uses: actions-rs/cargo@v1
-      with:
-        command: rustdoc
-        args: --all-features --features=imxrt-ral/imxrt1011
+      run: cargo rustdoc --all-features --features=imxrt-ral/imxrt1011
