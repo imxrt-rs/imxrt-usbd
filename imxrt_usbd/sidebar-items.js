@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"constant":["MAX_ENDPOINTS"],"enum":["Speed"],"mod":["gpt"],"struct":["BusAdapter","EndpointMemory","EndpointState"],"trait":["Peripherals"]};
+window.SIDEBAR_ITEMS = {"constant":["MAX_ENDPOINTS"],"enum":["Speed"],"mod":["gpt"],"struct":["BusAdapter","EndpointMemory","EndpointState","Instances"]};

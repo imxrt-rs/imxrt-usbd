@@ -1,4 +1,2 @@
-var srcIndex = new Map(JSON.parse('[\
-["imxrt_usbd",["",[["ral",[],["usb.rs","usbphy.rs"]]],["buffer.rs","bus.rs","cache.rs","driver.rs","endpoint.rs","gpt.rs","lib.rs","log.rs","qh.rs","ral.rs","state.rs","td.rs","vcell.rs"]]]\
-]'));
-createSrcSidebar();
+createSrcSidebar('[["imxrt_usbd",["",[],["buffer.rs","bus.rs","cache.rs","driver.rs","endpoint.rs","gpt.rs","lib.rs","log.rs","qh.rs","ral.rs","state.rs","td.rs","vcell.rs"]]]]');
+//{"start":19,"fragment_lengths":[156]}
