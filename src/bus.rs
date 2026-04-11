@@ -14,9 +14,9 @@ use crate::gpt;
 use core::cell::RefCell;
 use cortex_m::interrupt::{self, Mutex};
 use usb_device::{
+    UsbDirection,
     bus::{PollResult, UsbBus},
     endpoint::{EndpointAddress, EndpointType},
-    UsbDirection,
 };
 
 pub use super::driver::Speed;

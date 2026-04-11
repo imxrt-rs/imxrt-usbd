@@ -30,8 +30,8 @@ use crate::{
     td::{Status, Td},
 };
 use usb_device::{
-    endpoint::{EndpointAddress, EndpointType},
     UsbDirection, UsbError,
+    endpoint::{EndpointAddress, EndpointType},
 };
 
 /// A USB endpoint

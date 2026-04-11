@@ -8,8 +8,8 @@ use core::{
 
 use crate::{buffer::Buffer, endpoint::Endpoint, qh::Qh, td::Td};
 use usb_device::{
-    endpoint::{EndpointAddress, EndpointType},
     UsbDirection,
+    endpoint::{EndpointAddress, EndpointType},
 };
 
 /// A list of transfer descriptors

@@ -1,7 +1,6 @@
 [package]
 name = "imxrt-usbd"
-version = "0.3.0"
-authors = ["Ian McIntyre <ianpmcintyre@gmail.com>"]
+version = "0.4.0"
 repository = "https://github.com/imxrt-rs/imxrt-usbd"
 edition.workspace = true
 license = "MIT OR Apache-2.0"
@@ -31,9 +30,10 @@ imxrt-ral = { version = "0.6", features = ["imxrt1011"] }
 
 [package.metadata.docs.rs]
 default-target = "thumbv7em-none-eabihf"
+features = ["imxrt-ral/imxrt1011"]
 
 [workspace.package]
-edition = "2021"
+edition = "2024"
 
 [profile.release]
 overflow-checks = true

@@ -6,9 +6,9 @@
 
 use crate::{buffer, gpt, ral};
 use usb_device::{
+    UsbDirection, UsbError,
     bus::PollResult,
     endpoint::{EndpointAddress, EndpointType},
-    UsbDirection, UsbError,
 };
 
 /// Direct index to the OUT control endpoint

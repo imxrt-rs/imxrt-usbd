@@ -12,6 +12,8 @@ The `defmt` feature replaces the `defmt-03` feature. Activating this
 package's `defmt` feature *does not* activate the similarly-named feature
 in the usb-device package. You may enable them individually.
 
+Upgrade package to Rust 2024.
+
 [0.3.0] 2024-05-29
 ------------------
 
