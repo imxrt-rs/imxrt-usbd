@@ -18,7 +18,7 @@
 //!
 //! # Debugging features
 //!
-//! Enable the `defmt-03` feature to activate internal logging using defmt (version 0.3).
+//! Enable the `defmt` feature to activate internal logging using defmt.
 //!
 //! # Example
 //!

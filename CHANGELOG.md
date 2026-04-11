@@ -8,6 +8,10 @@ The package now requires imxrt-ral to represent its register access layer.
 The `Peripherals` trait is gone, and users are expected to use imxrt-ral
 peripheral instances.
 
+The `defmt` feature replaces the `defmt-03` feature. Activating this
+package's `defmt` feature *does not* activate the similarly-named feature
+in the usb-device package. You may enable them individually.
+
 [0.3.0] 2024-05-29
 ------------------
 

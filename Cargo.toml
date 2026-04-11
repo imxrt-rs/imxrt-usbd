@@ -22,16 +22,12 @@ cortex-m = "0.7"
 imxrt-ral = "0.6"
 usb-device = "0.3"
 
-[dependencies.defmt-03]
-package = "defmt"
-version = "0.3"
+[dependencies.defmt]
+version = "1.0"
 optional = true
 
 [dev-dependencies]
 imxrt-ral = { version = "0.6", features = ["imxrt1011"] }
-
-[features]
-"defmt-03" = ["dep:defmt-03", "usb-device/defmt"]
 
 [package.metadata.docs.rs]
 default-target = "thumbv7em-none-eabihf"
