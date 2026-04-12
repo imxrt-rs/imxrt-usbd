@@ -4,6 +4,9 @@ Changelog
 [Unreleased]
 ------------
 
+[0.4.0] 2026-04-12
+------------------
+
 The package now requires imxrt-ral to represent its register access layer.
 The `Peripherals` trait is gone, and users are expected to use imxrt-ral
 peripheral instances.
@@ -93,7 +96,8 @@ endpoints.
 
 First release
 
-[Unreleased]: https://github.com/imxrt-rs/imxrt-usbd/compare/v0.3.0...HEAD
+[Unreleased]: https://github.com/imxrt-rs/imxrt-usbd/compare/v0.4.0...HEAD
+[0.4.0]: https://github.com/imxrt-rs/imxrt-usbd/compare/v0.3.0...v0.4.0
 [0.3.0]: https://github.com/imxrt-rs/imxrt-usbd/compare/v0.2.2...v0.3.0
 [0.2.2]: https://github.com/imxrt-rs/imxrt-usbd/compare/v0.2.1...v0.2.2
 [0.2.1]: https://github.com/imxrt-rs/imxrt-usbd/compare/v0.2.0...v0.2.1
