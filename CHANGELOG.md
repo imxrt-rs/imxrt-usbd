@@ -4,6 +4,9 @@ Changelog
 [Unreleased]
 ------------
 
+[0.4.1] 2026-05-16
+------------------
+
 Fix the `defmt` feature. Activate the `defmt` feature in usb-device, since this
 package may try to log usb-device items.
 
@@ -100,6 +103,7 @@ endpoints.
 First release
 
 [Unreleased]: https://github.com/imxrt-rs/imxrt-usbd/compare/v0.4.0...HEAD
+[0.4.1]: https://github.com/imxrt-rs/imxrt-usbd/compare/v0.4.0...v0.4.1
 [0.4.0]: https://github.com/imxrt-rs/imxrt-usbd/compare/v0.3.0...v0.4.0
 [0.3.0]: https://github.com/imxrt-rs/imxrt-usbd/compare/v0.2.2...v0.3.0
 [0.2.2]: https://github.com/imxrt-rs/imxrt-usbd/compare/v0.2.1...v0.2.2
