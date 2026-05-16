@@ -4,6 +4,9 @@ Changelog
 [Unreleased]
 ------------
 
+Fix the `defmt` feature. Activate the `defmt` feature in usb-device, since this
+package may try to log usb-device items.
+
 [0.4.0] 2026-04-12
 ------------------
 
