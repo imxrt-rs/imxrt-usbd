@@ -320,8 +320,16 @@ impl Driver {
         let ep = self.ep_allocator.endpoint_mut(addr).unwrap();
         ep.set_stalled(&self.usb, stall);
 
-        // Re-prime any OUT endpoints if we're unstalling
-        if !stall && addr.direction() == UsbDirection::Out && !ep.is_primed(&self.usb) {
+        // Re-prime any OUT endpoints if we're unstalling. Only prime an *enabled*
+        // endpoint: priming a disabled OUT endpoint (e.g. a class clearing stalls
+        // in its reset() before SET_CONFIGURATION enables endpoints) leaves a stale
+        // transfer descriptor that the controller never completes once the endpoint
+        // is later enabled.
+        if !stall
+            && addr.direction() == UsbDirection::Out
+            && ep.is_enabled(&self.usb)
+            && !ep.is_primed(&self.usb)
+        {
             let max_packet_len = ep.max_packet_len();
             ep.schedule_transfer(&self.usb, max_packet_len);
         }
