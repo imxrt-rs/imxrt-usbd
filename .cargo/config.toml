@@ -1,5 +1,0 @@
-# Route `cargo test` (no explicit --target) to the host so that the no_std
-# crate can compile and run its unit tests.  Embedded builds always pass
-# --target thumbv7em-none-eabihf explicitly, so this does not affect them.
-[build]
-target = "x86_64-unknown-linux-gnu"
