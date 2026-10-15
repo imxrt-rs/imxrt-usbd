@@ -220,7 +220,7 @@ impl Endpoint {
 
     /// Return an immutable reference to the staging buffer at `slot`.
     ///
-    /// Panics in debug builds if `slot` is out of range or the slot is `None`.
+    /// Panics if `slot` is out of range or the slot is `None`.
     #[cfg(feature = "transfer")]
     pub(crate) fn staging(&self, slot: usize) -> &Buffer {
         self.buffers[slot].as_ref().unwrap()
@@ -228,7 +228,7 @@ impl Endpoint {
 
     /// Return a mutable reference to the staging buffer at `slot`.
     ///
-    /// Panics in debug builds if `slot` is out of range or the slot is `None`.
+    /// Panics if `slot` is out of range or the slot is `None`.
     pub(crate) fn staging_mut(&mut self, slot: usize) -> &mut Buffer {
         self.buffers[slot].as_mut().unwrap()
     }
@@ -238,7 +238,7 @@ impl Endpoint {
     /// Used by the packet path in the driver to pass a pointer to `submit_inner`
     /// without holding a borrow on the endpoint.
     ///
-    /// Panics in debug builds if `slot` is out of range or the slot is `None`.
+    /// Panics if `slot` is out of range or the slot is `None`.
     #[cfg(feature = "transfer")]
     pub(crate) fn staging_buf_ptr(&mut self, slot: usize) -> *mut u8 {
         self.buffers[slot].as_mut().unwrap().as_ptr_mut()
