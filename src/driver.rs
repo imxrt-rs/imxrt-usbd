@@ -217,7 +217,10 @@ impl Driver {
     ///
     /// Panics if EP0 OUT isn't allocated.
     pub fn ctrl0_read(&mut self, buffer: &mut [u8]) -> Result<usize, UsbError> {
-        let ctrl_out = self.ep_allocator.endpoint_mut(ctrl_ep0_out()).unwrap();
+        let ctrl_out = self
+            .ep_allocator
+            .endpoint_mut(ctrl_ep0_out())
+            .expect("EP0 OUT is allocated before any control transfer");
         if ctrl_out.has_setup(&self.usb) && buffer.len() >= 8 {
             debug!("EP0 Out SETUP");
             let setup = ctrl_out.read_setup(&self.usb);
@@ -257,7 +260,10 @@ impl Driver {
     ///
     /// Panics if EP0 IN isn't allocated, or if EP0 OUT isn't allocated.
     pub fn ctrl0_write(&mut self, buffer: &[u8]) -> Result<usize, UsbError> {
-        let ctrl_in = self.ep_allocator.endpoint_mut(ctrl_ep0_in()).unwrap();
+        let ctrl_in = self
+            .ep_allocator
+            .endpoint_mut(ctrl_ep0_in())
+            .expect("EP0 IN is allocated before any control transfer");
         debug!("EP0 In {=usize}", buffer.len());
         ctrl_in.check_errors()?;
 
@@ -271,7 +277,10 @@ impl Driver {
         ctrl_in.schedule_transfer(&self.usb, written);
 
         // Might need an OUT schedule for a status phase...
-        let ctrl_out = self.ep_allocator.endpoint_mut(ctrl_ep0_out()).unwrap();
+        let ctrl_out = self
+            .ep_allocator
+            .endpoint_mut(ctrl_ep0_out())
+            .expect("EP0 OUT is allocated before any control transfer");
         if !ctrl_out.is_primed(&self.usb) {
             ctrl_out.clear_complete(&self.usb);
             ctrl_out.clear_nack(&self.usb);
@@ -293,7 +302,10 @@ impl Driver {
         }
         #[cfg(not(feature = "transfer"))]
         {
-            let ep = self.ep_allocator.endpoint_mut(addr).unwrap();
+            let ep = self
+                .ep_allocator
+                .endpoint_mut(addr)
+                .expect("ep_read is only called for an allocated endpoint");
             debug!("EP{=usize} Out", ep.address().index());
             ep.check_errors()?;
 
@@ -325,7 +337,10 @@ impl Driver {
         }
         #[cfg(not(feature = "transfer"))]
         {
-            let ep = self.ep_allocator.endpoint_mut(addr).unwrap();
+            let ep = self
+                .ep_allocator
+                .endpoint_mut(addr)
+                .expect("ep_write is only called for an allocated endpoint");
             ep.check_errors()?;
 
             if ep.is_primed(&self.usb) {
@@ -347,7 +362,10 @@ impl Driver {
     ///
     /// Panics if the endpoint isn't allocated
     pub fn ep_stall(&mut self, stall: bool, addr: EndpointAddress) {
-        let ep = self.ep_allocator.endpoint_mut(addr).unwrap();
+        let ep = self
+            .ep_allocator
+            .endpoint_mut(addr)
+            .expect("ep_stall is only called for an allocated endpoint");
         ep.set_stalled(&self.usb, stall);
 
         // Re-prime any OUT endpoints if we're unstalling. Only prime an *enabled*
@@ -410,7 +428,10 @@ impl Driver {
             return Err(UsbError::InvalidEndpoint);
         }
 
-        let ep = self.ep_allocator.endpoint_mut(addr).unwrap();
+        let ep = self
+            .ep_allocator
+            .endpoint_mut(addr)
+            .expect("ep_read is only called for an allocated endpoint");
         debug!("EP{=usize} Out (queued)", ep.address().index());
         ep.check_errors()?;
 
@@ -476,7 +497,10 @@ impl Driver {
             return Err(UsbError::InvalidEndpoint);
         }
 
-        let ep = self.ep_allocator.endpoint_mut(addr).unwrap();
+        let ep = self
+            .ep_allocator
+            .endpoint_mut(addr)
+            .expect("ep_write is only called for an allocated endpoint");
         ep.check_errors()?;
 
         // Reap retired fire-and-forget staging records so they don't pin the
@@ -689,7 +713,8 @@ impl Driver {
     ///
     /// # Panics
     ///
-    /// Panics if the endpoint is already allocated.
+    /// Panics if the endpoint is already allocated, or if `addr` lies beyond
+    /// the capacity of the [`EndpointState`](crate::EndpointState).
     pub fn allocate_ep(
         &mut self,
         addr: EndpointAddress,
@@ -698,7 +723,7 @@ impl Driver {
     ) {
         self.ep_allocator
             .allocate_endpoint(addr, buffer, kind)
-            .unwrap();
+            .expect("endpoint is unallocated and fits the EndpointState capacity");
 
         debug!(
             "ALLOC EP{=usize} {} {}",
