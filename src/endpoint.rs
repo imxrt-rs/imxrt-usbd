@@ -395,15 +395,23 @@ impl Endpoint {
     }
 
     /// Stall or unstall the endpoint
+    ///
+    /// Unstalling a non-control endpoint also resets its data toggle to DATA0.
+    /// USB 2.0 §9.4.5 has CLEAR_FEATURE(ENDPOINT_HALT) do that, and the host
+    /// resets its side; leaving the device's toggle at DATA1 makes the
+    /// controller ACK the host's next packet and drop it as a retransmission.
     pub fn set_stalled(&mut self, usb: &ral::AnyUsbInstance, stall: bool) {
         let endptctrl = endpoint_control::register(usb, self.address.index());
+        // RXR/TXR are write-1-to-set and read back 0, so the read-modify-write
+        // cannot replay an earlier reset. ENDPTCTRL0 has no such bits.
+        let reset_toggle = u32::from(!stall && self.address.index() != 0);
 
         match self.address.direction() {
             UsbDirection::In => {
-                ral::modify_reg!(endpoint_control, &endptctrl, ENDPTCTRL, TXS: stall as u32)
+                ral::modify_reg!(endpoint_control, &endptctrl, ENDPTCTRL, TXS: stall as u32, TXR: reset_toggle)
             }
             UsbDirection::Out => {
-                ral::modify_reg!(endpoint_control, &endptctrl, ENDPTCTRL, RXS: stall as u32)
+                ral::modify_reg!(endpoint_control, &endptctrl, ENDPTCTRL, RXS: stall as u32, RXR: reset_toggle)
             }
         }
     }
@@ -891,8 +899,9 @@ impl Endpoint {
 
     /// Flush the endpoint and drop every queued transfer.
     ///
-    /// Used during bus reset, endpoint unstall, and BOT reset recovery. After this
-    /// call `pending_transfers()` is 0 and a fresh `submit_transfer` primes from a
+    /// Used during bus reset, when the device enters the configured state, and by
+    /// the per-endpoint `Driver::ep_cancel_transfers` hook. Stalling and
+    /// unstalling an endpoint does not call it. After this call `pending_transfers()` is 0 and a fresh `submit_transfer` primes from a
     /// clean QH overlay.
     #[cfg(feature = "transfer")]
     pub fn clear_transfers(&mut self, usb: &ral::AnyUsbInstance) {
@@ -2093,5 +2102,105 @@ mod tests {
             0,
             "ENDPTFLUSH bit 1 must be set for EP1 OUT"
         );
+    }
+
+    // -----------------------------------------------------------------------
+    // set_stalled: clearing a halt resets the data toggle (USB 2.0 §9.4.5).
+    //
+    // On the zeroed fake register block RXR/TXR are plain read/write bits, so a
+    // write of 1 reads back as 1 (on silicon they are write-1-to-set and read 0).
+    // -----------------------------------------------------------------------
+
+    /// A bulk endpoint of the given `index` and `direction`, with leaked storage.
+    fn make_stall_ep(index: u8, direction: UsbDirection) -> Endpoint {
+        let qh: &'static mut crate::qh::Qh =
+            std::boxed::Box::leak(std::boxed::Box::new(crate::qh::Qh::new()));
+        let tds: &'static mut [Td] = {
+            let v: std::vec::Vec<Td> = (0..crate::state::TDS_PER_EP).map(|_| Td::new()).collect();
+            std::boxed::Box::leak(v.into_boxed_slice())
+        };
+        let backing: &'static mut [u8] = std::boxed::Box::leak(std::boxed::Box::new([0u8; 64]));
+        let buf = unsafe { crate::buffer::Allocator::from_buffer(backing) }
+            .allocate(64)
+            .unwrap();
+        Endpoint::new(
+            usb_device::endpoint::EndpointAddress::from_parts(index.into(), direction),
+            qh,
+            tds,
+            buf,
+            EndpointType::Bulk,
+        )
+    }
+
+    /// The (stall, toggle reset) bits of the endpoint's direction in its
+    /// `ENDPTCTRL`.
+    fn stall_and_reset_bits(ep: &Endpoint, usb: &ral::AnyUsbInstance) -> (bool, bool) {
+        let endptctrl = endpoint_control::register(usb, ep.address.index());
+        match ep.address.direction() {
+            UsbDirection::In => (
+                ral::read_reg!(endpoint_control, &endptctrl, ENDPTCTRL, TXS == 1),
+                ral::read_reg!(endpoint_control, &endptctrl, ENDPTCTRL, TXR == 1),
+            ),
+            UsbDirection::Out => (
+                ral::read_reg!(endpoint_control, &endptctrl, ENDPTCTRL, RXS == 1),
+                ral::read_reg!(endpoint_control, &endptctrl, ENDPTCTRL, RXR == 1),
+            ),
+        }
+    }
+
+    #[test]
+    fn unstall_resets_the_data_toggle_in_both_directions() {
+        for direction in [UsbDirection::Out, UsbDirection::In] {
+            let usb = fake_usb();
+            let mut ep = make_stall_ep(1, direction);
+
+            ep.set_stalled(usb, true);
+            assert_eq!(
+                stall_and_reset_bits(&ep, usb),
+                (true, false),
+                "{direction:?}: stalling must set the stall bit and leave the toggle alone"
+            );
+
+            ep.set_stalled(usb, false);
+            assert_eq!(
+                stall_and_reset_bits(&ep, usb),
+                (false, true),
+                "{direction:?}: unstalling must clear the stall bit and reset the toggle"
+            );
+        }
+    }
+
+    #[test]
+    fn unstall_of_an_unstalled_endpoint_still_resets_the_data_toggle() {
+        // USB 2.0 §9.4.5: CLEAR_FEATURE(ENDPOINT_HALT) resets the toggle
+        // "regardless of whether an endpoint has the Halt feature set".
+        let usb = fake_usb();
+        let mut ep = make_stall_ep(2, UsbDirection::In);
+
+        ep.set_stalled(usb, false);
+
+        assert_eq!(
+            stall_and_reset_bits(&ep, usb),
+            (false, true),
+            "unstalling an endpoint that was not stalled must still reset the toggle"
+        );
+    }
+
+    #[test]
+    fn unstall_of_ep0_leaves_the_reserved_toggle_bits_alone() {
+        // ENDPTCTRL0 has no RXR/TXR: bits 6 and 22 are reserved.
+        let usb = fake_usb();
+        for direction in [UsbDirection::Out, UsbDirection::In] {
+            let mut ep = make_stall_ep(0, direction);
+
+            ep.set_stalled(usb, true);
+            ep.set_stalled(usb, false);
+
+            assert_eq!(
+                stall_and_reset_bits(&ep, usb),
+                (false, false),
+                "{direction:?}: EP0 unstall must not write the reserved toggle bit"
+            );
+        }
     }
 }
