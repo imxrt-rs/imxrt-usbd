@@ -108,11 +108,20 @@ impl Td {
 }
 
 bitflags::bitflags! {
+    #[derive(Clone, Copy, Debug)]
     pub(crate) struct Status : u32 {
         const ACTIVE = TOKEN::STATUS::RW::ACTIVE;
         const HALTED = TOKEN::STATUS::RW::HALTED;
         const DATA_BUFFER_ERROR = TOKEN::STATUS::RW::DATA_BUFFER_ERROR;
         const TRANSACTION_ERROR = TOKEN::STATUS::RW::TRANSACTION_ERROR;
+    }
+}
+
+impl Status {
+    /// Returns `true` if any of the error bits is set: transaction error,
+    /// data buffer error, or halted.
+    pub(crate) fn has_error(self) -> bool {
+        self.intersects(Self::TRANSACTION_ERROR | Self::DATA_BUFFER_ERROR | Self::HALTED)
     }
 }
 
@@ -193,6 +202,28 @@ mod test {
         let mut td = Td::new();
         ral::write_reg!(super, &mut td, TOKEN, STATUS: u32::MAX);
         assert_eq!(td.TOKEN.read(), 0b11111111);
+    }
+
+    #[test]
+    fn status_has_error() {
+        use super::Status;
+
+        for error in [
+            Status::TRANSACTION_ERROR,
+            Status::DATA_BUFFER_ERROR,
+            Status::HALTED,
+        ] {
+            assert!(error.has_error(), "{error:?} is an error");
+            assert!(
+                (error | Status::ACTIVE).has_error(),
+                "{error:?} is an error while active"
+            );
+        }
+        assert!(!Status::empty().has_error(), "an idle transfer is no error");
+        assert!(
+            !Status::ACTIVE.has_error(),
+            "an active transfer is no error"
+        );
     }
 
     #[test]

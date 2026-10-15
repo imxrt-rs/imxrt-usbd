@@ -22,13 +22,9 @@
 //! the mutable borrow to prevent races. That's how today's
 //! driver works.
 
-use crate::{
-    buffer::Buffer,
-    qh::Qh,
-    ral,
-    ral::endpoint_control,
-    td::{Status, Td},
-};
+#[cfg(feature = "transfer")]
+use crate::td::Status;
+use crate::{buffer::Buffer, qh::Qh, ral, ral::endpoint_control, td::Td};
 use usb_device::{
     UsbDirection, UsbError,
     endpoint::{EndpointAddress, EndpointType},
@@ -261,11 +257,7 @@ impl Endpoint {
     /// Check for any transfer status, which is signaled through
     /// an error
     pub fn check_errors(&self) -> Result<(), UsbError> {
-        let status = self.tds[0].status();
-        if status.contains(Status::TRANSACTION_ERROR)
-            | status.contains(Status::DATA_BUFFER_ERROR)
-            | status.contains(Status::HALTED)
-        {
+        if self.tds[0].status().has_error() {
             Err(UsbError::InvalidState)
         } else {
             Ok(())
@@ -821,11 +813,7 @@ impl Endpoint {
         // All dTDs complete — check for errors.
         for i in 0..rec.td_count as usize {
             let idx = (rec.first_td as usize + i) % crate::state::TDS_PER_EP;
-            let st = self.tds[idx].status();
-            if st.contains(Status::TRANSACTION_ERROR)
-                | st.contains(Status::DATA_BUFFER_ERROR)
-                | st.contains(Status::HALTED)
-            {
+            if self.tds[idx].status().has_error() {
                 // Pop record and free its TD budget.
                 self.q_head = (self.q_head + 1) % crate::state::TDS_PER_EP;
                 self.q_len -= 1;
