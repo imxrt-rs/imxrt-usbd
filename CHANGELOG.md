@@ -4,6 +4,9 @@ Changelog
 [Unreleased]
 ------------
 
+If the host asks a `UsbBus` for an _unallocated_ endpoint's stall state, the
+device returns `false` instead of panicking.
+
 [0.4.2] 2026-06-09
 ------------------
 

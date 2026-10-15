@@ -396,7 +396,7 @@ impl UsbBus for BusAdapter {
     }
 
     fn is_stalled(&self, ep_addr: EndpointAddress) -> bool {
-        self.with_usb(|usb| usb.is_ep_stalled(ep_addr))
+        self.with_usb(|usb| usb.is_allocated(ep_addr) && usb.is_ep_stalled(ep_addr))
     }
 
     fn suspend(&self) {
