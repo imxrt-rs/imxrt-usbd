@@ -60,11 +60,16 @@ impl<const COUNT: usize> EpList<COUNT> {
     }
 }
 
+/// The number of endpoint indices the controller supports: EP0 through EP7.
+///
+/// Each index has an OUT and an IN endpoint.
+pub(crate) const ENDPOINT_INDEX_COUNT: usize = 8;
+
 /// The maximum supported number of endpoints.
 ///
 /// Eight endpoints, two in each direction. Any endpoints allocated
 /// beyond this are wasted.
-pub const MAX_ENDPOINTS: usize = 8 * 2;
+pub const MAX_ENDPOINTS: usize = ENDPOINT_INDEX_COUNT * 2;
 
 /// Produces an index into the EPs, QHs, and TDs collections
 fn index(ep_addr: EndpointAddress) -> usize {
@@ -235,7 +240,7 @@ impl EndpointAllocator<'_> {
 
     /// Return an iterator of all allocated endpoints.
     pub fn endpoints_iter_mut(&mut self) -> impl Iterator<Item = &mut Endpoint> {
-        (0..8)
+        (0..ENDPOINT_INDEX_COUNT)
             .flat_map(|index| {
                 let ep_out = EndpointAddress::from_parts(index, UsbDirection::Out);
                 let ep_in = EndpointAddress::from_parts(index, UsbDirection::In);
@@ -304,6 +309,34 @@ mod tests {
         for _ in 0..10 {
             assert!(ep_state.allocator().is_none());
         }
+    }
+
+    #[test]
+    fn endpoints_iter_mut_reaches_every_endpoint_index() {
+        let mut buffer = [0; 4096];
+        let mut buffer_alloc = unsafe { buffer::Allocator::from_buffer(&mut buffer) };
+        let ep_state = EndpointState::max_endpoints();
+        let mut ep_alloc = ep_state.allocator().unwrap();
+
+        for index in 0..super::ENDPOINT_INDEX_COUNT {
+            for raw in [index, index | (1 << 7)] {
+                let addr = EndpointAddress::from(raw as u8);
+                ep_alloc
+                    .allocate_endpoint(addr, buffer_alloc.allocate(2).unwrap(), EndpointType::Bulk)
+                    .unwrap();
+            }
+        }
+
+        assert_eq!(
+            ep_alloc.endpoints_iter_mut().count(),
+            super::MAX_ENDPOINTS,
+            "every allocated endpoint is visited"
+        );
+        let highest = ep_alloc
+            .endpoints_iter_mut()
+            .map(|ep| ep.address().index())
+            .max();
+        assert_eq!(highest, Some(super::ENDPOINT_INDEX_COUNT - 1));
     }
 
     #[test]

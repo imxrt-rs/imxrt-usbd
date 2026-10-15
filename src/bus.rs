@@ -432,7 +432,7 @@ impl UsbBus for BusAdapter {
                 usb.allocate_ep(addr, buffer, ep_type);
                 Ok(addr)
             } else {
-                for idx in 1..8 {
+                for idx in 1..crate::state::ENDPOINT_INDEX_COUNT {
                     let addr = EndpointAddress::from_parts(idx, ep_dir);
                     if usb.is_allocated(addr) {
                         continue;
