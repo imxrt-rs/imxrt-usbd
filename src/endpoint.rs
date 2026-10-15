@@ -70,9 +70,20 @@ fn wait_endptflush(usb: &ral::AnyUsbInstance, mask: u32) {
     let _ = (usb, mask);
 }
 
-/// Largest single dTD payload we program: 16 KiB = 4×4 KiB pages.
+/// Largest single dTD payload we program: 16 KiB.
+///
+/// A dTD has `BUFFER_POINTER_COUNT` page pointers, which reach 20 KiB only when the
+/// payload starts on a page boundary. Starting mid-page, the guaranteed reach is one
+/// page less: 16 KiB, the maximum the reference manual recommends when the offset
+/// cannot be predetermined.
 #[cfg(feature = "transfer")]
 pub(crate) const TRANSFER_DTD_MAX: usize = 16 * 1024;
+
+#[cfg(feature = "transfer")]
+const _: () = assert!(
+    TRANSFER_DTD_MAX <= (crate::td::BUFFER_POINTER_COUNT - 1) * crate::td::PAGE_SIZE as usize,
+    "a dTD payload at any page offset must fit the dTD's buffer pages"
+);
 
 /// The total payload one full chain can carry: `TDS_PER_EP` dTDs × `TRANSFER_DTD_MAX`
 /// (= 128 KiB with the `transfer` feature). `chain_layout` clamps oversized inputs.

@@ -7,11 +7,17 @@
 
 use crate::{ral, vcell::VCell};
 
+/// The page size of a dTD buffer pointer: each pointer selects a 4 KiB page.
+pub(crate) const PAGE_SIZE: u32 = 4096;
+
+/// The number of buffer page pointers in a dTD.
+pub(crate) const BUFFER_POINTER_COUNT: usize = 5;
+
 #[repr(C)]
 pub struct Td {
     NEXT: VCell<u32>,
     TOKEN: VCell<u32>,
-    BUFFER_POINTERS: [VCell<u32>; 5],
+    BUFFER_POINTERS: [VCell<u32>; BUFFER_POINTER_COUNT],
     // Reserved memory for other information
     last_transfer_size: usize,
 }
@@ -21,13 +27,7 @@ impl Td {
         Td {
             NEXT: VCell::new(0),
             TOKEN: VCell::new(0),
-            BUFFER_POINTERS: [
-                VCell::new(0),
-                VCell::new(0),
-                VCell::new(0),
-                VCell::new(0),
-                VCell::new(0),
-            ],
+            BUFFER_POINTERS: [const { VCell::new(0) }; BUFFER_POINTER_COUNT],
             last_transfer_size: 0,
         }
     }
@@ -37,12 +37,22 @@ impl Td {
     /// Specifieds `size` as the total bytes expected to transfer. This may not
     /// be what's fully transferred; check `bytes_transferred` after the transfer
     /// completes.
+    ///
+    /// The transfer must fit the dTD's page pointers: the offset of `ptr` into its
+    /// page plus `size` may not exceed `BUFFER_POINTER_COUNT` pages. A debug build
+    /// asserts it.
     pub fn set_buffer(&mut self, ptr: *mut u8, size: usize) {
+        debug_assert!(
+            size == 0
+                || (ptr as usize % PAGE_SIZE as usize) + size
+                    <= BUFFER_POINTER_COUNT * PAGE_SIZE as usize,
+            "transfer of {size} bytes at {ptr:p} runs past the dTD's buffer pages"
+        );
         ral::modify_reg!(crate::td, self, TOKEN, TOTAL_BYTES: size as u32);
         self.last_transfer_size = size;
 
         if size != 0 {
-            const PTR_ALIGNMENT: u32 = 4096;
+            const PTR_ALIGNMENT: u32 = PAGE_SIZE;
             const PTR_MASK: u32 = !(PTR_ALIGNMENT - 1);
 
             self.BUFFER_POINTERS[0].write(ptr as u32);
@@ -235,6 +245,33 @@ mod test {
         let mut td = Td::new();
         ral::write_reg!(super, &mut td, TOKEN, TOTAL_BYTES: u32::MAX);
         assert_eq!(td.TOKEN.read(), 0x7FFF << 16);
+    }
+
+    #[test]
+    fn set_buffer_fills_every_page_pointer() {
+        let mut td = Td::new();
+        // The pointer is never dereferenced.
+        let ptr = 0x2000_0000 as *mut u8;
+        td.set_buffer(ptr, 5 * 4096);
+        for (idx, buffer_pointer) in td.BUFFER_POINTERS.iter().enumerate() {
+            assert_eq!(buffer_pointer.read(), 0x2000_0000 + (idx as u32) * 4096);
+        }
+    }
+
+    #[test]
+    fn set_buffer_accepts_the_largest_payload_at_any_offset() {
+        let mut td = Td::new();
+        // The last byte of the payload lands on the last byte of the fifth page.
+        td.set_buffer(0x2000_0001 as *mut u8, 5 * 4096 - 1);
+        // 16 KiB from the last byte of a page spans exactly five pages.
+        td.set_buffer(0x2000_0fff as *mut u8, 16 * 1024);
+    }
+
+    #[test]
+    #[should_panic(expected = "runs past the dTD's buffer pages")]
+    fn set_buffer_rejects_a_payload_past_the_pages() {
+        let mut td = Td::new();
+        td.set_buffer(0x2000_0001 as *mut u8, 5 * 4096);
     }
 
     #[test]
