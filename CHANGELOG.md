@@ -8,6 +8,11 @@ Fix a panic in `UsbBus::is_stalled` when the host names an endpoint that the
 device did not allocate (a `GET_STATUS` request addressed to an endpoint).
 The bus now reports such an endpoint as not stalled.
 
+Implement `UsbBus::force_reset`, with or without the `transfer` feature. It
+clears Run/Stop to drop the D+ pull-up, holds the disconnect for a fixed
+busy-wait (about 10 ms at 600 MHz), then reattaches, so the host re-enumerates
+the device. It previously returned `UsbError::Unsupported`.
+
 Add the `transfer` feature: a per-endpoint queue of sized dTD-chain transfers
 for bulk/interrupt endpoints.
 
@@ -18,8 +23,8 @@ for bulk/interrupt endpoints.
   endpoint, for class-level reconfiguration.
 - `BusAdapter::set_packet_queue_depth` configures eager OUT packet read-ahead.
 - The packet path (`UsbBus::read` / `write`) is re-expressed over staging
-  buffers under the feature; without the feature the build is behaviorally
-  identical to the previous release.
+  buffers under the feature; without the feature the packet path is unchanged
+  from the previous release.
 - Bus reset and endpoint enable flush the software-side transfer queue on all
   non-control endpoints (feature-gated).
 
