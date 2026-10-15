@@ -132,6 +132,22 @@ impl Status {
     }
 }
 
+/// The dTD token word, as a RAL-style register description.
+///
+/// The bit positions follow the "dTD Token" table of the i.MX RT1060 Reference
+/// Manual (Rev. 1, "Endpoint Transfer Descriptor (dTD)", section 41.5.5.2,
+/// Table 41-63):
+///
+/// | Bits  | Field                         |
+/// | ----- | ----------------------------- |
+/// | 30-16 | Total Bytes                   |
+/// | 15    | Interrupt On Complete (IOC)   |
+/// | 11-10 | Multiplier Override (MultO)   |
+/// | 7-0   | Status                        |
+///
+/// MultO must be zero for anything but transmit isochronous endpoints; the driver
+/// never sets it. Status bit 7 is Active, bit 6 Halted, bit 5 Data Buffer Error
+/// and bit 3 Transaction Error.
 mod TOKEN {
     pub mod STATUS {
         pub const offset: u32 = 0;
