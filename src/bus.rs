@@ -561,7 +561,8 @@ impl UsbBus for BusAdapter {
     }
 
     fn is_stalled(&self, ep_addr: EndpointAddress) -> bool {
-        self.with_usb(|usb| usb.is_ep_stalled(ep_addr))
+        // The host can name any endpoint with GET_STATUS(Endpoint), allocated or not.
+        self.with_usb(|usb| usb.is_allocated(ep_addr) && usb.is_ep_stalled(ep_addr))
     }
 
     fn suspend(&self) {
@@ -576,3 +577,68 @@ impl UsbBus for BusAdapter {
         self.with_usb_mut(|usb| usb.poll())
     }
 }
+
+// grcov exclude start
+#[cfg(test)]
+mod tests {
+    use super::BusAdapter;
+    use crate::driver::fake_driver;
+    use core::cell::RefCell;
+    use cortex_m::interrupt::{CriticalSection, Mutex};
+    use usb_device::{
+        UsbDirection,
+        bus::UsbBus,
+        endpoint::{EndpointAddress, EndpointType},
+    };
+
+    /// A `BusAdapter` over fake registers. It carries its own critical section,
+    /// since `interrupt::free` has no host implementation.
+    fn fake_bus() -> BusAdapter {
+        BusAdapter {
+            usb: Mutex::new(RefCell::new(fake_driver())),
+            // Safety: the test owns the adapter and runs no interrupt handler.
+            cs: Some(unsafe { CriticalSection::new() }),
+        }
+    }
+
+    #[test]
+    fn is_stalled_is_false_for_unallocated_endpoint() {
+        // Given a bus with no endpoint allocated
+        let bus = fake_bus();
+
+        // When a host `GET_STATUS(Endpoint)` names an endpoint the device never
+        // allocated, in any direction and at any index the request can carry
+        for index in 0..16 {
+            for direction in [UsbDirection::In, UsbDirection::Out] {
+                let addr = EndpointAddress::from_parts(index, direction);
+
+                // Then the bus answers instead of panicking
+                assert!(
+                    !bus.is_stalled(addr),
+                    "unallocated EP{index} {direction:?} must not report a stall"
+                );
+            }
+        }
+    }
+
+    #[test]
+    fn is_stalled_follows_allocated_endpoint() {
+        // Given an allocated bulk IN endpoint
+        let mut bus = fake_bus();
+        let addr = bus
+            .alloc_ep(UsbDirection::In, None, EndpointType::Bulk, 64, 0)
+            .expect("endpoint allocation");
+        assert!(!bus.is_stalled(addr), "a fresh endpoint is not stalled");
+
+        // When it is stalled, then unstalled
+        bus.set_stalled(addr, true);
+        let stalled = bus.is_stalled(addr);
+        bus.set_stalled(addr, false);
+        let unstalled = bus.is_stalled(addr);
+
+        // Then the answer tracks the endpoint
+        assert!(stalled, "a stalled endpoint reports a stall");
+        assert!(!unstalled, "an unstalled endpoint reports none");
+    }
+}
+// grcov exclude stop
