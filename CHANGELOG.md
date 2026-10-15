@@ -8,6 +8,12 @@ Fix a panic in `UsbBus::is_stalled` when the host names an endpoint that the
 device did not allocate (a `GET_STATUS` request addressed to an endpoint).
 The bus now reports such an endpoint as not stalled.
 
+Fix the D-cache maintenance that `schedule_transfer` performs on an endpoint's
+queue head and transfer descriptor. It cleaned and invalidated the cache line
+of a stack temporary rather than the descriptor itself, so a descriptor in
+cacheable memory was never written back. State placed in non-cacheable memory
+was not affected.
+
 Implement `UsbBus::force_reset`, with or without the `transfer` feature. It
 clears Run/Stop to drop the D+ pull-up, holds the disconnect for a fixed
 busy-wait (about 10 ms at 600 MHz), then reattaches, so the host re-enumerates
@@ -47,7 +53,7 @@ The `Peripherals` trait is gone, and users are expected to use imxrt-ral
 peripheral instances.
 
 The `defmt` feature replaces the `defmt-03` feature. Activating this
-package's `defmt` feature *does not* activate the similarly-named feature
+package's `defmt` feature _does not_ activate the similarly-named feature
 in the usb-device package. You may enable them individually.
 
 Upgrade package to Rust 2024.

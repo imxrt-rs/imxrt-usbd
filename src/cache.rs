@@ -70,3 +70,44 @@ pub fn clean_invalidate_dcache_by_address(addr: usize, size: usize) {
         let _ = (addr, size);
     }
 }
+
+/// The address and size of `value`, as handed to cache maintenance.
+///
+/// Takes the address of the value the reference points to. Casting `&reference`
+/// instead yields the address of the local holding the reference, which is not
+/// the memory the controller reads.
+fn span_of<T>(value: &T) -> (usize, usize) {
+    (
+        core::ptr::from_ref(value) as usize,
+        core::mem::size_of::<T>(),
+    )
+}
+
+/// Cleans and invalidates the D-cache lines that hold `value`.
+///
+/// See [`clean_invalidate_dcache_by_address`] for the cache-line granularity
+/// and the non-ARM no-op.
+pub fn clean_invalidate_dcache_of<T>(value: &T) {
+    let (addr, size) = span_of(value);
+    clean_invalidate_dcache_by_address(addr, size);
+}
+
+#[cfg(test)]
+mod test {
+    use super::span_of;
+
+    #[test]
+    fn span_covers_the_referenced_value() {
+        let value = [0u32; 8];
+        let reference = &value;
+
+        let (addr, size) = span_of(reference);
+
+        assert_eq!(
+            addr,
+            core::ptr::addr_of!(value) as usize,
+            "address of the value"
+        );
+        assert_eq!(size, 32, "size of the value");
+    }
+}

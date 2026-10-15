@@ -100,10 +100,7 @@ impl Td {
 
     /// Clean and invalidate this TD from DCache
     pub fn clean_invalidate_dcache(&self) {
-        crate::cache::clean_invalidate_dcache_by_address(
-            &self as *const _ as usize,
-            core::mem::size_of_val(self),
-        );
+        crate::cache::clean_invalidate_dcache_of(self);
     }
 }
 
