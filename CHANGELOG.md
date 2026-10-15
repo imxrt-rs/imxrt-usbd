@@ -4,6 +4,10 @@ Changelog
 [Unreleased]
 ------------
 
+Fix a panic in `UsbBus::is_stalled` when the host names an endpoint that the
+device did not allocate (a `GET_STATUS` request addressed to an endpoint).
+The bus now reports such an endpoint as not stalled.
+
 [0.4.2] 2026-06-09
 ------------------
 

@@ -334,14 +334,11 @@ impl Driver {
 
     /// Checks if an endpoint is stalled
     ///
-    /// # Panics
-    ///
-    /// Panics if the endpoint isn't allocated
+    /// Returns `false` for an endpoint that isn't allocated.
     pub fn is_ep_stalled(&self, addr: EndpointAddress) -> bool {
         self.ep_allocator
             .endpoint(addr)
-            .unwrap()
-            .is_stalled(&self.usb)
+            .is_some_and(|ep| ep.is_stalled(&self.usb))
     }
 
     /// Allocate a buffer from the endpoint memory
@@ -441,3 +438,104 @@ impl Driver {
         }
     }
 }
+
+/// A `Driver` over zeroed, leaked register blocks, for host tests that never
+/// touch real hardware.
+///
+/// Each call leaks its own register blocks, endpoint memory and endpoint
+/// state, so tests running on parallel threads share nothing. `initialize`
+/// is not called: it spins on `USBCMD.RST`, which a plain memory block never
+/// clears.
+#[cfg(test)]
+pub(crate) fn fake_driver() -> Driver {
+    extern crate std;
+    use std::boxed::Box;
+
+    fn leaked_zeroed<T>() -> *const T {
+        // Safety: the register blocks are `repr(C)` structs of plain integer cells.
+        Box::leak(Box::new(unsafe { core::mem::zeroed::<T>() }))
+    }
+
+    let instances = crate::Instances::<1> {
+        // Safety: each pointer refers to a leaked, zeroed block that lives for
+        // the rest of the process and is not aliased elsewhere.
+        usb: unsafe { imxrt_ral::usb::Instance::new(leaked_zeroed()) },
+        usbnc: unsafe { imxrt_ral::usbnc::Instance::new(leaked_zeroed()) },
+        usbphy: unsafe { imxrt_ral::usbphy::Instance::new(leaked_zeroed()) },
+    };
+    let buffer = Box::leak(Box::new(buffer::EndpointMemory::<1024>::new()));
+    let state = Box::leak(Box::new(crate::state::EndpointState::max_endpoints()));
+    Driver::new(instances, buffer, state)
+}
+
+// grcov exclude start
+#[expect(clippy::panic_in_result_fn, reason = "test module")]
+#[cfg(test)]
+mod tests {
+    use super::{Driver, fake_driver};
+    use usb_device::{
+        UsbDirection,
+        endpoint::{EndpointAddress, EndpointType},
+    };
+
+    type TestResult = core::result::Result<(), &'static str>;
+
+    fn allocate(driver: &mut Driver, addr: EndpointAddress) -> TestResult {
+        let buffer = driver
+            .allocate_buffer(64)
+            .ok_or("endpoint memory exhausted")?;
+        driver.allocate_ep(addr, buffer, EndpointType::Bulk);
+        Ok(())
+    }
+
+    #[test]
+    fn is_ep_stalled_is_false_for_unallocated_endpoint() {
+        // Given a driver with nothing allocated
+        let driver = fake_driver();
+
+        // When the host names any endpoint, in either direction, up to the
+        // 4-bit index `GET_STATUS(Endpoint)` can carry
+        for index in 0..16 {
+            for direction in [UsbDirection::In, UsbDirection::Out] {
+                let addr = EndpointAddress::from_parts(index, direction);
+
+                // Then the driver answers instead of panicking
+                assert!(
+                    !driver.is_ep_stalled(addr),
+                    "unallocated EP{index} {direction:?} must not report a stall"
+                );
+            }
+        }
+    }
+
+    #[test]
+    fn is_ep_stalled_follows_allocated_endpoint() -> TestResult {
+        // Given one allocated endpoint
+        let mut driver = fake_driver();
+        let addr = EndpointAddress::from_parts(1, UsbDirection::In);
+        allocate(&mut driver, addr)?;
+        assert!(
+            !driver.is_ep_stalled(addr),
+            "a fresh endpoint is not stalled"
+        );
+
+        // When it is stalled, then unstalled
+        driver.ep_stall(true, addr);
+        let stalled = driver.is_ep_stalled(addr);
+        driver.ep_stall(false, addr);
+        let unstalled = driver.is_ep_stalled(addr);
+
+        // Then the answer tracks the endpoint
+        assert!(stalled, "a stalled endpoint reports a stall");
+        assert!(!unstalled, "an unstalled endpoint reports none");
+
+        // And its neighbours stay unaffected
+        let other = EndpointAddress::from_parts(1, UsbDirection::Out);
+        assert!(
+            !driver.is_ep_stalled(other),
+            "the unallocated OUT twin must not report a stall"
+        );
+        Ok(())
+    }
+}
+// grcov exclude stop
