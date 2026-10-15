@@ -109,7 +109,7 @@ impl Driver {
         ral::write_reg!(ral::usb, self.usb, USBCMD, ITC: 0);
 
         ral::write_reg!(ral::usb, self.usb, USBMODE, CM: CM_2, SLOM: 1);
-        ral::modify_reg!(ral::usb, self.usb, PORTSC1, PFSC: (speed == Speed::LowFull) as u32);
+        ral::modify_reg!(ral::usb, self.usb, PORTSC1, PFSC: u32::from(speed == Speed::LowFull));
 
         ral::modify_reg!(ral::usb, self.usb, USBSTS, |usbsts| usbsts);
         // Disable interrupts by default
@@ -119,7 +119,7 @@ impl Driver {
             ral::usb,
             self.usb,
             ASYNCLISTADDR,
-            self.ep_allocator.qh_list_addr() as u32
+            ral::bus_address(self.ep_allocator.qh_list_addr())
         )
     }
 
@@ -157,7 +157,7 @@ impl Driver {
     pub fn set_address(&mut self, address: u8) {
         // See the "quirk" note in the UsbBus impl. We're using USBADRA to let
         // the hardware set the address before the status phase.
-        ral::write_reg!(ral::usb, self.usb, DEVICEADDR, USBADR: address as u32, USBADRA: 1);
+        ral::write_reg!(ral::usb, self.usb, DEVICEADDR, USBADR: u32::from(address), USBADRA: 1);
         debug!("ADDRESS {=u8}", address);
     }
 
@@ -808,16 +808,17 @@ impl Driver {
             );
             // Note: could be complete in one register read, but this is a little
             // easier to comprehend...
-            self.ep_out = ral::read_reg!(ral::usb, self.usb, ENDPTCOMPLETE, ERCE) as u16;
+            self.ep_out =
+                ral::low_halfword(ral::read_reg!(ral::usb, self.usb, ENDPTCOMPLETE, ERCE));
 
             let ep_in_complete = ral::read_reg!(ral::usb, self.usb, ENDPTCOMPLETE, ETCE);
             ral::write_reg!(ral::usb, self.usb, ENDPTCOMPLETE, ETCE: ep_in_complete);
 
-            let ep_setup = ral::read_reg!(ral::usb, self.usb, ENDPTSETUPSTAT) as u16;
+            let ep_setup = ral::low_halfword(ral::read_reg!(ral::usb, self.usb, ENDPTSETUPSTAT));
 
             PollResult::Data {
                 ep_out: self.ep_out,
-                ep_in_complete: ep_in_complete as u16,
+                ep_in_complete: ral::low_halfword(ep_in_complete),
                 ep_setup,
             }
         } else {

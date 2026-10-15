@@ -44,10 +44,12 @@ impl Td {
     pub fn set_buffer(&mut self, ptr: *mut u8, size: usize) {
         debug_assert!(
             size == 0
-                || (ptr as usize % PAGE_SIZE as usize) + size
+                || (ptr.addr() % PAGE_SIZE as usize) + size
                     <= BUFFER_POINTER_COUNT * PAGE_SIZE as usize,
             "transfer of {size} bytes at {ptr:p} runs past the dTD's buffer pages"
         );
+        // Callers keep `size` within five pages (asserted above in debug builds),
+        // far inside the 15-bit Total Bytes field, so the narrowing is exact.
         ral::modify_reg!(crate::td, self, TOKEN, TOTAL_BYTES: size as u32);
         self.last_transfer_size = size;
 
@@ -55,7 +57,7 @@ impl Td {
             const PTR_ALIGNMENT: u32 = PAGE_SIZE;
             const PTR_MASK: u32 = !(PTR_ALIGNMENT - 1);
 
-            self.BUFFER_POINTERS[0].write(ptr as u32);
+            self.BUFFER_POINTERS[0].write(ral::bus_address(ptr));
             for idx in 1..self.BUFFER_POINTERS.len() {
                 let mut ptr = self.BUFFER_POINTERS[idx - 1].read();
                 ptr &= PTR_MASK;
@@ -71,6 +73,8 @@ impl Td {
 
     /// Returns the number of bytes transferred in the previous transfer
     pub fn bytes_transferred(&self) -> usize {
+        // A 15-bit field widened to usize; `usize` holds at least 32 bits on every
+        // target this crate builds for.
         let total_bytes = ral::read_reg!(crate::td, self, TOKEN, TOTAL_BYTES) as usize;
         self.last_transfer_size - total_bytes
     }
@@ -94,7 +98,7 @@ impl Td {
 
     /// Set the next TD pointed at by this TD
     pub fn set_next(&mut self, next: *const Td) {
-        ral::write_reg!(crate::td, self, NEXT, next as u32);
+        ral::write_reg!(crate::td, self, NEXT, ral::bus_address(next));
     }
 
     /// Set the active flag
@@ -105,7 +109,7 @@ impl Td {
     /// Specify if transfer completion should be indicated as a
     /// USB interrupt (irrespective of an actual ISR run)
     pub fn set_interrupt_on_complete(&mut self, ioc: bool) {
-        ral::modify_reg!(crate::td, self, TOKEN, IOC: ioc as u32);
+        ral::modify_reg!(crate::td, self, TOKEN, IOC: u32::from(ioc));
     }
 
     /// Clean and invalidate this TD from DCache
