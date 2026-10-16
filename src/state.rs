@@ -12,16 +12,26 @@ use usb_device::{
     endpoint::{EndpointAddress, EndpointType},
 };
 
-/// A list of transfer descriptors
+/// dTDs statically reserved per endpoint (per direction).
 ///
-/// Supports 1 TD per QH (per endpoint direction)
+/// With the `transfer` feature, each endpoint owns a pool of 8 dTDs so a
+/// transfer queue can hold up to 8 chained descriptors (e.g. two 64 KiB
+/// transfers of 4×16 KiB, or eight 1-packet transfers). Without the
+/// feature the layout matches the historical 1 TD per QH.
+pub(crate) const TDS_PER_EP: usize = if cfg!(feature = "transfer") { 8 } else { 1 };
+
+/// A list of transfer descriptor pools.
+///
+/// Each endpoint slot holds `TDS_PER_EP` TDs laid out contiguously so that
+/// every TD is individually 32-byte-aligned (Td is 32 B on ARM).
 #[repr(align(32))]
-struct TdList<const COUNT: usize>([UnsafeCell<Td>; COUNT]);
+struct TdList<const COUNT: usize>([UnsafeCell<[Td; TDS_PER_EP]>; COUNT]);
 
 impl<const COUNT: usize> TdList<COUNT> {
     const fn new() -> Self {
-        const TD: UnsafeCell<Td> = UnsafeCell::new(Td::new());
-        Self([TD; COUNT])
+        const TD_POOL: UnsafeCell<[Td; TDS_PER_EP]> =
+            UnsafeCell::new([const { Td::new() }; TDS_PER_EP]);
+        Self([TD_POOL; COUNT])
     }
 }
 
@@ -50,11 +60,16 @@ impl<const COUNT: usize> EpList<COUNT> {
     }
 }
 
+/// The number of endpoint indices the controller supports: EP0 through EP7.
+///
+/// Each index has an OUT and an IN endpoint.
+pub(crate) const ENDPOINT_INDEX_COUNT: usize = 8;
+
 /// The maximum supported number of endpoints.
 ///
 /// Eight endpoints, two in each direction. Any endpoints allocated
 /// beyond this are wasted.
-pub const MAX_ENDPOINTS: usize = 8 * 2;
+pub const MAX_ENDPOINTS: usize = ENDPOINT_INDEX_COUNT * 2;
 
 /// Produces an index into the EPs, QHs, and TDs collections
 fn index(ep_addr: EndpointAddress) -> usize {
@@ -150,7 +165,7 @@ impl<const COUNT: usize> EndpointState<COUNT> {
 
 pub struct EndpointAllocator<'a> {
     qh_list: &'a [UnsafeCell<Qh>],
-    td_list: &'a [UnsafeCell<Td>],
+    td_list: &'a [UnsafeCell<[Td; TDS_PER_EP]>],
     ep_list: &'a [UnsafeCell<MaybeUninit<Endpoint>>],
     alloc_mask: &'a AtomicU32,
 }
@@ -225,7 +240,7 @@ impl EndpointAllocator<'_> {
 
     /// Return an iterator of all allocated endpoints.
     pub fn endpoints_iter_mut(&mut self) -> impl Iterator<Item = &mut Endpoint> {
-        (0..8)
+        (0..ENDPOINT_INDEX_COUNT)
             .flat_map(|index| {
                 let ep_out = EndpointAddress::from_parts(index, UsbDirection::Out);
                 let ep_in = EndpointAddress::from_parts(index, UsbDirection::In);
@@ -267,7 +282,7 @@ impl EndpointAllocator<'_> {
         // allocation, and ensures that we only release one &mut reference for each
         // component.
         let qh = unsafe { &mut *self.qh_list[index].get() };
-        let td = unsafe { &mut *self.td_list[index].get() };
+        let tds: &'static mut [Td] = unsafe { &mut (&mut *self.td_list[index].get())[..] };
         // We cannot access these two components after this call. The endpoint
         // takes mutable references, so it has exclusive ownership of both.
         // This module is designed to isolate this access so we can visually
@@ -276,7 +291,7 @@ impl EndpointAllocator<'_> {
         // EP is uninitialized.
         let ep = unsafe { &mut *self.ep_list[index].get() };
         // Nothing to drop here.
-        ep.write(Endpoint::new(addr, qh, td, buffer, kind));
+        ep.write(Endpoint::new(addr, qh, tds, buffer, kind));
         // Safety: EP is initialized.
         Some(unsafe { ep.assume_init_mut() })
     }
@@ -294,6 +309,34 @@ mod tests {
         for _ in 0..10 {
             assert!(ep_state.allocator().is_none());
         }
+    }
+
+    #[test]
+    fn endpoints_iter_mut_reaches_every_endpoint_index() {
+        let mut buffer = [0; 4096];
+        let mut buffer_alloc = unsafe { buffer::Allocator::from_buffer(&mut buffer) };
+        let ep_state = EndpointState::max_endpoints();
+        let mut ep_alloc = ep_state.allocator().unwrap();
+
+        for index in 0..super::ENDPOINT_INDEX_COUNT {
+            for raw in [index, index | (1 << 7)] {
+                let addr = EndpointAddress::from(raw as u8);
+                ep_alloc
+                    .allocate_endpoint(addr, buffer_alloc.allocate(2).unwrap(), EndpointType::Bulk)
+                    .unwrap();
+            }
+        }
+
+        assert_eq!(
+            ep_alloc.endpoints_iter_mut().count(),
+            super::MAX_ENDPOINTS,
+            "every allocated endpoint is visited"
+        );
+        let highest = ep_alloc
+            .endpoints_iter_mut()
+            .map(|ep| ep.address().index())
+            .max();
+        assert_eq!(highest, Some(super::ENDPOINT_INDEX_COUNT - 1));
     }
 
     #[test]

@@ -21,6 +21,24 @@ use usb_device::{
 
 pub use super::driver::Speed;
 
+/// Busy-wait cycles the D+ pull-up is held low during [`force_reset`], between
+/// dropping the bus (`detach`) and re-asserting it (`attach`).
+///
+/// This is a *hardware*-timing requirement, not a software-synchronisation
+/// delay: the host detects a disconnect purely electrically (D+ held at SE0),
+/// and there is no device-observable signal for "the host noticed". A bounded
+/// busy-wait is therefore the correct primitive — there is nothing to poll on.
+///
+/// The value is sized generously for the i.MX RT10xx M7 cores: at 600 MHz
+/// (RT1064) this is ~10 ms, and longer at lower core clocks (~12 ms at the
+/// 500 MHz RT1011). USB hosts register a disconnect within microseconds, so a
+/// few-millisecond hold has a wide margin. The library cannot know the core
+/// clock, so this is a conservative floor; tune it on the bench if a specific
+/// host needs a longer (or wants a shorter) disconnect window.
+///
+/// [`force_reset`]: UsbBus::force_reset
+const DETACH_HOLD_CYCLES: u32 = 6_000_000;
+
 /// A full- and high-speed `UsbBus` implementation
 ///
 /// The `BusAdapter` adapts the USB peripheral instances, and exposes a `UsbBus` implementation.
@@ -225,6 +243,20 @@ impl BusAdapter {
         self.with_usb_mut(|usb| usb.enable_zlt(ep_addr));
     }
 
+    /// Reset the data toggle of the given endpoint to DATA0
+    ///
+    /// Call this from firmware that observes the host's CLEAR_FEATURE(ENDPOINT_HALT)
+    /// request: USB 2.0 §9.4.5 has the host reset its toggle for that endpoint, and
+    /// the device must follow. No class should call it for a routine unstall.
+    /// `usb-device` classes unstall endpoints in the normal course of work (for
+    /// example `usbd-storage` before every command), and the host does not reset
+    /// its toggle then, so [`UsbBus::set_stalled`] leaves the toggle alone.
+    ///
+    /// This call does nothing on endpoint 0 or if the endpoint isn't allocated.
+    pub fn reset_data_toggle(&self, ep: EndpointAddress) {
+        self.with_usb_mut(|usb| usb.ep_reset_data_toggle(ep));
+    }
+
     /// Immutable access to the USB peripheral
     fn with_usb<R>(&self, func: impl FnOnce(&Driver) -> R) -> R {
         let with_cs = |cs: &'_ _| {
@@ -279,6 +311,113 @@ impl BusAdapter {
     }
 }
 
+/// Transfer-queue extension API for [`BusAdapter`].
+///
+/// # Transfer-queue overview
+///
+/// This API provides a zero-copy, multi-transfer-in-flight path for bulk and
+/// interrupt endpoints alongside the existing `UsbBus` single-packet path.
+///
+/// ## Retire law (EHCI)
+///
+/// A dTD is owned by the USB controller from the moment it is primed until the
+/// ACTIVE bit clears. **No field of the dTD — and no byte of the associated DMA
+/// buffer — may be read or written by software while ACTIVE is set.** Violating
+/// this rule produces silent data corruption. `poll_transfer` / `poll_transfer`
+/// enforce the retire law: they inspect ACTIVE before returning bytes.
+///
+/// ## Short-packet contract (OUT endpoints)
+///
+/// A short packet (fewer bytes than the TD announced) retires the current dTD
+/// immediately and leaves any subsequent linked dTDs in the hardware queue. For
+/// `submit_read`, callers should size OUT transfers to the announced data length
+/// (e.g. a bulk CBW is exactly 31 bytes). Misbehaving hosts are recovered via
+/// `bus_reset` / `UsbBus::reset`.
+///
+/// ## Lazy vs. eager OUT priming
+///
+/// Depth-1 OUT endpoints (the default) never have a staging transfer primed
+/// unless the class explicitly calls `UsbBus::read`. This is the *lazy* rule:
+/// it prevents the controller from swallowing a packet into a staging buffer
+/// while a zero-copy data-phase transfer is active.
+///
+/// Endpoints configured with `set_packet_queue_depth(ep, N > 1)` are *eager*:
+/// up to N staging transfers are kept primed at all times (CDC receive path).
+///
+/// ## Memory safety note
+///
+/// `submit_write` and `submit_read` accept raw slices and pass them to the DMA
+/// engine. The controller writes/reads the memory asynchronously after the call
+/// returns. Callers must guarantee that the slice remains valid and unmodified
+/// until `poll_transfer` retires the record. Whether these methods should be
+/// `unsafe fn` is an open question for upstream review; they are currently `safe`
+/// because `BusAdapter` is `no_std`-firmware-only and the aliasing contract is
+/// documented here.
+#[cfg(feature = "transfer")]
+impl BusAdapter {
+    /// Queue an IN transfer (device→host) from `buf`. Zero-copy; `buf` must
+    /// remain valid and unmodified until `poll_transfer` retires it.
+    pub fn submit_write(
+        &self,
+        ep: usb_device::endpoint::EndpointAddress,
+        buf: &[u8],
+    ) -> usb_device::Result<()> {
+        self.with_usb_mut(|usb| usb.ep_submit(ep, buf.as_ptr() as *mut u8, buf.len()))
+    }
+
+    /// Queue an OUT transfer (host→device) into `buf`. Zero-copy; `buf` must
+    /// remain valid and unmodified until `poll_transfer` retires it.
+    pub fn submit_read(
+        &self,
+        ep: usb_device::endpoint::EndpointAddress,
+        buf: &mut [u8],
+    ) -> usb_device::Result<()> {
+        self.with_usb_mut(|usb| usb.ep_submit(ep, buf.as_mut_ptr(), buf.len()))
+    }
+
+    /// Retire the oldest completed transfer on `ep`, if any.
+    ///
+    /// Returns `Some(Ok(n))` when the oldest transfer completed with `n` bytes
+    /// transferred, `Some(Err(_))` on a dTD error, or `None` if no transfer has
+    /// completed yet.
+    pub fn poll_transfer(
+        &self,
+        ep: usb_device::endpoint::EndpointAddress,
+    ) -> Option<usb_device::Result<usize>> {
+        self.with_usb_mut(|usb| usb.ep_poll_transfer(ep))
+    }
+
+    /// Number of queued (not yet retired) transfers on `ep`.
+    pub fn pending_transfers(&self, ep: usb_device::endpoint::EndpointAddress) -> usize {
+        self.with_usb(|usb| usb.ep_pending_transfers(ep))
+    }
+
+    /// Cancel every queued transfer on `ep`: flush the hardware prime and drop
+    /// all software queue records (staging and zero-copy alike).
+    ///
+    /// For class-level reconfiguration of a shared endpoint — e.g. a
+    /// SET_INTERFACE alternate-setting switch where a transfer primed by the
+    /// previous alt setting would otherwise swallow the new alt's data. The
+    /// bus layer never observes alt switches, so the class/firmware must call
+    /// this explicitly when it changes which protocol owns an endpoint.
+    /// No-op on EP0 and unallocated endpoints.
+    pub fn cancel_transfers(&self, ep: usb_device::endpoint::EndpointAddress) {
+        self.with_usb_mut(|usb| usb.ep_cancel_transfers(ep));
+    }
+
+    /// Configure eager packet read-ahead depth for an OUT endpoint.
+    ///
+    /// Call after `UsbDevice` configuration and before traffic. `depth` must be
+    /// ≥ 1. Returns `Err(InvalidEndpoint)` for IN or control endpoints.
+    pub fn set_packet_queue_depth(
+        &self,
+        ep: usb_device::endpoint::EndpointAddress,
+        depth: usize,
+    ) -> usb_device::Result<()> {
+        self.with_usb_mut(|usb| usb.set_packet_queue_depth(ep, depth))
+    }
+}
+
 impl UsbBus for BusAdapter {
     /// The USB hardware can guarantee that we set the status before we receive
     /// the status, and we're taking advantage of that. We expect this flag to
@@ -307,7 +446,7 @@ impl UsbBus for BusAdapter {
                 usb.allocate_ep(addr, buffer, ep_type);
                 Ok(addr)
             } else {
-                for idx in 1..8 {
+                for idx in 1..crate::state::ENDPOINT_INDEX_COUNT {
                     let addr = EndpointAddress::from_parts(idx, ep_dir);
                     if usb.is_allocated(addr) {
                         continue;
@@ -339,6 +478,26 @@ impl UsbBus for BusAdapter {
         });
     }
 
+    /// Simulate a disconnect so the host re-enumerates the device.
+    ///
+    /// Clears the controller's Run/Stop bit (removing the D+ pull-up), holds
+    /// the disconnect for `DETACH_HOLD_CYCLES` so the host registers it, then
+    /// re-asserts Run/Stop. The host then drives a bus reset, which flows
+    /// through [`reset`](UsbBus::reset) and tears down any in-flight transfers;
+    /// the device must be re-configured (call [`configure`](BusAdapter::configure)
+    /// again) once it reaches the configured state, exactly as after any reset.
+    ///
+    /// The whole detach/hold/attach sequence runs inside the bus critical
+    /// section, so it is not interrupted by USB ISR activity.
+    fn force_reset(&self) -> usb_device::Result<()> {
+        self.with_usb_mut(|usb| {
+            usb.detach();
+            cortex_m::asm::delay(DETACH_HOLD_CYCLES);
+            usb.attach();
+        });
+        Ok(())
+    }
+
     fn write(&self, ep_addr: EndpointAddress, buf: &[u8]) -> usb_device::Result<usize> {
         self.with_usb_mut(|usb| {
             if !usb.is_allocated(ep_addr) {
@@ -351,12 +510,22 @@ impl UsbBus for BusAdapter {
                 usb.ep_write(buf, ep_addr)
             }
             .inspect_err(|&_status| {
-                warn!(
-                    "EP{=usize} {} STATUS {}",
-                    ep_addr.index(),
-                    ep_addr.direction(),
-                    _status
-                );
+                // WouldBlock is the designed not-ready return on the hot path
+                // (polled every loop) — keep it at TRACE so it cannot flood.
+                if matches!(_status, usb_device::UsbError::WouldBlock) {
+                    trace!(
+                        "EP{=usize} {} STATUS WouldBlock",
+                        ep_addr.index(),
+                        ep_addr.direction()
+                    );
+                } else {
+                    warn!(
+                        "EP{=usize} {} STATUS {}",
+                        ep_addr.index(),
+                        ep_addr.direction(),
+                        _status
+                    );
+                }
             })?;
 
             Ok(written)
@@ -375,12 +544,22 @@ impl UsbBus for BusAdapter {
                 usb.ep_read(buf, ep_addr)
             }
             .inspect_err(|&_status| {
-                warn!(
-                    "EP{=usize} {} STATUS {}",
-                    ep_addr.index(),
-                    ep_addr.direction(),
-                    _status
-                );
+                // WouldBlock is the designed nothing-to-read return on the hot
+                // path (polled every loop) — TRACE, not WARN (no flood).
+                if matches!(_status, usb_device::UsbError::WouldBlock) {
+                    trace!(
+                        "EP{=usize} {} STATUS WouldBlock",
+                        ep_addr.index(),
+                        ep_addr.direction()
+                    );
+                } else {
+                    warn!(
+                        "EP{=usize} {} STATUS {}",
+                        ep_addr.index(),
+                        ep_addr.direction(),
+                        _status
+                    );
+                }
             })?;
 
             Ok(read)
@@ -396,7 +575,8 @@ impl UsbBus for BusAdapter {
     }
 
     fn is_stalled(&self, ep_addr: EndpointAddress) -> bool {
-        self.with_usb(|usb| usb.is_ep_stalled(ep_addr))
+        // The host can name any endpoint with GET_STATUS(Endpoint), allocated or not.
+        self.with_usb(|usb| usb.is_allocated(ep_addr) && usb.is_ep_stalled(ep_addr))
     }
 
     fn suspend(&self) {
@@ -411,3 +591,104 @@ impl UsbBus for BusAdapter {
         self.with_usb_mut(|usb| usb.poll())
     }
 }
+
+// grcov exclude start
+#[cfg(test)]
+mod tests {
+    use super::BusAdapter;
+    use crate::driver::fake_driver;
+    use core::cell::RefCell;
+    use cortex_m::interrupt::{CriticalSection, Mutex};
+    use usb_device::{
+        UsbDirection,
+        bus::UsbBus,
+        endpoint::{EndpointAddress, EndpointType},
+    };
+
+    /// A `BusAdapter` over fake registers. It carries its own critical section,
+    /// since `interrupt::free` has no host implementation.
+    fn fake_bus() -> BusAdapter {
+        BusAdapter {
+            usb: Mutex::new(RefCell::new(fake_driver())),
+            // Safety: the test owns the adapter and runs no interrupt handler.
+            cs: Some(unsafe { CriticalSection::new() }),
+        }
+    }
+
+    #[test]
+    fn is_stalled_is_false_for_unallocated_endpoint() {
+        // Given a bus with no endpoint allocated
+        let bus = fake_bus();
+
+        // When a host `GET_STATUS(Endpoint)` names an endpoint the device never
+        // allocated, in any direction and at any index the request can carry
+        for index in 0..16 {
+            for direction in [UsbDirection::In, UsbDirection::Out] {
+                let addr = EndpointAddress::from_parts(index, direction);
+
+                // Then the bus answers instead of panicking
+                assert!(
+                    !bus.is_stalled(addr),
+                    "unallocated EP{index} {direction:?} must not report a stall"
+                );
+            }
+        }
+    }
+
+    #[test]
+    fn is_stalled_follows_allocated_endpoint() {
+        // Given an allocated bulk IN endpoint
+        let mut bus = fake_bus();
+        let addr = bus
+            .alloc_ep(UsbDirection::In, None, EndpointType::Bulk, 64, 0)
+            .expect("endpoint allocation");
+        assert!(!bus.is_stalled(addr), "a fresh endpoint is not stalled");
+
+        // When it is stalled, then unstalled
+        bus.set_stalled(addr, true);
+        let stalled = bus.is_stalled(addr);
+        bus.set_stalled(addr, false);
+        let unstalled = bus.is_stalled(addr);
+
+        // Then the answer tracks the endpoint
+        assert!(stalled, "a stalled endpoint reports a stall");
+        assert!(!unstalled, "an unstalled endpoint reports none");
+    }
+
+    #[test]
+    fn reset_data_toggle_reaches_the_endpoint_and_spares_set_stalled() {
+        // Given an allocated bulk OUT endpoint
+        let mut bus = fake_bus();
+        let addr = bus
+            .alloc_ep(UsbDirection::Out, None, EndpointType::Bulk, 64, 0)
+            .expect("endpoint allocation");
+        let rxr = |bus: &BusAdapter| bus.with_usb(|usb| usb.toggle_reset_bit(addr));
+
+        // When a class unstalls it in the normal course of work
+        bus.set_stalled(addr, true);
+        bus.set_stalled(addr, false);
+
+        // Then the toggle is untouched
+        assert!(!rxr(&bus), "a routine unstall must not reset the toggle");
+
+        // When firmware sees the host's CLEAR_FEATURE(ENDPOINT_HALT)
+        bus.reset_data_toggle(addr);
+
+        // Then it is reset
+        assert!(rxr(&bus), "reset_data_toggle must reset the toggle");
+    }
+
+    #[test]
+    fn reset_data_toggle_ignores_an_unallocated_endpoint() {
+        // Given a bus with nothing allocated
+        let bus = fake_bus();
+
+        // When firmware names an endpoint the device never allocated
+        for index in 0..16 {
+            bus.reset_data_toggle(EndpointAddress::from_parts(index, UsbDirection::In));
+        }
+
+        // Then the call returns instead of panicking
+    }
+}
+// grcov exclude stop

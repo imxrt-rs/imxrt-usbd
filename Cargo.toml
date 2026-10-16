@@ -27,6 +27,7 @@ optional = true
 
 [features]
 defmt = ["dep:defmt", "usb-device/defmt"]
+transfer = []
 
 [dev-dependencies]
 imxrt-ral = { version = "0.6", features = ["imxrt1011"] }

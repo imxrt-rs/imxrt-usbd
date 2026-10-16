@@ -20,6 +20,33 @@
 //!
 //! Enable the `defmt` feature to activate internal logging using defmt.
 //!
+//! # Transfer queue (`transfer` feature)
+//!
+//! Enable the `transfer` feature to unlock a multi-transfer-in-flight path for
+//! bulk and interrupt endpoints. The feature adds:
+//!
+//! - **[`BusAdapter::submit_write`] / [`BusAdapter::submit_read`]** — queue a
+//!   zero-copy IN/OUT transfer.  The DMA buffer must remain valid and unmodified
+//!   until [`BusAdapter::poll_transfer`] retires it.
+//! - **[`BusAdapter::poll_transfer`]** — retire the oldest completed transfer.
+//! - **[`BusAdapter::pending_transfers`]** — count in-flight transfers.
+//! - **[`BusAdapter::set_packet_queue_depth`]** — configure eager read-ahead
+//!   depth for CDC/interrupt OUT endpoints.
+//!
+//! The per-endpoint TD pool (`TDS_PER_EP = 8`) allows up to eight 16 KiB dTDs
+//! per endpoint to be queued simultaneously (128 KiB maximum per transfer chain).
+//!
+//! ## Lazy vs. eager OUT priming
+//!
+//! By default (depth 1) OUT endpoints are *lazy*: no staging transfer is primed
+//! until the class calls `UsbBus::read`. This prevents the controller from
+//! swallowing a packet into a staging buffer while a zero-copy data-phase transfer
+//! is active on the same endpoint.
+//!
+//! Call `set_packet_queue_depth(ep, N)` with N > 1 to switch to *eager* mode:
+//! up to N staging transfers are kept primed at all times, suitable for CDC
+//! receive paths that want low latency without explicit per-packet priming.
+//!
 //! # Example
 //!
 //! ```no_run

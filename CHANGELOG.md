@@ -4,6 +4,42 @@ Changelog
 [Unreleased]
 ------------
 
+Fix a panic in `UsbBus::is_stalled` when the host names an endpoint that the
+device did not allocate (a `GET_STATUS` request addressed to an endpoint).
+The bus now reports such an endpoint as not stalled.
+
+Fix the D-cache maintenance that `schedule_transfer` performs on an endpoint's
+queue head and transfer descriptor. It cleaned and invalidated the cache line
+of a stack temporary rather than the descriptor itself, so a descriptor in
+cacheable memory was never written back. State placed in non-cacheable memory
+was not affected.
+
+Add `BusAdapter::reset_data_toggle`, which resets an endpoint's data toggle to
+DATA0. Firmware calls it when it sees the host's `CLEAR_FEATURE(ENDPOINT_HALT)`
+(USB 2.0 §9.4.5). `UsbBus::set_stalled` never touches the toggle, because
+classes unstall endpoints routinely (`usbd-storage` does before every command)
+and the host keeps its toggle then.
+
+Implement `UsbBus::force_reset`, with or without the `transfer` feature. It
+clears Run/Stop to drop the D+ pull-up, holds the disconnect for a fixed
+busy-wait (about 10 ms at 600 MHz), then reattaches, so the host re-enumerates
+the device. It previously returned `UsbError::Unsupported`.
+
+Add the `transfer` feature: a per-endpoint queue of sized dTD-chain transfers
+for bulk/interrupt endpoints.
+
+- `BusAdapter::submit_write` / `submit_read` queue zero-copy IN/OUT transfers.
+- `BusAdapter::poll_transfer` retires the oldest completed transfer.
+- `BusAdapter::pending_transfers` counts in-flight transfers on an endpoint.
+- `BusAdapter::cancel_transfers` drops all queued and in-flight transfers on an
+  endpoint, for class-level reconfiguration.
+- `BusAdapter::set_packet_queue_depth` configures eager OUT packet read-ahead.
+- The packet path (`UsbBus::read` / `write`) is re-expressed over staging
+  buffers under the feature; without the feature the packet path is unchanged
+  from the previous release.
+- Bus reset and endpoint enable flush the software-side transfer queue on all
+  non-control endpoints (feature-gated).
+
 [0.4.2] 2026-06-09
 ------------------
 
@@ -23,7 +59,7 @@ The `Peripherals` trait is gone, and users are expected to use imxrt-ral
 peripheral instances.
 
 The `defmt` feature replaces the `defmt-03` feature. Activating this
-package's `defmt` feature *does not* activate the similarly-named feature
+package's `defmt` feature _does not_ activate the similarly-named feature
 in the usb-device package. You may enable them individually.
 
 Upgrade package to Rust 2024.

@@ -73,3 +73,44 @@ pub mod endpoint_control {
         }
     }
 }
+
+/// The address of `ptr` in the controller's 32-bit address space.
+///
+/// The i.MX RT address space is 32 bits wide, so the narrowing is exact on the
+/// target. Host unit tests run with wider pointers; they keep the low 32 bits,
+/// which is enough to exercise the register layout.
+pub(crate) fn bus_address<T>(ptr: *const T) -> u32 {
+    ptr.addr() as u32
+}
+
+/// The low halfword of a 32-bit register value.
+///
+/// For the endpoint status registers, whose event bits all sit in the low 16
+/// bits (`ENDPTSETUPSTAT` is bits 15-0; `ERCE` and `ETCE` are 8-bit fields
+/// within them), so the narrowing drops nothing but reserved bits.
+pub(crate) fn low_halfword(value: u32) -> u16 {
+    (value & 0xFFFF) as u16
+}
+
+#[cfg(test)]
+mod test {
+    use super::{bus_address, low_halfword};
+
+    #[test]
+    fn bus_address_is_the_pointer_value() {
+        assert_eq!(bus_address(0x2000_1234 as *const u8), 0x2000_1234);
+    }
+
+    #[test]
+    #[cfg(target_pointer_width = "64")]
+    fn bus_address_keeps_the_low_word_of_a_wide_pointer() {
+        assert_eq!(bus_address(0x1_2000_1234usize as *const u8), 0x2000_1234);
+    }
+
+    #[test]
+    fn low_halfword_keeps_the_low_16_bits() {
+        assert_eq!(low_halfword(0xABCD_1234), 0x1234);
+        assert_eq!(low_halfword(0x0000_FFFF), 0xFFFF);
+        assert_eq!(low_halfword(0x0001_0000), 0);
+    }
+}
