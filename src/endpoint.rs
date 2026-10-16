@@ -394,24 +394,22 @@ impl Endpoint {
         wait_endptprime(usb);
     }
 
-    /// Stall or unstall the endpoint
+    /// Stall or unstall the endpoint.
     ///
-    /// Unstalling a non-control endpoint also resets its data toggle to DATA0.
-    /// USB 2.0 §9.4.5 has CLEAR_FEATURE(ENDPOINT_HALT) do that, and the host
-    /// resets its side; leaving the device's toggle at DATA1 makes the
-    /// controller ACK the host's next packet and drop it as a retransmission.
+    /// This touches only the stall bit, never the data toggle. Classes unstall
+    /// routinely: `usbd-storage` calls `Endpoint::unstall` on both bulk endpoints
+    /// before every command, and the host keeps its toggle there, so a reset here
+    /// would desynchronise the two. The host-side reset of USB 2.0 §9.4.5
+    /// (CLEAR_FEATURE(ENDPOINT_HALT)) belongs to `reset_data_toggle`.
     pub fn set_stalled(&mut self, usb: &ral::AnyUsbInstance, stall: bool) {
         let endptctrl = endpoint_control::register(usb, self.address.index());
-        // RXR/TXR are write-1-to-set and read back 0, so the read-modify-write
-        // cannot replay an earlier reset. ENDPTCTRL0 has no such bits.
-        let reset_toggle = u32::from(!stall && self.address.index() != 0);
 
         match self.address.direction() {
             UsbDirection::In => {
-                ral::modify_reg!(endpoint_control, &endptctrl, ENDPTCTRL, TXS: stall as u32, TXR: reset_toggle)
+                ral::modify_reg!(endpoint_control, &endptctrl, ENDPTCTRL, TXS: stall as u32)
             }
             UsbDirection::Out => {
-                ral::modify_reg!(endpoint_control, &endptctrl, ENDPTCTRL, RXS: stall as u32, RXR: reset_toggle)
+                ral::modify_reg!(endpoint_control, &endptctrl, ENDPTCTRL, RXS: stall as u32)
             }
         }
     }
@@ -2105,7 +2103,8 @@ mod tests {
     }
 
     // -----------------------------------------------------------------------
-    // set_stalled: clearing a halt resets the data toggle (USB 2.0 §9.4.5).
+    // set_stalled never touches the data toggle: classes unstall routinely
+    // (usbd-storage does it before every command) and the host keeps its toggle.
     //
     // On the zeroed fake register block RXR/TXR are plain read/write bits, so a
     // write of 1 reads back as 1 (on silicon they are write-1-to-set and read 0).
@@ -2149,7 +2148,7 @@ mod tests {
     }
 
     #[test]
-    fn unstall_resets_the_data_toggle_in_both_directions() {
+    fn stall_and_unstall_leave_the_data_toggle_alone() {
         for direction in [UsbDirection::Out, UsbDirection::In] {
             let usb = fake_usb();
             let mut ep = make_stall_ep(1, direction);
@@ -2164,26 +2163,28 @@ mod tests {
             ep.set_stalled(usb, false);
             assert_eq!(
                 stall_and_reset_bits(&ep, usb),
-                (false, true),
-                "{direction:?}: unstalling must clear the stall bit and reset the toggle"
+                (false, false),
+                "{direction:?}: unstalling must clear the stall bit and leave the toggle alone"
             );
         }
     }
 
     #[test]
-    fn unstall_of_an_unstalled_endpoint_still_resets_the_data_toggle() {
-        // USB 2.0 §9.4.5: CLEAR_FEATURE(ENDPOINT_HALT) resets the toggle
-        // "regardless of whether an endpoint has the Halt feature set".
-        let usb = fake_usb();
-        let mut ep = make_stall_ep(2, UsbDirection::In);
+    fn unstall_of_an_unstalled_endpoint_leaves_the_data_toggle_alone() {
+        // usbd-storage unstalls both bulk endpoints before every command, and
+        // the host does not reset its toggle for those.
+        for direction in [UsbDirection::Out, UsbDirection::In] {
+            let usb = fake_usb();
+            let mut ep = make_stall_ep(2, direction);
 
-        ep.set_stalled(usb, false);
+            ep.set_stalled(usb, false);
 
-        assert_eq!(
-            stall_and_reset_bits(&ep, usb),
-            (false, true),
-            "unstalling an endpoint that was not stalled must still reset the toggle"
-        );
+            assert_eq!(
+                stall_and_reset_bits(&ep, usb),
+                (false, false),
+                "{direction:?}: unstalling an endpoint that was not stalled must not reset the toggle"
+            );
+        }
     }
 
     #[test]
