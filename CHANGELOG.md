@@ -14,6 +14,12 @@ of a stack temporary rather than the descriptor itself, so a descriptor in
 cacheable memory was never written back. State placed in non-cacheable memory
 was not affected.
 
+Add `BusAdapter::reset_data_toggle`, which resets an endpoint's data toggle to
+DATA0. Firmware calls it when it sees the host's `CLEAR_FEATURE(ENDPOINT_HALT)`
+(USB 2.0 §9.4.5). `UsbBus::set_stalled` never touches the toggle, because
+classes unstall endpoints routinely (`usbd-storage` does before every command)
+and the host keeps its toggle then.
+
 Implement `UsbBus::force_reset`, with or without the `transfer` feature. It
 clears Run/Stop to drop the D+ pull-up, holds the disconnect for a fixed
 busy-wait (about 10 ms at 600 MHz), then reattaches, so the host re-enumerates

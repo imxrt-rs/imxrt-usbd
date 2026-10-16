@@ -138,6 +138,33 @@ impl Driver {
         }
     }
 
+    /// Reset the data toggle of `addr` to DATA0.
+    ///
+    /// For firmware that sees the host's CLEAR_FEATURE(ENDPOINT_HALT) (USB 2.0
+    /// §9.4.5). This call does nothing on EP0 and on unallocated endpoints.
+    pub fn ep_reset_data_toggle(&mut self, addr: EndpointAddress) {
+        if let Some(ep) = self.ep_allocator.endpoint_mut(addr) {
+            ep.reset_data_toggle(&self.usb);
+        }
+    }
+
+    /// Whether the `ENDPTCTRL` toggle-reset bit (RXR for OUT, TXR for IN) of
+    /// `addr` is set. On the zeroed fake registers a written 1 reads back as 1.
+    #[cfg(test)]
+    pub(crate) fn toggle_reset_bit(&self, addr: EndpointAddress) -> bool {
+        use crate::ral::endpoint_control;
+
+        let endptctrl = endpoint_control::register(&self.usb, addr.index());
+        match addr.direction() {
+            UsbDirection::In => {
+                ral::read_reg!(endpoint_control, &endptctrl, ENDPTCTRL, TXR == 1)
+            }
+            UsbDirection::Out => {
+                ral::read_reg!(endpoint_control, &endptctrl, ENDPTCTRL, RXR == 1)
+            }
+        }
+    }
+
     /// Enable (`true`) or disable (`false`) USB interrupts
     pub fn set_interrupts(&mut self, interrupts: bool) {
         if interrupts {
@@ -924,6 +951,54 @@ mod tests {
             "the unallocated OUT twin must not report a stall"
         );
         Ok(())
+    }
+
+    #[test]
+    fn ep_reset_data_toggle_resets_an_allocated_endpoint() -> TestResult {
+        // Given an allocated bulk OUT endpoint
+        let mut driver = fake_driver();
+        let addr = EndpointAddress::from_parts(1, UsbDirection::Out);
+        allocate(&mut driver, addr)?;
+        assert!(
+            !driver.toggle_reset_bit(addr),
+            "a fresh endpoint has no reset pending"
+        );
+
+        // When the driver is asked to reset its toggle
+        driver.ep_reset_data_toggle(addr);
+
+        // Then RXR is set
+        assert!(
+            driver.toggle_reset_bit(addr),
+            "the OUT toggle must be reset"
+        );
+        Ok(())
+    }
+
+    #[test]
+    fn ep_reset_data_toggle_ignores_ep0_and_unallocated_endpoints() {
+        // Given a driver with nothing allocated
+        let mut driver = fake_driver();
+
+        // When the host names any endpoint, in either direction, up to the
+        // 4-bit index `CLEAR_FEATURE(Endpoint)` can carry
+        for index in 0..16 {
+            for direction in [UsbDirection::In, UsbDirection::Out] {
+                driver.ep_reset_data_toggle(EndpointAddress::from_parts(index, direction));
+            }
+        }
+
+        // Then nothing panics and no toggle bit is written (the register block
+        // has `ENDPTCTRL` for the first 7 endpoints only)
+        for index in 0..7 {
+            for direction in [UsbDirection::In, UsbDirection::Out] {
+                let addr = EndpointAddress::from_parts(index, direction);
+                assert!(
+                    !driver.toggle_reset_bit(addr),
+                    "unallocated EP{index} {direction:?} must not be written"
+                );
+            }
+        }
     }
 }
 // grcov exclude stop

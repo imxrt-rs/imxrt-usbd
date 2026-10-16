@@ -243,6 +243,20 @@ impl BusAdapter {
         self.with_usb_mut(|usb| usb.enable_zlt(ep_addr));
     }
 
+    /// Reset the data toggle of the given endpoint to DATA0
+    ///
+    /// Call this from firmware that observes the host's CLEAR_FEATURE(ENDPOINT_HALT)
+    /// request: USB 2.0 §9.4.5 has the host reset its toggle for that endpoint, and
+    /// the device must follow. No class should call it for a routine unstall.
+    /// `usb-device` classes unstall endpoints in the normal course of work (for
+    /// example `usbd-storage` before every command), and the host does not reset
+    /// its toggle then, so [`UsbBus::set_stalled`] leaves the toggle alone.
+    ///
+    /// This call does nothing on endpoint 0 or if the endpoint isn't allocated.
+    pub fn reset_data_toggle(&self, ep: EndpointAddress) {
+        self.with_usb_mut(|usb| usb.ep_reset_data_toggle(ep));
+    }
+
     /// Immutable access to the USB peripheral
     fn with_usb<R>(&self, func: impl FnOnce(&Driver) -> R) -> R {
         let with_cs = |cs: &'_ _| {
@@ -639,6 +653,42 @@ mod tests {
         // Then the answer tracks the endpoint
         assert!(stalled, "a stalled endpoint reports a stall");
         assert!(!unstalled, "an unstalled endpoint reports none");
+    }
+
+    #[test]
+    fn reset_data_toggle_reaches_the_endpoint_and_spares_set_stalled() {
+        // Given an allocated bulk OUT endpoint
+        let mut bus = fake_bus();
+        let addr = bus
+            .alloc_ep(UsbDirection::Out, None, EndpointType::Bulk, 64, 0)
+            .expect("endpoint allocation");
+        let rxr = |bus: &BusAdapter| bus.with_usb(|usb| usb.toggle_reset_bit(addr));
+
+        // When a class unstalls it in the normal course of work
+        bus.set_stalled(addr, true);
+        bus.set_stalled(addr, false);
+
+        // Then the toggle is untouched
+        assert!(!rxr(&bus), "a routine unstall must not reset the toggle");
+
+        // When firmware sees the host's CLEAR_FEATURE(ENDPOINT_HALT)
+        bus.reset_data_toggle(addr);
+
+        // Then it is reset
+        assert!(rxr(&bus), "reset_data_toggle must reset the toggle");
+    }
+
+    #[test]
+    fn reset_data_toggle_ignores_an_unallocated_endpoint() {
+        // Given a bus with nothing allocated
+        let bus = fake_bus();
+
+        // When firmware names an endpoint the device never allocated
+        for index in 0..16 {
+            bus.reset_data_toggle(EndpointAddress::from_parts(index, UsbDirection::In));
+        }
+
+        // Then the call returns instead of panicking
     }
 }
 // grcov exclude stop

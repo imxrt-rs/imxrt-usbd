@@ -414,6 +414,29 @@ impl Endpoint {
         }
     }
 
+    /// Reset the endpoint's data toggle to DATA0, leaving the stall bit as it is.
+    ///
+    /// This is the device side of USB 2.0 §9.4.5: the host resets its toggle on
+    /// CLEAR_FEATURE(ENDPOINT_HALT), and the device must follow. It does nothing
+    /// on endpoint 0, whose `ENDPTCTRL0` has no toggle-reset bits.
+    pub fn reset_data_toggle(&mut self, usb: &ral::AnyUsbInstance) {
+        if self.address.index() == 0 {
+            return;
+        }
+        let endptctrl = endpoint_control::register(usb, self.address.index());
+
+        // RXR/TXR are write-1-to-set and read back 0, so the read-modify-write
+        // cannot replay an earlier reset.
+        match self.address.direction() {
+            UsbDirection::In => {
+                ral::modify_reg!(endpoint_control, &endptctrl, ENDPTCTRL, TXR: 1)
+            }
+            UsbDirection::Out => {
+                ral::modify_reg!(endpoint_control, &endptctrl, ENDPTCTRL, RXR: 1)
+            }
+        }
+    }
+
     /// Indicates if the endpoint is stalled
     pub fn is_stalled(&self, usb: &ral::AnyUsbInstance) -> bool {
         let endptctrl = endpoint_control::register(usb, self.address.index());
@@ -2201,6 +2224,77 @@ mod tests {
                 stall_and_reset_bits(&ep, usb),
                 (false, false),
                 "{direction:?}: EP0 unstall must not write the reserved toggle bit"
+            );
+        }
+    }
+
+    // -----------------------------------------------------------------------
+    // reset_data_toggle: the device side of the host's CLEAR_FEATURE(ENDPOINT_HALT)
+    // (USB 2.0 §9.4.5). It writes RXR/TXR and leaves the stall bit alone.
+    // -----------------------------------------------------------------------
+
+    #[test]
+    fn reset_data_toggle_sets_the_toggle_bit_of_its_direction_only() {
+        for direction in [UsbDirection::Out, UsbDirection::In] {
+            let usb = fake_usb();
+            let mut ep = make_stall_ep(1, direction);
+
+            ep.reset_data_toggle(usb);
+
+            assert_eq!(
+                stall_and_reset_bits(&ep, usb),
+                (false, true),
+                "{direction:?}: the toggle bit of the endpoint's direction must be set"
+            );
+            let endptctrl = endpoint_control::register(usb, 1);
+            let (other_rxr, other_txr) = (
+                ral::read_reg!(endpoint_control, &endptctrl, ENDPTCTRL, RXR == 1),
+                ral::read_reg!(endpoint_control, &endptctrl, ENDPTCTRL, TXR == 1),
+            );
+            assert_eq!(
+                (other_rxr, other_txr),
+                (
+                    direction == UsbDirection::Out,
+                    direction == UsbDirection::In
+                ),
+                "{direction:?}: the opposite direction's toggle bit must stay clear"
+            );
+        }
+    }
+
+    #[test]
+    fn reset_data_toggle_leaves_the_stall_bit_as_it_found_it() {
+        for direction in [UsbDirection::Out, UsbDirection::In] {
+            for stalled in [false, true] {
+                let usb = fake_usb();
+                let mut ep = make_stall_ep(2, direction);
+                ep.set_stalled(usb, stalled);
+
+                ep.reset_data_toggle(usb);
+
+                assert_eq!(
+                    stall_and_reset_bits(&ep, usb),
+                    (stalled, true),
+                    "{direction:?}, stalled={stalled}: the stall bit must not move"
+                );
+            }
+        }
+    }
+
+    #[test]
+    fn reset_data_toggle_on_ep0_writes_nothing() {
+        // ENDPTCTRL0 has no RXR/TXR: bits 6 and 22 are reserved.
+        for direction in [UsbDirection::Out, UsbDirection::In] {
+            let usb = fake_usb();
+            let mut ep = make_stall_ep(0, direction);
+
+            ep.reset_data_toggle(usb);
+
+            let endptctrl = endpoint_control::register(usb, 0);
+            assert_eq!(
+                ral::read_reg!(endpoint_control, &endptctrl, ENDPTCTRL),
+                0,
+                "{direction:?}: EP0 ENDPTCTRL must be untouched"
             );
         }
     }
