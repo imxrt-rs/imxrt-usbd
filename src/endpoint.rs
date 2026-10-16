@@ -922,7 +922,8 @@ impl Endpoint {
     ///
     /// Used during bus reset, when the device enters the configured state, and by
     /// the per-endpoint `Driver::ep_cancel_transfers` hook. Stalling and
-    /// unstalling an endpoint does not call it. After this call `pending_transfers()` is 0 and a fresh `submit_transfer` primes from a
+    /// unstalling an endpoint does not call it. After this call
+    /// `pending_transfers()` is 0 and a fresh `submit_transfer` primes from a
     /// clean QH overlay.
     #[cfg(feature = "transfer")]
     pub fn clear_transfers(&mut self, usb: &ral::AnyUsbInstance) {
